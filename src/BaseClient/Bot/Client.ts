@@ -1,0 +1,58 @@
+import { Client } from '@discordjs/core';
+import { REST } from '@discordjs/rest';
+import { WebSocketManager } from '@discordjs/ws';
+import { ActivityType, GatewayIntentBits, PresenceUpdateStatus } from 'discord-api-types/v10';
+import { ClusterClient, getInfo } from 'discord-hybrid-sharding';
+
+const cleanedToken = (
+ (process.argv.includes('--dev') ? process.env.DevToken : process.env.Token) ?? ''
+).replace('Bot ', '');
+
+const rest = new REST({ api: 'http://nirn:8080/api' }).setToken(cleanedToken);
+
+export const gateway = new WebSocketManager({
+ rest,
+ intents:
+  GatewayIntentBits.Guilds |
+  GatewayIntentBits.GuildMembers |
+  GatewayIntentBits.GuildModeration |
+  GatewayIntentBits.GuildExpressions |
+  GatewayIntentBits.GuildIntegrations |
+  GatewayIntentBits.GuildWebhooks |
+  GatewayIntentBits.GuildInvites |
+  GatewayIntentBits.GuildVoiceStates |
+  GatewayIntentBits.GuildMessages |
+  GatewayIntentBits.GuildMessageReactions |
+  GatewayIntentBits.DirectMessages |
+  GatewayIntentBits.DirectMessageReactions |
+  GatewayIntentBits.MessageContent |
+  GatewayIntentBits.GuildScheduledEvents |
+  GatewayIntentBits.AutoModerationConfiguration |
+  GatewayIntentBits.AutoModerationExecution |
+  GatewayIntentBits.GuildMessageTyping,
+ shardCount: getInfo().TOTAL_SHARDS,
+ shardIds: getInfo().SHARD_LIST,
+ initialPresence: {
+  status: PresenceUpdateStatus.Idle,
+  afk: true,
+  since: Date.now(),
+  activities: [
+   {
+    state: 'Starting up...',
+    name: 'Starting up...',
+    type: ActivityType.Custom,
+   },
+  ],
+ },
+});
+
+gateway.setToken(cleanedToken);
+gateway.connect();
+
+export const client = new Client({ rest, gateway });
+export const { api } = client;
+export const cluster = new ClusterClient(client);
+export const cache: { guilds: number; members: Map<string, number> } = {
+ guilds: 0,
+ members: new Map(),
+};

@@ -1,0 +1,25 @@
+export { type RAutomod } from '../BaseClient/Bot/CacheClasses/automod.js';
+export { type RBan } from '../BaseClient/Bot/CacheClasses/ban.js';
+export { type RChannel } from '../BaseClient/Bot/CacheClasses/channel.js';
+export { type RCommand } from '../BaseClient/Bot/CacheClasses/command.js';
+export { type RCommandPermission } from '../BaseClient/Bot/CacheClasses/commandPermission.js';
+export { type REmoji } from '../BaseClient/Bot/CacheClasses/emoji.js';
+export { type REvent } from '../BaseClient/Bot/CacheClasses/event.js';
+export { type RGuild } from '../BaseClient/Bot/CacheClasses/guild.js';
+export { type RGuildCommand } from '../BaseClient/Bot/CacheClasses/guildCommand.js';
+export { type RIntegration } from '../BaseClient/Bot/CacheClasses/integration.js';
+export { type RInvite } from '../BaseClient/Bot/CacheClasses/invite.js';
+export { type RMember } from '../BaseClient/Bot/CacheClasses/member.js';
+export { type RMessage } from '../BaseClient/Bot/CacheClasses/message.js';
+export { type RReaction } from '../BaseClient/Bot/CacheClasses/reaction.js';
+export { type RRole } from '../BaseClient/Bot/CacheClasses/role.js';
+export { type RSoundboardSound } from '../BaseClient/Bot/CacheClasses/soundboard.js';
+export { type RStageInstance } from '../BaseClient/Bot/CacheClasses/stage.js';
+export { type RSticker } from '../BaseClient/Bot/CacheClasses/sticker.js';
+export { type RThread } from '../BaseClient/Bot/CacheClasses/thread.js';
+export { type RThreadMember } from '../BaseClient/Bot/CacheClasses/threadMember.js';
+export { type RUser } from '../BaseClient/Bot/CacheClasses/user.js';
+export { type RVoiceState } from '../BaseClient/Bot/CacheClasses/voice.js';
+export { type RWebhook } from '../BaseClient/Bot/CacheClasses/webhook.js';
+
+export { type DeriveRFromAPI } from '../BaseClient/Bot/CacheClasses/base.js';
