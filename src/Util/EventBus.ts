@@ -44,7 +44,7 @@ import type {
  RVoiceState,
 } from 'src/Typings/Redis.js';
 
-// import cacheDB from '../BaseClient/Bot/Redis.js';
+import cacheDB from '../BaseClient/Bot/Redis.js';
 
 interface EmitterTypeMap {
  // Application Commands
@@ -383,9 +383,8 @@ const allEventsCovered: CheckAllEventsCovered = true;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ignore = allEventsCovered;
 
-const emit = <T extends keyof EmitterTypeMap>(type: T, _data: EmitterTypeMap[T]) => {
- console.log('Emitting', type);
- // cacheDB.publish(type, JSON.stringify(data));
+const emit = <T extends keyof EmitterTypeMap>(type: T, data: EmitterTypeMap[T]) => {
+ cacheDB.publish(type, JSON.stringify(data));
 };
 
 export default emit;
