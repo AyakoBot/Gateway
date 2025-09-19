@@ -66,7 +66,7 @@ export default {
   if ('geo_restricted' in data && data.geo_restricted) return;
 
   cache.guilds += 1;
-  cache.members.set(data.id, data.approximate_member_count || 0);
+  cache.members.set(data.id, data.member_count || 0);
 
   redis.guilds.set(data);
   data.soundboard_sounds.forEach((sound) => redis.soundboards.set({ ...sound, guild_id: data.id }));
