@@ -18,8 +18,12 @@ export default class BanCache extends Cache<APIBan> {
   const rData = this.apiToR(data, guildId);
   if (!rData) return false;
 
-  await this.setValue(rData, [rData.guild_id], [rData.user_id, rData.guild_id]);
+  await this.setValue(rData, [rData.guild_id], [rData.guild_id, rData.user_id]);
   return true;
+ }
+
+ async get(guildId: string, userId: string) {
+  return super.get(guildId, userId);
  }
 
  apiToR(data: APIBan, guildId: string) {

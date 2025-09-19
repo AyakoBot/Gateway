@@ -56,18 +56,24 @@ export default class UserCache extends Cache<APIUser> {
   return true;
  }
 
+ async get(userId: string) {
+  return super.get(userId);
+ }
+
  apiToR(data: APIUser) {
   const keysNotToCache = Object.keys(data).filter(
    (key): key is keyof typeof data => !this.keys.includes(key),
   );
 
   const rData = structuredClone(data) as unknown as RUser;
+  /* eslint-disable indent */
   rData.avatar_decoration_data = data.avatar_decoration_data
    ? {
-    asset_url: UserCache.assetUrl(data.avatar_decoration_data.asset),
-    sku_id: data.avatar_decoration_data.sku_id,
-   }
+      asset_url: UserCache.assetUrl(data.avatar_decoration_data.asset),
+      sku_id: data.avatar_decoration_data.sku_id,
+     }
    : undefined;
+  /* eslint-enable indent */
   rData.avatar_url = data.avatar ? UserCache.avatarUrl(data.avatar, data.id) : null;
   rData.banner_url = data.banner ? UserCache.bannerUrl(data.banner, data.id) : null;
 

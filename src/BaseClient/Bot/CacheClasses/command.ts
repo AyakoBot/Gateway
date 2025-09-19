@@ -41,6 +41,10 @@ export default class CommandCache extends Cache<APIApplicationCommand> {
   return true;
  }
 
+ async get(commandId: string) {
+  return super.get(commandId);
+ }
+
  apiToR(data: APIApplicationCommand) {
   if (!data.guild_id) return false;
 

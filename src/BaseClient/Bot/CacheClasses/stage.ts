@@ -30,6 +30,10 @@ export default class StageCache extends Cache<APIStageInstance> {
   return true;
  }
 
+ async get(stageId: string) {
+  return super.get(stageId);
+ }
+
  apiToR(data: APIStageInstance) {
   const keysNotToCache = Object.keys(data).filter(
    (key): key is keyof typeof data => !this.keys.includes(key),

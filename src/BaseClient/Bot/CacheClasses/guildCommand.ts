@@ -46,6 +46,10 @@ export default class GuildCommandCache extends Cache<
   return true;
  }
 
+ async get(commandId: string) {
+  return super.get(commandId);
+ }
+
  apiToR(data: APIApplicationCommand & { guild_id: string }) {
   if (!data.guild_id) return false;
   const keysNotToCache = Object.keys(data).filter(

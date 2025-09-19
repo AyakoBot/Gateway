@@ -34,6 +34,10 @@ export default class StickerCache extends Cache<APISticker> {
   return true;
  }
 
+ async get(stickerId: string) {
+  return super.get(stickerId);
+ }
+
  apiToR(data: APISticker) {
   const keysNotToCache = Object.keys(data).filter(
    (key): key is keyof typeof data => !this.keys.includes(key),

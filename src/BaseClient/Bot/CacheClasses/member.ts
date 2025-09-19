@@ -50,6 +50,10 @@ export default class MemberCache extends Cache<APIGuildMember> {
   return true;
  }
 
+ async get(guildId: string, userId: string) {
+  return super.get(guildId, userId);
+ }
+
  apiToR(data: APIGuildMember, guildId: string) {
   const keysNotToCache = Object.keys(data).filter(
    (key): key is keyof typeof data => !this.keys.includes(key),

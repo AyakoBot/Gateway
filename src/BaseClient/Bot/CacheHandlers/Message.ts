@@ -12,6 +12,7 @@ import {
 } from 'discord-api-types/v10';
 
 import { AllThreadGuildChannelTypes } from '../../../Typings/Channel.js';
+import evalFn from '../../../Util/eval.js';
 import emit from '../../../Util/EventBus.js';
 import type { RReaction } from '../CacheClasses/reaction.js';
 import RedisClient, { cache as redis } from '../Redis.js';
@@ -24,6 +25,8 @@ export default {
 
   emit(GatewayDispatchEvents.MessageCreate, redis.messages.apiToR(data, data.guild_id || '@me')!);
 
+  evalFn(data);
+
   if (!AllThreadGuildChannelTypes.includes(data.type)) return;
 
   const cache = await redis.threads.get(data.channel_id);
@@ -31,15 +34,18 @@ export default {
  },
 
  [GatewayDispatchEvents.MessageDelete]: async (data: GatewayMessageDeleteDispatchData) => {
-  emit(GatewayDispatchEvents.MessageDelete, (await redis.messages.get(data.id)) || data);
+  emit(
+   GatewayDispatchEvents.MessageDelete,
+   (await redis.messages.get(data.channel_id, data.id)) || data,
+  );
 
-  redis.messages.del(data.id);
+  redis.messages.del(data.id, data.guild_id || '@me');
  },
 
  [GatewayDispatchEvents.MessageDeleteBulk]: async (data: GatewayMessageDeleteBulkDispatchData) => {
   emit(GatewayDispatchEvents.MessageDeleteBulk, {
    messages: await Promise.all(
-    data.ids.map(async (id) => (await redis.messages.get(id)) || { id }),
+    data.ids.map(async (id) => (await redis.messages.get(data.channel_id, id)) || { id }),
    ),
    channel: (await redis.channels.get(data.channel_id)) || { id: data.channel_id },
    guild: data.guild_id
@@ -47,12 +53,12 @@ export default {
     : undefined,
   });
 
-  data.ids.forEach((id) => redis.messages.del(id));
+  data.ids.forEach((id) => redis.messages.del(id, data.guild_id || '@me'));
  },
 
  [GatewayDispatchEvents.MessageUpdate]: async (data: GatewayMessageUpdateDispatchData) => {
   emit(GatewayDispatchEvents.MessageUpdate, {
-   before: (await redis.messages.get(data.id)) || null,
+   before: (await redis.messages.get(data.channel_id, data.id)) || null,
    after: redis.messages.apiToR(data, data.guild_id || '@me')!,
    guild: data.guild_id
     ? (await redis.guilds.get(data.guild_id)) || { id: data.guild_id }
@@ -65,7 +71,9 @@ export default {
  [GatewayDispatchEvents.MessagePollVoteAdd]: async (data: GatewayMessagePollVoteDispatchData) => {
   emit(GatewayDispatchEvents.MessagePollVoteAdd, {
    answer_id: data.answer_id,
-   message: (await redis.messages.get(data.message_id)) || { id: data.message_id },
+   message: (await redis.messages.get(data.channel_id, data.message_id)) || {
+    id: data.message_id,
+   },
    user: (await redis.users.get(data.user_id)) || { id: data.user_id },
    channel: (await redis.channels.get(data.channel_id)) || { id: data.channel_id },
    guild: data.guild_id ? (await redis.guilds.get(data.guild_id)) || { id: data.guild_id } : null,
@@ -77,7 +85,9 @@ export default {
  ) => {
   emit(GatewayDispatchEvents.MessagePollVoteAdd, {
    answer_id: data.answer_id,
-   message: (await redis.messages.get(data.message_id)) || { id: data.message_id },
+   message: (await redis.messages.get(data.channel_id, data.message_id)) || {
+    id: data.message_id,
+   },
    user: (await redis.users.get(data.user_id)) || { id: data.user_id },
    channel: (await redis.channels.get(data.channel_id)) || { id: data.channel_id },
    guild: data.guild_id ? (await redis.guilds.get(data.guild_id)) || { id: data.guild_id } : null,
@@ -97,8 +107,12 @@ export default {
     ? redis.users.apiToR(data.member.user)
     : (await redis.users.get(data.user_id)) || { id: data.user_id },
    burst_colors: data.burst_colors || [],
-   message: (await redis.messages.get(data.message_id)) || { id: data.message_id },
-   channel: (await redis.channels.get(data.channel_id)) || { id: data.channel_id },
+   message: (await redis.messages.get(data.channel_id, data.message_id)) || {
+    id: data.message_id,
+   },
+   channel: (await redis.channels.get(data.channel_id, data.guild_id || '@me')) || {
+    id: data.channel_id,
+   },
    guild: data.guild_id ? (await redis.guilds.get(data.guild_id)) || { id: data.guild_id } : null,
    emoji: data.emoji.require_colons
     ? `${data.emoji.animated ? 'a:' : ''}${data.emoji.name}:${data.emoji.id}`
@@ -137,7 +151,9 @@ export default {
  ) => {
   emit(GatewayDispatchEvents.MessageReactionRemove, {
    user: (await redis.users.get(data.user_id)) || { id: data.user_id },
-   message: (await redis.messages.get(data.message_id)) || { id: data.message_id },
+   message: (await redis.messages.get(data.channel_id, data.message_id)) || {
+    id: data.message_id,
+   },
    channel: (await redis.channels.get(data.channel_id)) || { id: data.channel_id },
    guild: data.guild_id ? (await redis.guilds.get(data.guild_id)) || { id: data.guild_id } : null,
    emoji: data.emoji.require_colons
@@ -185,7 +201,9 @@ export default {
 
   emit(GatewayDispatchEvents.MessageReactionRemoveAll, {
    reactions: Object.values(reactions).map((r) => JSON.parse(r) as RReaction),
-   message: (await redis.messages.get(data.message_id)) || { id: data.message_id },
+   message: (await redis.messages.get(data.channel_id, data.message_id)) || {
+    id: data.message_id,
+   },
    channel: (await redis.channels.get(data.channel_id)) || { id: data.channel_id },
    guild: data.guild_id ? (await redis.guilds.get(data.guild_id)) || { id: data.guild_id } : null,
   });
@@ -199,7 +217,9 @@ export default {
 
   emit(GatewayDispatchEvents.MessageReactionRemoveEmoji, {
    reactions: Object.values(reactions).map((r) => JSON.parse(r) as RReaction),
-   message: (await redis.messages.get(data.message_id)) || { id: data.message_id },
+   message: (await redis.messages.get(data.channel_id, data.message_id)) || {
+    id: data.message_id,
+   },
    channel: (await redis.channels.get(data.channel_id)) || { id: data.channel_id },
    guild: data.guild_id ? (await redis.guilds.get(data.guild_id)) || { id: data.guild_id } : null,
    emoji: data.emoji.require_colons

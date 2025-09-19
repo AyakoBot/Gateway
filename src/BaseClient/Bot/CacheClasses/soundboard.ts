@@ -34,6 +34,10 @@ export default class SoundboardCache extends Cache<APISoundboardSound> {
   return true;
  }
 
+ async get(soundId: string) {
+  return super.get(soundId);
+ }
+
  apiToR(data: APISoundboardSound) {
   const keysNotToCache = Object.keys(data).filter(
    (key): key is keyof typeof data => !this.keys.includes(key),

@@ -35,6 +35,10 @@ export default class ReactionCache extends Cache<APIReaction> {
   return true;
  }
 
+ async get(channelId: string, messageId: string, emojiId: string) {
+  return super.get(channelId, messageId, emojiId);
+ }
+
  apiToR(data: APIReaction, guildId: string, channelId: string, messageId: string) {
   const keysNotToCache = Object.keys(data).filter(
    (key): key is keyof typeof data => !this.keys.includes(key),

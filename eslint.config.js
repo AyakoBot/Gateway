@@ -214,7 +214,7 @@ export default ts.config(
    ],
 
    // Additional rules from CODE_RULES.md
-   curly: ['error', 'multi-line', 'consistent'],
+   curly: ['error', 'multi-line'],
    'no-else-return': 'error',
    'prefer-null-coalescing': 'off',
    'no-undefined': 'off',

@@ -26,6 +26,10 @@ export default class ThreadMemberCache extends Cache<APIThreadMember> {
   return true;
  }
 
+ async get(guildId: string, threadId: string, userId: string) {
+  return super.get(guildId, threadId, userId);
+ }
+
  apiToR(data: APIThreadMember, guildId: string) {
   if (!data.member?.user.id && !data.user_id) return false;
   if (!data.id) return false;

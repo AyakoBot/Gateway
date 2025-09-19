@@ -59,6 +59,10 @@ export default class ThreadCache extends Cache<
   return true;
  }
 
+ async get(threadId: string) {
+  return super.get(threadId);
+ }
+
  apiToR(data: Omit<APIThreadChannel, 'position'>) {
   if (!data.guild_id) return false;
   const keysNotToCache = Object.keys(data).filter(

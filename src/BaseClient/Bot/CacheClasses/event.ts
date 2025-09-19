@@ -47,6 +47,10 @@ export default class EventCache extends Cache<APIGuildScheduledEvent> {
   return true;
  }
 
+ async get(eventId: string) {
+  return super.get(eventId);
+ }
+
  apiToR(data: APIGuildScheduledEvent) {
   const keysNotToCache = Object.keys(data).filter(
    (key): key is keyof typeof data => !this.keys.includes(key),

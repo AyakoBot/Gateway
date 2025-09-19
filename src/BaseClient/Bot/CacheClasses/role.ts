@@ -40,6 +40,10 @@ export default class RoleCache extends Cache<APIRole> {
   return true;
  }
 
+ async get(roleId: string) {
+  return super.get(roleId);
+ }
+
  apiToR(data: APIRole, guildId: string) {
   const keysNotToCache = Object.keys(data).filter(
    (key): key is keyof typeof data => !this.keys.includes(key),

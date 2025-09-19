@@ -35,6 +35,10 @@ export default class EmojiCache extends Cache<APIEmoji> {
   return true;
  }
 
+ async get(emojiId: string) {
+  return super.get(emojiId);
+ }
+
  apiToR(data: APIEmoji, guildId: string) {
   const keysNotToCache = Object.keys(data).filter(
    (key): key is keyof typeof data => !this.keys.includes(key),

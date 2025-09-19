@@ -66,6 +66,10 @@ export default class ChannelCache extends Cache<
   return true;
  }
 
+ async get(channelId: string) {
+  return super.get(channelId);
+ }
+
  apiToR(data: APIGuildChannel<RChannelTypes>) {
   if (!data.guild_id) return false;
 

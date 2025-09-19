@@ -42,6 +42,10 @@ export default class IntegrationCache extends Cache<
   return true;
  }
 
+ async get(integrationId: string) {
+  return super.get(integrationId);
+ }
+
  apiToR(data: APIGuildIntegration, guildId: string) {
   const keysNotToCache = Object.keys(data).filter(
    (key): key is keyof typeof data => !this.keys.includes(key),

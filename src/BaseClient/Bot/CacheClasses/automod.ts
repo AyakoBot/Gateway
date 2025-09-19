@@ -34,6 +34,10 @@ export default class AutomodCache extends Cache<APIAutoModerationRule> {
   return true;
  }
 
+ async get(automodId: string) {
+  return super.get(automodId);
+ }
+
  apiToR(data: APIAutoModerationRule) {
   const keysNotToCache = Object.keys(data).filter(
    (key): key is keyof typeof data => !this.keys.includes(key),

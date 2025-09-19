@@ -63,11 +63,11 @@ const caches: Record<
   data: GatewayApplicationCommandPermissionsUpdateDispatchData,
  ) => {
   const existing = await RedisClient.hgetall(redis.commandPermissions.keystore(data.guild_id));
-  data.permissions.forEach((perm) => redis.commandPermissions.set(perm, data.guild_id));
+  data.permissions.forEach((perm) => redis.commandPermissions.set(perm, data.guild_id, data.id));
 
   emit(GatewayDispatchEvents.ApplicationCommandPermissionsUpdate, {
    before: (Object.values(existing) || []).map((e) => JSON.parse(e) as RCommandPermission),
-   after: data.permissions.map((p) => redis.commandPermissions.apiToR(p, data.guild_id)!),
+   after: data.permissions.map((p) => redis.commandPermissions.apiToR(p, data.guild_id, data.id)!),
    guild: (await redis.guilds.get(data.guild_id)) || { id: data.guild_id },
   });
  },

@@ -45,6 +45,10 @@ export default class InviteCache extends Cache<APIInvite> {
   return true;
  }
 
+ async get(code: string) {
+  return super.get(code);
+ }
+
  apiToR(data: APIInvite) {
   if (!data.guild) return false;
 

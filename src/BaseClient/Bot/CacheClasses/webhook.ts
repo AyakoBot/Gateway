@@ -45,6 +45,10 @@ export default class WebhookCache extends Cache<
   return true;
  }
 
+ async get(guildId: string, webhookId: string) {
+  return super.get(guildId, webhookId);
+ }
+
  apiToR(data: APIWebhook) {
   if (!data.guild_id) return false;
 

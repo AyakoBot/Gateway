@@ -70,6 +70,10 @@ export default class MessageCache extends Cache<APIMessage> {
   return true;
  }
 
+ async get(channelId: string, messageId: string) {
+  return super.get(channelId, messageId);
+ }
+
  apiToR(data: APIMessage, guildId: string | '@me') {
   const keysNotToCache = Object.keys(data).filter(
    (key): key is keyof typeof data => !this.keys.includes(key),

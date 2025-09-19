@@ -35,6 +35,10 @@ export default class VoiceCache extends Cache<APIVoiceState> {
   return true;
  }
 
+ async get(guildId: string, userId: string) {
+  return super.get(guildId, userId);
+ }
+
  apiToR(data: APIVoiceState) {
   if (!data.guild_id) return false;
 
