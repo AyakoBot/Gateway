@@ -5,18 +5,10 @@ import {
  type GatewaySubscriptionUpdateDispatchData,
 } from 'discord-api-types/v10';
 
-import emit from '../../../Util/EventBus.js';
-
 export default {
- [GatewayDispatchEvents.SubscriptionCreate]: (data: GatewaySubscriptionCreateDispatchData) => {
-  emit(GatewayDispatchEvents.SubscriptionCreate, data);
- },
+ [GatewayDispatchEvents.SubscriptionCreate]: (_: GatewaySubscriptionCreateDispatchData) => {},
 
- [GatewayDispatchEvents.SubscriptionDelete]: (data: GatewaySubscriptionDeleteDispatchData) => {
-  emit(GatewayDispatchEvents.SubscriptionCreate, data);
- },
+ [GatewayDispatchEvents.SubscriptionDelete]: (_: GatewaySubscriptionDeleteDispatchData) => {},
 
- [GatewayDispatchEvents.SubscriptionUpdate]: (data: GatewaySubscriptionUpdateDispatchData) => {
-  emit(GatewayDispatchEvents.SubscriptionCreate, data);
- },
+ [GatewayDispatchEvents.SubscriptionUpdate]: (_: GatewaySubscriptionUpdateDispatchData) => {},
 } as const;

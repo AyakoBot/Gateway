@@ -5,18 +5,10 @@ import {
  type GatewayEntitlementUpdateDispatchData,
 } from 'discord-api-types/v10';
 
-import emit from '../../../Util/EventBus.js';
-
 export default {
- [GatewayDispatchEvents.EntitlementCreate]: (data: GatewayEntitlementCreateDispatchData) => {
-  emit(GatewayDispatchEvents.EntitlementCreate, data);
- },
+ [GatewayDispatchEvents.EntitlementCreate]: (_: GatewayEntitlementCreateDispatchData) => {},
 
- [GatewayDispatchEvents.EntitlementDelete]: (data: GatewayEntitlementDeleteDispatchData) => {
-  emit(GatewayDispatchEvents.EntitlementDelete, data);
- },
+ [GatewayDispatchEvents.EntitlementDelete]: (_: GatewayEntitlementDeleteDispatchData) => {},
 
- [GatewayDispatchEvents.EntitlementUpdate]: (data: GatewayEntitlementUpdateDispatchData) => {
-  emit(GatewayDispatchEvents.EntitlementUpdate, data);
- },
+ [GatewayDispatchEvents.EntitlementUpdate]: (_: GatewayEntitlementUpdateDispatchData) => {},
 } as const;
