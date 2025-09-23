@@ -143,14 +143,77 @@ export default abstract class Cache<
 > {
  abstract keys: ReadonlyArray<keyof DeriveRFromAPI<T, K>>;
 
+ private dedupScript = `
+ local currentKey = KEYS[1]
+ local timestampKey = KEYS[2]
+ local historyKey = KEYS[3]
+ local newValue = ARGV[1]
+ local ttl = tonumber(ARGV[2])
+ local timestamp = ARGV[3]
+ 
+ -- Function to normalize JSON by sorting keys recursively
+ local function normalizeJson(jsonStr)
+   local success, decoded = pcall(cjson.decode, jsonStr)
+   if not success then
+     return jsonStr  -- Return original if not valid JSON
+   end
+   
+   local function sortTable(t)
+     if type(t) ~= "table" then
+       return t
+     end
+     
+     local result = {}
+     local keys = {}
+     
+     -- Collect all keys
+     for k in pairs(t) do
+       table.insert(keys, k)
+     end
+     
+     -- Sort keys
+     table.sort(keys, function(a, b)
+       return tostring(a) < tostring(b)
+     end)
+     
+     -- Rebuild table with sorted keys, recursively sorting nested objects
+     for _, k in ipairs(keys) do
+       result[k] = sortTable(t[k])
+     end
+     
+     return result
+   end
+   
+   local sortedTable = sortTable(decoded)
+   local success2, normalizedJson = pcall(cjson.encode, sortedTable)
+   return success2 and normalizedJson or jsonStr
+ end
+ 
+ local current = redis.call('GET', currentKey)
+ local normalizedCurrent = current and normalizeJson(current) or nil
+ local normalizedNew = normalizeJson(newValue)
+ 
+ if normalizedCurrent == normalizedNew then
+   redis.call('EXPIRE', currentKey, ttl)
+   return 0
+ end
+ 
+ redis.call('SET', currentKey, newValue, 'EX', ttl)
+ redis.call('SET', timestampKey, newValue, 'EX', ttl)
+ redis.call('HSET', historyKey, timestampKey, timestamp)
+ redis.call('HEXPIRE', historyKey, ttl, 'FIELDS', 1, timestampKey)
+ return 1
+  `;
+
  private prefix: string;
  private keystorePrefix: string;
+ private historyPrefix: string;
  public redis: Redis;
 
  constructor(redis: Redis, type: string) {
   this.prefix = `cache:${type}`;
+  this.historyPrefix = `history:${type}`;
   this.keystorePrefix = `keystore:${type}`;
-
   this.redis = redis;
  }
 
@@ -158,6 +221,10 @@ export default abstract class Cache<
 
  keystore(...ids: string[]) {
   return `${this.keystorePrefix}${ids.length ? `:${ids.join(':')}` : ''}`;
+ }
+
+ history(...ids: string[]) {
+  return `${this.historyPrefix}${ids.length ? `:${ids.join(':')}` : ''}`;
  }
 
  key(...ids: string[]) {
@@ -194,39 +261,40 @@ export default abstract class Cache<
   pipeline.call('hexpire', this.keystore(...keystoreKeys), this.key(...keys), ttl);
  }
 
- private setKey(
-  pipeline: ChainableCommander,
-  ttl: number = 604800,
-  keys: string[],
+ async setValue(
   value: DeriveRFromAPI<T, K>,
-  now: number,
+  keystoreIds: string[],
+  ids: string[],
+  ttl: number = 604800,
  ) {
-  pipeline.set(this.key(...keys, 'current'), JSON.stringify(value));
-  pipeline.set(this.key(...keys, String(now)), JSON.stringify(value));
-
-  pipeline.expire(this.key(...keys, 'current'), ttl);
-  pipeline.expire(this.key(...keys, String(now)), ttl);
-
-  pipeline.hset(this.key(...keys), this.key(...keys, String(now)), 0);
-  pipeline.call('hexpire', this.key(...keys), this.key(...keys, String(now)), ttl);
- }
-
- setValue(value: DeriveRFromAPI<T, K>, keystoreIds: string[], ids: string[], ttl: number = 604800) {
-  const pipeline = this.redis.pipeline();
   const now = Date.now();
+  const valueStr = JSON.stringify(value);
+  const currentKey = this.key(...ids, 'current');
+  const timestampKey = this.key(...ids, String(now));
+  const historyKey = this.history(...ids);
 
-  this.setKey(pipeline, ttl, ids, value, now);
-  this.setKeystore(pipeline, ttl, keystoreIds, ids);
+  const result = await this.redis.eval(
+   this.dedupScript,
+   3,
+   currentKey,
+   timestampKey,
+   historyKey,
+   valueStr,
+   ttl,
+   now,
+  );
 
-  return pipeline.exec();
+  if (result === 1 || keystoreIds.length > 0) {
+   const pipeline = this.redis.pipeline();
+   this.setKeystore(pipeline, ttl, keystoreIds, ids);
+   return pipeline.exec();
+  }
+
+  return [];
  }
 
  del(...ids: string[]) {
-  const pipeline = this.redis.pipeline();
-  pipeline.del(this.key(...ids));
-  pipeline.hdel(this.keystore(...ids), this.key(...ids));
-
-  return pipeline.exec();
+  return this.redis.del(this.key(...ids, 'current'));
  }
 
  abstract apiToR(...args: [T, string, string, string]): DeriveRFromAPI<T, K> | false;
