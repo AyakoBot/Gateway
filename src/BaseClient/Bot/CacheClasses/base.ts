@@ -150,6 +150,7 @@ export default abstract class Cache<
  constructor(redis: Redis, type: string) {
   this.prefix = `cache:${type}`;
   this.keystorePrefix = `keystore:${type}`;
+
   this.redis = redis;
  }
 
@@ -166,7 +167,21 @@ export default abstract class Cache<
  abstract set(...args: [T, string, string, string]): Promise<boolean>;
 
  get(...ids: string[]): Promise<null | DeriveRFromAPI<T, K>> {
-  return this.redis.get(this.key(...ids)).then((data) => this.stringToData(data));
+  return this.redis.get(this.key(...ids, 'current')).then((data) => this.stringToData(data));
+ }
+
+ getAt(time: number, ...ids: string[]): Promise<null | DeriveRFromAPI<T, K>> {
+  return this.redis.get(this.key(...ids, String(time))).then((data) => this.stringToData(data));
+ }
+
+ getAll(...ids: string[]): Promise<Array<DeriveRFromAPI<T, K>>> {
+  return this.getTimes(...ids).then((times) =>
+   Promise.all(times.map((t) => this.getAt(Number(t), ...ids))).then((d) => d.filter((v) => !!v)),
+  );
+ }
+
+ getTimes(...ids: string[]): Promise<number[]> {
+  return this.redis.hkeys(this.key(...ids)).then((times) => times.map((t) => Number(t)));
  }
 
  private setKeystore(
@@ -184,14 +199,23 @@ export default abstract class Cache<
   ttl: number = 604800,
   keys: string[],
   value: DeriveRFromAPI<T, K>,
+  now: number,
  ) {
-  pipeline.set(this.key(...keys), JSON.stringify(value));
-  pipeline.expire(this.key(...keys), ttl);
+  pipeline.set(this.key(...keys, 'current'), JSON.stringify(value));
+  pipeline.set(this.key(...keys, String(now)), JSON.stringify(value));
+
+  pipeline.expire(this.key(...keys, 'current'), ttl);
+  pipeline.expire(this.key(...keys, String(now)), ttl);
+
+  pipeline.hset(this.key(...keys), this.key(...keys, String(now)), 0);
+  pipeline.call('hexpire', this.key(...keys), this.key(...keys, String(now)), ttl);
  }
 
  setValue(value: DeriveRFromAPI<T, K>, keystoreIds: string[], ids: string[], ttl: number = 604800) {
   const pipeline = this.redis.pipeline();
-  this.setKey(pipeline, ttl, ids, value);
+  const now = Date.now();
+
+  this.setKey(pipeline, ttl, ids, value, now);
   this.setKeystore(pipeline, ttl, keystoreIds, ids);
 
   return pipeline.exec();
