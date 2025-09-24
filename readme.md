@@ -7,7 +7,6 @@
 ### Prerequisits
 
 - [Docker](https://www.docker.com/)
-- [Postgres Database](https://www.postgresql.org/) (at 5432) ([schema](https://github.com/AyakoBot/Ayako/blob/main/prisma/schema.prisma))
 - [Redis](https://redis.io/) (at 6379) (You will have to change the connection string of the [redis client](https://github.com/AyakoBot/Gateway/blob/main/src/BaseClient/Bot/Redis.ts#L30))
 - [Jemalloc](https://jemalloc.net/) (optional)
 - [Nirn Proxy](https://github.com/germanoeich/nirn-proxy) (optional) (If you don't want to use Nirn, you will have to change the API endpoint by going through the code and replacing `http://nirn:8080/api` with your API endpoint)
