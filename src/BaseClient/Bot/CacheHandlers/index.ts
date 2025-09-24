@@ -7,6 +7,7 @@ import {
  type GatewayGuildSoundboardSoundsUpdateDispatchData,
  type GatewayInteractionCreateDispatchData,
  type GatewayPresenceUpdateDispatchData,
+ type GatewayRateLimitedDispatchData,
  type GatewayReadyDispatchData,
  type GatewayResumedDispatch,
  type GatewayTypingStartDispatchData,
@@ -118,4 +119,14 @@ const caches: Record<
  [GatewayDispatchEvents.Resumed]: (_: GatewayResumedDispatch['d']) => {},
 
  [GatewayDispatchEvents.PresenceUpdate]: (_: GatewayPresenceUpdateDispatchData) => {},
+
+ [GatewayDispatchEvents.RateLimited]: (
+  data: GatewayRateLimitedDispatchData,
+  shardId: number | undefined,
+ ) => [
+  // eslint-disable-next-line no-console
+  console.log(
+   `[Shard ${shardId || '?'} Rate limited] ${data.retry_after}ms - ${data.opcode}: ${data.meta}`,
+  ),
+ ],
 };
