@@ -25,10 +25,14 @@ import VoiceCache from './CacheClasses/voice.js';
 import WebhookCache from './CacheClasses/webhook.js';
 
 export const prefix = 'cache';
-const cacheDBnum = process.argv.includes('--dev') ? 2 : 0;
+const cacheDBnum = process.argv.includes('--dev') ? process.env.devCacheDB : process.env.cacheDB;
 
-export const cacheDB = new Redis({ host: 'redis', db: cacheDBnum });
-export const cacheSub = new Redis({ host: 'redis', db: cacheDBnum });
+if (!cacheDBnum && typeof cacheDBnum !== 'number') {
+ throw new Error('No cache DB number provided in env vars');
+}
+
+export const cacheDB = new Redis({ host: 'redis', db: Number(cacheDBnum) });
+export const cacheSub = new Redis({ host: 'redis', db: Number(cacheDBnum) });
 
 export default cacheDB;
 
