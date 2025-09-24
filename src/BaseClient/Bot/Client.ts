@@ -52,7 +52,18 @@ gateway.connect();
 export const client = new Client({ rest, gateway });
 export const { api } = client;
 export const cluster = new ClusterClient(client);
-export const cache: { guilds: number; members: Map<string, number> } = {
+export const cache: {
+ guilds: number;
+ members: Map<string, number>;
+ emojis: Map<string, number>;
+ roles: Map<string, number>;
+ stickers: Map<string, number>;
+ sounds: Map<string, number>;
+} = {
  guilds: 0,
  members: new Map(),
+ emojis: new Map(),
+ roles: new Map(),
+ stickers: new Map(),
+ sounds: new Map(),
 };

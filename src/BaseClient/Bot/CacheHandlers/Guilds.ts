@@ -50,6 +50,10 @@ export default {
 
   cache.guilds += 1;
   cache.members.set(data.id, data.member_count || 0);
+  cache.emojis.set(data.id, data.emojis?.length || 0);
+  cache.roles.set(data.id, data.roles?.length || 0);
+  cache.stickers.set(data.id, data.stickers?.length || 0);
+  cache.sounds.set(data.id, data.soundboard_sounds?.length || 0);
 
   redis.guilds.set(data);
   data.soundboard_sounds.forEach((sound) => redis.soundboards.set({ ...sound, guild_id: data.id }));
@@ -67,6 +71,11 @@ export default {
  [GatewayDispatchEvents.GuildDelete]: async (data: GatewayGuildDeleteDispatchData) => {
   cache.guilds -= 1;
   cache.members.delete(data.id);
+  cache.emojis.delete(data.id);
+  cache.roles.delete(data.id);
+  cache.stickers.delete(data.id);
+  cache.sounds.delete(data.id);
+
   redis.guilds.del(data.id);
 
   const getPipeline = RedisClient.pipeline();
@@ -171,6 +180,8 @@ export default {
  },
 
  [GatewayDispatchEvents.GuildEmojisUpdate]: async (data: GatewayGuildEmojisUpdateDispatchData) => {
+  cache.emojis.set(data.guild_id, data.emojis.length);
+
   const emojis = await RedisClient.hgetall(redis.emojis.keystore(data.guild_id));
   const pipeline = RedisClient.pipeline();
   pipeline.del(...Object.keys(emojis));
@@ -240,10 +251,14 @@ export default {
  },
 
  [GatewayDispatchEvents.GuildRoleCreate]: (data: GatewayGuildRoleCreateDispatchData) => {
+  cache.roles.set(data.guild_id, (cache.roles.get(data.guild_id) || 1) + 1);
+
   redis.roles.set(data.role, data.guild_id);
  },
 
  [GatewayDispatchEvents.GuildRoleDelete]: (data: GatewayGuildRoleCreateDispatchData) => {
+  cache.roles.set(data.guild_id, (cache.roles.get(data.guild_id) || 1) - 1);
+
   if (data.role) redis.roles.del(data.role.id);
  },
 
@@ -282,12 +297,16 @@ export default {
  ) => {
   if (!data.guild_id) return;
 
+  cache.sounds.set(data.guild_id, (cache.sounds.get(data.guild_id) || 0) + 1);
+
   redis.soundboards.set(data);
  },
 
  [GatewayDispatchEvents.GuildSoundboardSoundDelete]: (
   data: GatewayGuildSoundboardSoundDeleteDispatchData,
  ) => {
+  cache.sounds.set(data.guild_id, (cache.sounds.get(data.guild_id) || 1) - 1);
+
   redis.soundboards.del(data.sound_id);
  },
 
@@ -302,6 +321,8 @@ export default {
  [GatewayDispatchEvents.GuildSoundboardSoundsUpdate]: async (
   data: GatewayGuildSoundboardSoundsUpdateDispatchData,
  ) => {
+  cache.sounds.set(data.guild_id, data.soundboard_sounds.length);
+
   const sounds = await RedisClient.hgetall(redis.soundboards.keystore(data.guild_id));
   const pipeline = RedisClient.pipeline();
   pipeline.del(...Object.keys(sounds));
@@ -316,6 +337,8 @@ export default {
  [GatewayDispatchEvents.GuildStickersUpdate]: async (
   data: GatewayGuildStickersUpdateDispatchData,
  ) => {
+  cache.stickers.set(data.guild_id, data.stickers.length);
+
   const stickers = await RedisClient.hgetall(redis.stickers.keystore(data.guild_id));
   const pipeline = RedisClient.pipeline();
   pipeline.del(...Object.keys(stickers));

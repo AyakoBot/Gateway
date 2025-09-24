@@ -1,11 +1,14 @@
 import type { Client } from '@discordjs/core';
+import { getInfo } from 'discord-hybrid-sharding';
 import { glob } from 'glob';
 import { scheduleJob } from 'node-schedule';
 
 import type splitByThousandType from '../../Util/splitByThousand.js';
 import type { cache as CacheType } from '../Bot/Client.js';
+import type BotMetricsType from '../Bot/Metrics.js';
 
 import manager from './Manager.js';
+import Metrics from './Metrics.js';
 
 const getCounts = () =>
  manager
@@ -15,12 +18,20 @@ const getCounts = () =>
     ({ cache }: { cache: typeof CacheType }) => ({
      guilds: cache.guilds,
      members: Array.from(cache.members.values()).reduce((a, b) => a + b, 0),
+     emojis: Array.from(cache.emojis.values()).reduce((a, b) => a + b, 0),
+     roles: Array.from(cache.roles.values()).reduce((a, b) => a + b, 0),
+     stickers: Array.from(cache.stickers.values()).reduce((a, b) => a + b, 0),
+     sounds: Array.from(cache.sounds.values()).reduce((a, b) => a + b, 0),
     }),
    ),
   )
   .then((counts) => ({
    guilds: counts.reduce((a, b) => a + b.guilds, 0),
    members: counts.reduce((a, b) => a + b.members, 0),
+   emojis: counts.reduce((a, b) => a + b.emojis, 0),
+   roles: counts.reduce((a, b) => a + b.roles, 0),
+   stickers: counts.reduce((a, b) => a + b.stickers, 0),
+   sounds: counts.reduce((a, b) => a + b.sounds, 0),
   }));
 
 scheduleJob('0 */10 * * * *', async () => {
@@ -38,6 +49,14 @@ scheduleJob('0 */10 * * * *', async () => {
     '/app/Ayako/packages/Gateway/dist/Util/splitByThousand.js'
    );
 
+   const { default: BotMetrics }: { default: typeof BotMetricsType } = await import(
+    // @ts-expect-error custom path cuz broadcastEval
+    '/app/Ayako/packages/Gateway/dist/BaseClient/Bot/Metrics.js'
+   );
+
+   BotMetrics.userInstallCount(app?.approximate_user_install_count ?? 0);
+   BotMetrics.userAuthCount(app?.approximate_user_authorization_count ?? 0);
+
    cl.api.applications?.editCurrent({
     description: `**Your go-to, free-to-access, management, and automation Discord Bot!**
 Installed on \`${splitByThousand(guilds)} Servers\` / \`${splitByThousand(app?.approximate_user_install_count ?? 0)} Users\` 
@@ -54,6 +73,14 @@ https://support.ayakobot.com`,
 const run = () => {
  scheduleJob('0 0 */1 * * *', async () => {
   const counts = await getCounts();
+
+  Metrics.guildCount(counts.guilds);
+  Metrics.userCount(counts.members);
+  Metrics.emojiCount(counts.emojis);
+  Metrics.roleCount(counts.roles);
+  Metrics.stickerCount(counts.stickers);
+  Metrics.clusterCount(getInfo().CLUSTER_COUNT);
+  Metrics.shardCount(getInfo().SHARD_LIST.length);
 
   // eslint-disable-next-line no-console
   console.log(
