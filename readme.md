@@ -3,7 +3,7 @@
 ## With Docker Compose (recommended)
 [See Ayako's Monorepo](https://github.com/AyakoBot/Ayako)
 
-## Just Ayako
+## Just Ayako's Gateway
 ### Prerequisits
 
 - [Docker](https://www.docker.com/)
