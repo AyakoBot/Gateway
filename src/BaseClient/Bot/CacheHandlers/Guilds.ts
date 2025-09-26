@@ -32,8 +32,10 @@ import RedisClient, { cache as redis } from '../Redis.js';
 
 export default {
  [GatewayDispatchEvents.GuildAuditLogEntryCreate]: (
-  _: GatewayGuildAuditLogEntryCreateDispatchData,
- ) => {},
+  data: GatewayGuildAuditLogEntryCreateDispatchData,
+ ) => {
+  redis.auditlogs.set(data, data.guild_id);
+ },
 
  [GatewayDispatchEvents.GuildBanAdd]: (data: GatewayGuildBanAddDispatchData) => {
   redis.bans.set({ reason: '-', user: data.user }, data.guild_id);

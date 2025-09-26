@@ -1,6 +1,7 @@
 import type {
  APIApplicationCommand,
  APIApplicationCommandPermission,
+ APIAuditLogEntry,
  APIAutoModerationRule,
  APIBan,
  APIEmoji,
@@ -25,6 +26,7 @@ import type {
 import type Redis from 'ioredis';
 import type { ChainableCommander } from 'ioredis';
 
+import type { RAuditLog } from './auditlog';
 import type { RAutomod } from './automod';
 import type { RBan } from './ban';
 import type { RChannel, RChannelTypes } from './channel';
@@ -113,7 +115,9 @@ export type DeriveRFromAPI<T, K extends boolean> = T extends APIThreadChannel & 
                                                ? RReaction
                                                : T extends APIThreadMember
                                                  ? RThreadMember
-                                                 : never;
+                                                 : T extends APIAuditLogEntry
+                                                   ? RAuditLog
+                                                   : never;
 
 export default abstract class Cache<
  T extends
@@ -138,7 +142,8 @@ export default abstract class Cache<
   | APIWebhook
   | APIGuildIntegration
   | APIReaction
-  | APIThreadMember,
+  | APIThreadMember
+  | APIAuditLogEntry,
  K extends boolean = false,
 > {
  abstract keys: ReadonlyArray<keyof DeriveRFromAPI<T, K>>;

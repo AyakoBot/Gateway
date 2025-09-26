@@ -1,5 +1,6 @@
 import Redis from 'ioredis';
 
+import AuditLogCache from './CacheClasses/auditlog.js';
 import AutomodCache from './CacheClasses/automod.js';
 import BanCache from './CacheClasses/ban.js';
 import ChannelCache from './CacheClasses/channel.js';
@@ -40,6 +41,7 @@ await cacheDB.config('SET', 'notify-keyspace-events', 'Ex');
 await cacheSub.subscribe(`__keyevent@${cacheDBnum}__:expired`);
 
 export const cache = {
+ auditlogs: new AuditLogCache(cacheDB),
  automods: new AutomodCache(cacheDB),
  bans: new BanCache(cacheDB),
  channels: new ChannelCache(cacheDB),
