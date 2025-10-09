@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 import Manager from './Manager.js';
 
+Manager.setMaxListeners(2);
+
 Manager.on('clusterCreate', (cluster) => {
  console.log(`[Cluster Manager] Launched Cluster ${cluster.id + 1}`);
 
