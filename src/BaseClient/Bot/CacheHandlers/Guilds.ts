@@ -13,6 +13,7 @@ import {
  type GatewayGuildMembersChunkDispatchData,
  type GatewayGuildMemberUpdateDispatchData,
  type GatewayGuildRoleCreateDispatchData,
+ type GatewayGuildRoleDeleteDispatchData,
  type GatewayGuildScheduledEventCreateDispatchData,
  type GatewayGuildScheduledEventDeleteDispatchData,
  type GatewayGuildScheduledEventUpdateDispatchData,
@@ -89,6 +90,7 @@ export default {
   const getPipeline = RedisClient.pipeline();
 
   // Add all hgetall commands to the pipeline
+  getPipeline.hgetall(redis.auditlogs.keystore(data.id));
   getPipeline.hgetall(redis.automods.keystore(data.id));
   getPipeline.hgetall(redis.bans.keystore(data.id));
   getPipeline.hgetall(redis.channels.keystore(data.id));
@@ -115,6 +117,7 @@ export default {
   if (!results) return;
 
   const [
+   auditlogs,
    automods,
    bans,
    channels,
@@ -140,6 +143,7 @@ export default {
 
   const deletePipeline = RedisClient.pipeline();
   deletePipeline.del(redis.guilds.keystore(data.id));
+  deletePipeline.del(redis.auditlogs.keystore(data.id));
   deletePipeline.del(redis.automods.keystore(data.id));
   deletePipeline.del(redis.bans.keystore(data.id));
   deletePipeline.del(redis.channels.keystore(data.id));
@@ -162,6 +166,7 @@ export default {
   deletePipeline.del(redis.webhooks.keystore(data.id));
   deletePipeline.del(redis.welcomeScreens.keystore(data.id));
 
+  deletePipeline.del(...Object.keys(auditlogs));
   deletePipeline.del(...Object.keys(automods));
   deletePipeline.del(...Object.keys(bans));
   deletePipeline.del(...Object.keys(channels));
@@ -282,11 +287,11 @@ export default {
   redis.roles.set(data.role, data.guild_id);
  },
 
- [GatewayDispatchEvents.GuildRoleDelete]: (data: GatewayGuildRoleCreateDispatchData) => {
+ [GatewayDispatchEvents.GuildRoleDelete]: (data: GatewayGuildRoleDeleteDispatchData) => {
   firstGuildInteraction(data.guild_id);
   cache.roles.set(data.guild_id, (cache.roles.get(data.guild_id) || 1) - 1);
 
-  if (data.role) redis.roles.del(data.role.id);
+  redis.roles.del(data.role_id);
  },
 
  [GatewayDispatchEvents.GuildRoleUpdate]: (data: GatewayGuildRoleCreateDispatchData) => {
