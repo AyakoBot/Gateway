@@ -7,6 +7,7 @@ export type REmoji = Omit<APIEmoji, 'user' | 'id'> & {
  user_id: string | null;
  guild_id: string;
  id: string;
+ url: string;
 };
 
 export const REmojiKeys = [
@@ -18,6 +19,7 @@ export const REmojiKeys = [
  'require_colons',
  'managed',
  'guild_id',
+ 'url',
 ] as const;
 
 export default class EmojiCache extends Cache<APIEmoji> {
@@ -25,6 +27,10 @@ export default class EmojiCache extends Cache<APIEmoji> {
 
  constructor(redis: Redis) {
   super(redis, 'emojis');
+ }
+
+ public static getUrl(emojiId: string, animated: boolean = false) {
+  return `https://cdn.discordapp.com/emojis/${emojiId}.${animated ? 'gif' : 'webp'}`;
  }
 
  async set(data: APIEmoji, guildId: string) {
@@ -47,6 +53,7 @@ export default class EmojiCache extends Cache<APIEmoji> {
   const rData = structuredClone(data) as unknown as REmoji;
   rData.guild_id = guildId;
   rData.user_id = data.user?.id || null;
+  rData.url = EmojiCache.getUrl(data.id!, !!data.animated);
 
   keysNotToCache.forEach((k) => delete (rData as Record<string, unknown>)[k as string]);
 

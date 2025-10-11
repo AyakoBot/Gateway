@@ -1,10 +1,13 @@
-import type { APISticker } from 'discord-api-types/v10';
+import { StickerFormatType, type APISticker } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
 import type { MakeRequired } from 'src/Typings/Typings';
 
 import Cache from './base.js';
 
-export type RSticker = MakeRequired<APISticker, 'guild_id'> & { user_id: string | null };
+export type RSticker = MakeRequired<APISticker, 'guild_id'> & {
+ user_id: string | null;
+ url: string;
+};
 
 export const RStickerKeys = [
  'id',
@@ -17,6 +20,7 @@ export const RStickerKeys = [
  'available',
  'guild_id',
  'sort_value',
+ 'url',
 ] as const;
 
 export default class StickerCache extends Cache<APISticker> {
@@ -24,6 +28,10 @@ export default class StickerCache extends Cache<APISticker> {
 
  constructor(redis: Redis) {
   super(redis, 'stickers');
+ }
+
+ public static getUrl(stickerId: string, format: StickerFormatType = StickerFormatType.PNG) {
+  return `https://cdn.discordapp.com/stickers/${stickerId}.${String(StickerFormatType[format]).toLowerCase()}`;
  }
 
  async set(data: APISticker) {
@@ -45,6 +53,7 @@ export default class StickerCache extends Cache<APISticker> {
 
   const rData = structuredClone(data) as unknown as RSticker;
   rData.user_id = data.user?.id || null;
+  rData.url = StickerCache.getUrl(data.id, data.format_type);
 
   keysNotToCache.forEach((k) => delete (rData as unknown as Record<string, unknown>)[k as string]);
 
