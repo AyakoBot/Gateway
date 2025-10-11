@@ -20,7 +20,7 @@ export default class AuditLogCache extends Cache<APIAuditLogEntry> {
  public keys = RAuditLogKeys;
 
  constructor(redis: Redis) {
-  super(redis, 'automod');
+  super(redis, 'auditlogs');
  }
 
  async set(data: APIAuditLogEntry, guildId: string) {

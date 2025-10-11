@@ -23,7 +23,7 @@ export default class AutomodCache extends Cache<APIAutoModerationRule> {
  public keys = RAutomodKeys;
 
  constructor(redis: Redis) {
-  super(redis, 'automod');
+  super(redis, 'automods');
  }
 
  async set(data: APIAutoModerationRule) {
