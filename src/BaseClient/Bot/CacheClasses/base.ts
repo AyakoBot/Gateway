@@ -10,6 +10,7 @@ import type {
  APIGuildIntegration,
  APIGuildMember,
  APIGuildScheduledEvent,
+ APIGuildWelcomeScreen,
  APIInvite,
  APIMessage,
  APIReaction,
@@ -50,6 +51,7 @@ import type { RThreadMember } from './threadMember';
 import type { RUser } from './user';
 import type { RVoiceState } from './voice';
 import type { RWebhook } from './webhook';
+import type { RWelcomeScreen } from './welcomeScreen';
 
 type GuildBasedCommand<T extends boolean> = T extends true
  ? APIApplicationCommand & { guild_id: string }
@@ -117,7 +119,9 @@ export type DeriveRFromAPI<T, K extends boolean> = T extends APIThreadChannel & 
                                                  ? RThreadMember
                                                  : T extends APIAuditLogEntry
                                                    ? RAuditLog
-                                                   : never;
+                                                   : T extends APIGuildWelcomeScreen
+                                                     ? RWelcomeScreen
+                                                     : never;
 
 export default abstract class Cache<
  T extends
@@ -143,7 +147,8 @@ export default abstract class Cache<
   | APIGuildIntegration
   | APIReaction
   | APIThreadMember
-  | APIAuditLogEntry,
+  | APIAuditLogEntry
+  | APIGuildWelcomeScreen,
  K extends boolean = false,
 > {
  abstract keys: ReadonlyArray<keyof DeriveRFromAPI<T, K>>;
@@ -303,4 +308,41 @@ export default abstract class Cache<
  }
 
  abstract apiToR(...args: [T, string, string, string]): DeriveRFromAPI<T, K> | false;
+}
+
+export class StringCache {
+ private prefix: string;
+ public redis: Redis;
+
+ constructor(redis: Redis, type: string) {
+  this.prefix = `cache:${type}`;
+  this.redis = redis;
+ }
+
+ get(keystoreId: string, id: string): Promise<string | null> {
+  return this.redis.hget(this.key(keystoreId), id);
+ }
+
+ getAll(keystoreId: string): Promise<Record<string, string>> {
+  return this.redis.hgetall(this.key(keystoreId));
+ }
+
+ key(id: string) {
+  return `${this.prefix}:${id}`;
+ }
+
+ set(keystoreId: string, id: string, value: string, ttl: number = 604800) {
+  const pipeline = this.redis.pipeline();
+  pipeline.hset(this.key(keystoreId), id, value);
+  pipeline.call('hexpire', this.key(keystoreId), id, ttl);
+  return pipeline.exec();
+ }
+
+ del(keystoreId: string, id: string) {
+  return this.redis.hdel(this.key(keystoreId), id);
+ }
+
+ delAll(keystoreId: string) {
+  return this.redis.del(this.key(keystoreId));
+ }
 }

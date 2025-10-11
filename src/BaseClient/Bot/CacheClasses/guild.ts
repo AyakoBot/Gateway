@@ -55,7 +55,6 @@ export const RGuildKeys = [
  'system_channel_id',
  'vanity_url_code',
  'verification_level',
- 'welcome_screen',
  'widget_channel_id',
  'widget_enabled',
  'icon_url',
