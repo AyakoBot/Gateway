@@ -1,8 +1,8 @@
 import type Redis from 'ioredis';
 
-import { StringCache } from './StringCache.js';
+import StringCache from './StringCache.js';
 
-export class TimeTrackedHashCache extends StringCache {
+export default class TimeTrackedHashCache extends StringCache {
  private dedupeHashScript = `
  local currentKey = KEYS[1]
  local timestampKey = KEYS[2]

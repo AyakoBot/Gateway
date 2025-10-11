@@ -1,6 +1,6 @@
 import type Redis from 'ioredis';
 
-import { TimeTrackedHashCache } from './Base/Cache.js';
+import TimeTrackedHashCache from './Base/HashCache.js';
 
 export default class PinCache extends TimeTrackedHashCache {
  constructor(redis: Redis) {

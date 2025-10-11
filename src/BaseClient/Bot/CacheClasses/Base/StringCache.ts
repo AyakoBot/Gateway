@@ -1,6 +1,6 @@
 import type Redis from 'ioredis';
 
-export class StringCache {
+export default class StringCache {
  protected prefix: string;
  protected historyPrefix: string;
  public redis: Redis;
