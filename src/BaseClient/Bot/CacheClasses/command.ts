@@ -30,7 +30,7 @@ export default class CommandCache extends Cache<APIApplicationCommand> {
  public keys = RCommandKeys;
 
  constructor(redis: Redis) {
-  super(redis, 'commands');
+  super(redis, 'global-commands');
  }
 
  async set(data: APIApplicationCommand) {

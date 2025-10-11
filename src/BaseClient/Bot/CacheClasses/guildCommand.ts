@@ -35,7 +35,7 @@ export default class GuildCommandCache extends Cache<
  public keys = RGuildCommandKeys;
 
  constructor(redis: Redis) {
-  super(redis, 'commands');
+  super(redis, 'guild-commands');
  }
 
  async set(data: APIApplicationCommand & { guild_id: string }) {
