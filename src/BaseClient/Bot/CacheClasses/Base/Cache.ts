@@ -153,7 +153,7 @@ export default abstract class Cache<
 > {
  abstract keys: ReadonlyArray<keyof DeriveRFromAPI<T, K>>;
 
- private dedupScript = `
+ private dedupeScript = `
  local currentKey = KEYS[1]
  local timestampKey = KEYS[2]
  local historyKey = KEYS[3]
@@ -284,7 +284,7 @@ export default abstract class Cache<
   const historyKey = this.history(...ids);
 
   const result = await this.redis.eval(
-   this.dedupScript,
+   this.dedupeScript,
    3,
    currentKey,
    timestampKey,
