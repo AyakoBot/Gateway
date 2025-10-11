@@ -83,7 +83,7 @@ export default {
   cache.sounds.delete(data.id);
 
   redis.guilds.del(data.id);
-  redis.channels.del(data.id);
+  redis.channelStatuses.delAll(data.id);
   redis.pins.delAll(data.id);
 
   const getPipeline = RedisClient.pipeline();
