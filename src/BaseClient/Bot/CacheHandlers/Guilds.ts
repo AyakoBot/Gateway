@@ -199,7 +199,7 @@ export default {
   const emojis = await RedisClient.hgetall(redis.emojis.keystore(data.guild_id));
   const pipeline = RedisClient.pipeline();
   pipeline.del(...Object.keys(emojis));
-  pipeline.del(redis.stickers.keystore(data.guild_id));
+  pipeline.del(redis.emojis.keystore(data.guild_id));
   await pipeline.exec();
 
   data.emojis.forEach((emoji) => redis.emojis.set(emoji, data.guild_id));
