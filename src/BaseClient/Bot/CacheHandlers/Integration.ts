@@ -5,18 +5,22 @@ import {
  type GatewayIntegrationUpdateDispatchData,
 } from 'discord-api-types/v10';
 
+import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
 import { cache as redis } from '../Redis.js';
 
 export default {
  [GatewayDispatchEvents.IntegrationCreate]: (data: GatewayIntegrationCreateDispatchData) => {
+  firstGuildInteraction(data.guild_id);
   redis.integrations.set(data, data.guild_id);
  },
 
  [GatewayDispatchEvents.IntegrationDelete]: (data: GatewayIntegrationDeleteDispatchData) => {
+  firstGuildInteraction(data.guild_id);
   redis.integrations.del(data.id);
  },
 
  [GatewayDispatchEvents.IntegrationUpdate]: (data: GatewayIntegrationUpdateDispatchData) => {
+  firstGuildInteraction(data.guild_id);
   redis.integrations.set(data, data.guild_id);
  },
 } as const;

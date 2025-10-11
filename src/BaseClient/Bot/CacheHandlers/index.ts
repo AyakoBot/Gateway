@@ -20,6 +20,8 @@ import {
  AllThreadGuildChannelTypes,
 } from '../../../Typings/Channel.js';
 import emit from '../../../Util/EventBus.js';
+import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
+import firstGuildInteraction, { tasks } from '../../../Util/firstGuildInteraction.js';
 import type { RChannelTypes } from '../CacheClasses/channel.js';
 import ready from '../Events/ready.js';
 import { cache as redis } from '../Redis.js';
@@ -63,18 +65,22 @@ const caches: Record<
  [GatewayDispatchEvents.ApplicationCommandPermissionsUpdate]: (
   data: GatewayApplicationCommandPermissionsUpdateDispatchData,
  ) => {
+  firstGuildInteraction(data.guild_id);
   data.permissions.forEach((perm) => redis.commandPermissions.set(perm, data.guild_id, data.id));
  },
 
  [GatewayDispatchEvents.SoundboardSounds]: (
   data: GatewayGuildSoundboardSoundsUpdateDispatchData,
  ) => {
+  firstGuildInteraction(data.guild_id);
   data.soundboard_sounds.forEach((sound) =>
    redis.soundboards.set({ ...sound, guild_id: data.guild_id || sound.guild_id }),
   );
  },
 
  [GatewayDispatchEvents.InteractionCreate]: (data: GatewayInteractionCreateDispatchData) => {
+  if (data.guild_id) firstGuildInteraction(data.guild_id);
+  if (data.channel?.id && data.guild_id) firstChannelInteraction(data.channel.id, data.guild_id);
   if (data.user) redis.users.set(data.user);
 
   if (data.message && data.guild_id) {
@@ -103,10 +109,14 @@ const caches: Record<
   redis.users.set(data);
  },
 
- [GatewayDispatchEvents.WebhooksUpdate]: (_: GatewayWebhooksUpdateDispatchData) => {},
+ [GatewayDispatchEvents.WebhooksUpdate]: (data: GatewayWebhooksUpdateDispatchData) => {
+  tasks.webhooks(data.guild_id);
+ },
 
  [GatewayDispatchEvents.TypingStart]: (data: GatewayTypingStartDispatchData) => {
   if (!data.member || !data.guild_id) return;
+  firstGuildInteraction(data.guild_id);
+  firstChannelInteraction(data.channel_id, data.guild_id);
 
   redis.members.set(data.member, data.guild_id);
  },

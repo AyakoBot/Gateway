@@ -8,17 +8,23 @@ import {
  type GatewayThreadUpdateDispatchData,
 } from 'discord-api-types/v10';
 
+import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
+import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
 import RedisClient, { cache as redis } from '../Redis.js';
 
 export default {
  [GatewayDispatchEvents.ThreadCreate]: (data: GatewayThreadCreateDispatchData) => {
   if (!data.guild_id) return;
 
+  firstGuildInteraction(data.guild_id);
+
   redis.threads.set(data);
  },
 
  [GatewayDispatchEvents.ThreadDelete]: async (data: GatewayThreadDeleteDispatchData) => {
   redis.threads.del(data.id);
+
+  firstGuildInteraction(data.guild_id);
 
   const selectPipeline = RedisClient.pipeline();
   selectPipeline.hgetall(redis.threadMembers.keystore(data.guild_id));
@@ -50,10 +56,15 @@ export default {
    return;
   }
 
+  firstGuildInteraction(data.guild_id);
+  firstChannelInteraction(data.id, data.guild_id);
+
   redis.threads.set(data);
  },
 
  [GatewayDispatchEvents.ThreadListSync]: (data: GatewayThreadListSyncDispatchData) => {
+  firstGuildInteraction(data.guild_id);
+
   data.threads.forEach((thread) =>
    redis.threads.set({ ...thread, guild_id: data.guild_id || thread.guild_id }),
   );
@@ -67,6 +78,9 @@ export default {
  },
 
  [GatewayDispatchEvents.ThreadMembersUpdate]: (data: GatewayThreadMembersUpdateDispatchData) => {
+  firstGuildInteraction(data.guild_id);
+  firstChannelInteraction(data.id, data.guild_id);
+
   data.added_members?.forEach((threadMember) => {
    redis.threadMembers.set(threadMember, data.guild_id);
 
@@ -78,6 +92,9 @@ export default {
  },
 
  [GatewayDispatchEvents.ThreadMemberUpdate]: (data: GatewayThreadMemberUpdateDispatchData) => {
+  firstGuildInteraction(data.guild_id);
+  if (data.id) firstChannelInteraction(data.id, data.guild_id);
+
   redis.threadMembers.set(data, data.guild_id);
 
   if (!data.member) return;

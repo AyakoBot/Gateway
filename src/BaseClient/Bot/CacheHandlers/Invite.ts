@@ -7,6 +7,7 @@ import {
  type GatewayInviteDeleteDispatchData,
 } from 'discord-api-types/v10';
 
+import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
 import { cache as redis } from '../Redis.js';
 
 export default {
@@ -16,6 +17,8 @@ export default {
   if (data.target_user) redis.users.set(data.target_user);
 
   if (data.guild_id) {
+   firstGuildInteraction(data.guild_id);
+
    redis.invites.set({
     ...data,
     type: InviteType.Guild,
