@@ -17,6 +17,7 @@ export default class BanCache extends Cache<APIBan> {
  async set(data: APIBan, guildId: string) {
   const rData = this.apiToR(data, guildId);
   if (!rData) return false;
+  if (!rData.guild_id || !rData.user_id) return false;
 
   await this.setValue(rData, [rData.guild_id], [rData.guild_id, rData.user_id]);
   return true;

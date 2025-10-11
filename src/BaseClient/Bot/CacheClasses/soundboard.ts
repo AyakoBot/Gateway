@@ -29,6 +29,7 @@ export default class SoundboardCache extends Cache<APISoundboardSound> {
  async set(data: APISoundboardSound) {
   const rData = this.apiToR(data);
   if (!rData) return false;
+  if (!rData.guild_id || !rData.sound_id) return false;
 
   await this.setValue(rData, [rData.guild_id], [rData.sound_id]);
   return true;

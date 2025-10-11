@@ -36,6 +36,7 @@ export default class CommandCache extends Cache<APIApplicationCommand> {
  async set(data: APIApplicationCommand) {
   const rData = this.apiToR(data);
   if (!rData) return false;
+  if (!rData.id) return false;
 
   await this.setValue(rData, [], [rData.id]);
   return true;

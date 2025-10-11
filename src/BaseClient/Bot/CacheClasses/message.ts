@@ -65,6 +65,7 @@ export default class MessageCache extends Cache<APIMessage> {
  async set(data: APIMessage, guildId: string) {
   const rData = this.apiToR(data, guildId);
   if (!rData) return false;
+  if (!rData.guild_id || !rData.channel_id || !rData.id) return false;
 
   await this.setValue(rData, [rData.guild_id], [rData.channel_id, rData.id], 1209600);
   return true;

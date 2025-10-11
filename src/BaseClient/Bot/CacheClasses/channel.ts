@@ -61,6 +61,7 @@ export default class ChannelCache extends Cache<
  async set(data: APIGuildChannel<RChannelTypes>) {
   const rData = this.apiToR(data);
   if (!rData) return false;
+  if (!rData.guild_id || !rData.id) return false;
 
   await this.setValue(rData, [rData.guild_id], [rData.id]);
   return true;

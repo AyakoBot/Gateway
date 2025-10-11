@@ -29,6 +29,7 @@ export default class AutomodCache extends Cache<APIAutoModerationRule> {
  async set(data: APIAutoModerationRule) {
   const rData = this.apiToR(data);
   if (!rData) return false;
+  if (!rData.guild_id || !rData.id) return false;
 
   await this.setValue(rData, [rData.guild_id], [rData.id]);
   return true;

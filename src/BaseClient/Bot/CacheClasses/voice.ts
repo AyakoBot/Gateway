@@ -30,6 +30,7 @@ export default class VoiceCache extends Cache<APIVoiceState> {
  async set(data: APIVoiceState) {
   const rData = this.apiToR(data);
   if (!rData) return false;
+  if (!rData.guild_id || !rData.user_id) return false;
 
   await this.setValue(rData, [rData.guild_id], [rData.guild_id, rData.user_id]);
   return true;

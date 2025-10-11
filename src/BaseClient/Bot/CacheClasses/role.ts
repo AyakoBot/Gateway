@@ -35,6 +35,7 @@ export default class RoleCache extends Cache<APIRole> {
  async set(data: APIRole, guildId: string) {
   const rData = this.apiToR(data, guildId);
   if (!rData) return false;
+  if (!rData.guild_id || !rData.id) return false;
 
   await this.setValue(rData, [rData.guild_id], [rData.id]);
   return true;

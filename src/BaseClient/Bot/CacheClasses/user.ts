@@ -51,6 +51,7 @@ export default class UserCache extends Cache<APIUser> {
  async set(data: APIUser) {
   const rData = this.apiToR(data);
   if (!rData) return false;
+  if (!rData.id) return false;
 
   await this.setValue(rData, [], [rData.id]);
   return true;

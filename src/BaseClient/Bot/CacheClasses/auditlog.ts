@@ -26,6 +26,7 @@ export default class AuditLogCache extends Cache<APIAuditLogEntry> {
  async set(data: APIAuditLogEntry, guildId: string) {
   const rData = this.apiToR(data, guildId);
   if (!rData) return false;
+  if (!rData.guild_id || !rData.id) return false;
 
   await this.setValue(rData, [rData.guild_id], [rData.id]);
   return true;

@@ -26,11 +26,13 @@ export default class ReactionCache extends Cache<APIReaction> {
  async set(data: APIReaction, guildId: string, channelId: string, messageId: string) {
   const rData = this.apiToR(data, guildId, channelId, messageId);
   if (!rData) return false;
+  const emojiKey = data.emoji.id || data.emoji.name;
+  if (!rData.guild_id || !rData.channel_id || !rData.message_id || !emojiKey) return false;
 
   await this.setValue(
    rData,
    [rData.guild_id],
-   [rData.channel_id, rData.message_id, (data.emoji.id || data.emoji.name)!],
+   [rData.channel_id, rData.message_id, emojiKey],
   );
   return true;
  }

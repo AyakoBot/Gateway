@@ -17,6 +17,7 @@ export default class WelcomeScreenCache extends Cache<APIGuildWelcomeScreen> {
  async set(data: APIGuildWelcomeScreen, guildId: string) {
   const rData = this.apiToR(data);
   if (!rData) return false;
+  if (!guildId) return false;
 
   await this.setValue(rData, [guildId], [guildId]);
   return true;

@@ -21,6 +21,7 @@ export default class ThreadMemberCache extends Cache<APIThreadMember> {
  async set(data: APIThreadMember, guildId: string) {
   const rData = this.apiToR(data, guildId);
   if (!rData) return false;
+  if (!rData.guild_id || !rData.id || !rData.user_id) return false;
 
   await this.setValue(rData, [rData.guild_id], [rData.guild_id, rData.id, rData.user_id]);
   return true;

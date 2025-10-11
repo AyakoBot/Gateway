@@ -25,6 +25,7 @@ export default class StageCache extends Cache<APIStageInstance> {
  async set(data: APIStageInstance) {
   const rData = this.apiToR(data);
   if (!rData) return false;
+  if (!rData.guild_id || !rData.id) return false;
 
   await this.setValue(rData, [rData.guild_id], [rData.id]);
   return true;
