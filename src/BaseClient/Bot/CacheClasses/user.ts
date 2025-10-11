@@ -1,7 +1,7 @@
 import type { APIUser } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
 
-import Cache from './base.js';
+import Cache from './Base/Cache.js';
 
 export type RUser = Omit<APIUser, 'avatar_decoration_data' | 'avatar' | 'banner'> & {
  avatar_decoration_data?: { asset_url: string; sku_id: string };

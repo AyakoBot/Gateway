@@ -1,7 +1,7 @@
 import type { APIBan } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
 
-import Cache from './base.js';
+import Cache from './Base/Cache.js';
 
 export type RBan = Omit<APIBan, 'user'> & { user_id: string; guild_id: string };
 

@@ -23,4 +23,4 @@ export { type RVoiceState } from '../BaseClient/Bot/CacheClasses/voice.js';
 export { type RWebhook } from '../BaseClient/Bot/CacheClasses/webhook.js';
 export { type RWelcomeScreen } from '../BaseClient/Bot/CacheClasses/welcomeScreen.js';
 
-export { type DeriveRFromAPI } from '../BaseClient/Bot/CacheClasses/base.js';
+export { type DeriveRFromAPI } from '../BaseClient/Bot/CacheClasses/Base/Cache.js';

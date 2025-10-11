@@ -2,7 +2,7 @@ import type { APIApplicationCommand } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
 import type { MakeRequired } from 'src/Typings/Typings';
 
-import Cache from './base.js';
+import Cache from './Base/Cache.js';
 
 export type RGuildCommand = MakeRequired<APIApplicationCommand, 'guild_id'>;
 

@@ -1,7 +1,7 @@
 import type { APISoundboardSound } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
 
-import Cache from './base.js';
+import Cache from './Base/Cache.js';
 
 export type RSoundboardSound = Omit<APISoundboardSound, 'user' | 'guild_id'> & {
  user_id: string | null;

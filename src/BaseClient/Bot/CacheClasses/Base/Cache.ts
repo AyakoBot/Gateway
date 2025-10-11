@@ -27,31 +27,31 @@ import type {
 import type Redis from 'ioredis';
 import type { ChainableCommander } from 'ioredis';
 
-import type { RAuditLog } from './auditlog';
-import type { RAutomod } from './automod';
-import type { RBan } from './ban';
-import type { RChannel, RChannelTypes } from './channel';
-import type { RCommand } from './command';
-import type { RCommandPermission } from './commandPermission';
-import type { REmoji } from './emoji';
-import type { REvent } from './event';
-import type { RGuild } from './guild';
-import type { RGuildCommand } from './guildCommand';
-import type { RIntegration } from './integration';
-import type { RInvite } from './invite';
-import type { RMember } from './member';
-import type { RMessage } from './message';
-import type { RReaction } from './reaction';
-import type { RRole } from './role';
-import type { RSoundboardSound } from './soundboard';
-import type { RStageInstance } from './stage';
-import type { RSticker } from './sticker';
-import type { RThread } from './thread';
-import type { RThreadMember } from './threadMember';
-import type { RUser } from './user';
-import type { RVoiceState } from './voice';
-import type { RWebhook } from './webhook';
-import type { RWelcomeScreen } from './welcomeScreen';
+import type { RAuditLog } from '../auditlog';
+import type { RAutomod } from '../automod';
+import type { RBan } from '../ban';
+import type { RChannel, RChannelTypes } from '../channel';
+import type { RCommand } from '../command';
+import type { RCommandPermission } from '../commandPermission';
+import type { REmoji } from '../emoji';
+import type { REvent } from '../event';
+import type { RGuild } from '../guild';
+import type { RGuildCommand } from '../guildCommand';
+import type { RIntegration } from '../integration';
+import type { RInvite } from '../invite';
+import type { RMember } from '../member';
+import type { RMessage } from '../message';
+import type { RReaction } from '../reaction';
+import type { RRole } from '../role';
+import type { RSoundboardSound } from '../soundboard';
+import type { RStageInstance } from '../stage';
+import type { RSticker } from '../sticker';
+import type { RThread } from '../thread';
+import type { RThreadMember } from '../threadMember';
+import type { RUser } from '../user';
+import type { RVoiceState } from '../voice';
+import type { RWebhook } from '../webhook';
+import type { RWelcomeScreen } from '../welcomeScreen';
 
 type GuildBasedCommand<T extends boolean> = T extends true
  ? APIApplicationCommand & { guild_id: string }
@@ -308,41 +308,4 @@ export default abstract class Cache<
  }
 
  abstract apiToR(...args: [T, string, string, string]): DeriveRFromAPI<T, K> | false;
-}
-
-export class StringCache {
- private prefix: string;
- public redis: Redis;
-
- constructor(redis: Redis, type: string) {
-  this.prefix = `cache:${type}`;
-  this.redis = redis;
- }
-
- get(keystoreId: string, id: string): Promise<string | null> {
-  return this.redis.hget(this.key(keystoreId), id);
- }
-
- getAll(keystoreId: string): Promise<Record<string, string>> {
-  return this.redis.hgetall(this.key(keystoreId));
- }
-
- key(id: string) {
-  return `${this.prefix}:${id}`;
- }
-
- set(keystoreId: string, id: string, value: string, ttl: number = 604800) {
-  const pipeline = this.redis.pipeline();
-  pipeline.hset(this.key(keystoreId), id, value);
-  pipeline.call('hexpire', this.key(keystoreId), id, ttl);
-  return pipeline.exec();
- }
-
- del(keystoreId: string, id: string) {
-  return this.redis.hdel(this.key(keystoreId), id);
- }
-
- delAll(keystoreId: string) {
-  return this.redis.del(this.key(keystoreId));
- }
 }

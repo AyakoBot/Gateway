@@ -2,7 +2,7 @@ import { StickerFormatType, type APISticker } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
 import type { MakeRequired } from 'src/Typings/Typings';
 
-import Cache from './base.js';
+import Cache from './Base/Cache.js';
 
 export type RSticker = MakeRequired<APISticker, 'guild_id'> & {
  user_id: string | null;

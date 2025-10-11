@@ -1,7 +1,7 @@
 import type { APIEmoji } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
 
-import Cache from './base.js';
+import Cache from './Base/Cache.js';
 
 export type REmoji = Omit<APIEmoji, 'user' | 'id'> & {
  user_id: string | null;

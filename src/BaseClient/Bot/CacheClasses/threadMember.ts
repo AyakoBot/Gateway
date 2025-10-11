@@ -1,7 +1,7 @@
 import type { APIThreadMember } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
 
-import Cache from './base.js';
+import Cache from './Base/Cache.js';
 
 export type RThreadMember = Omit<APIThreadMember, 'member'> & {
  guild_id: string;
