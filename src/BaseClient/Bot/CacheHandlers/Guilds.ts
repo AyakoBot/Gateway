@@ -109,6 +109,7 @@ export default {
   getPipeline.hgetall(redis.threadMembers.keystore(data.id));
   getPipeline.hgetall(redis.voices.keystore(data.id));
   getPipeline.hgetall(redis.webhooks.keystore(data.id));
+  getPipeline.hgetall(redis.welcomeScreens.keystore(data.id));
 
   const results = await getPipeline.exec();
   if (!results) return;
@@ -134,6 +135,7 @@ export default {
    threadMembers,
    voices,
    webhooks,
+   welcomeScreens,
   ] = results.map((result) => result[1] || {});
 
   const deletePipeline = RedisClient.pipeline();
@@ -158,6 +160,7 @@ export default {
   deletePipeline.del(redis.threadMembers.keystore(data.id));
   deletePipeline.del(redis.voices.keystore(data.id));
   deletePipeline.del(redis.webhooks.keystore(data.id));
+  deletePipeline.del(redis.welcomeScreens.keystore(data.id));
 
   deletePipeline.del(...Object.keys(automods));
   deletePipeline.del(...Object.keys(bans));
@@ -179,6 +182,7 @@ export default {
   deletePipeline.del(...Object.keys(threadMembers));
   deletePipeline.del(...Object.keys(voices));
   deletePipeline.del(...Object.keys(webhooks));
+  deletePipeline.del(...Object.keys(welcomeScreens));
 
   await deletePipeline.exec();
  },
