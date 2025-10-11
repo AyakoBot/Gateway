@@ -1,6 +1,5 @@
 import {
  GatewayDispatchEvents,
- type APIGuildMember,
  type GatewayGuildAuditLogEntryCreateDispatchData,
  type GatewayGuildBanAddDispatchData,
  type GatewayGuildBanRemoveDispatchData,
@@ -248,9 +247,7 @@ export default {
    return;
   }
 
-  const member = await RedisClient.get(
-   `${redis.members.key()}:${data.guild_id}:${data.user.id}`,
-  ).then((r) => (r ? (JSON.parse(r) as APIGuildMember) : null));
+  const member = await redis.members.get(data.guild_id, data.user.id);
   if (!member) {
    redis.members.set(
     {
