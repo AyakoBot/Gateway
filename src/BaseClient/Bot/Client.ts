@@ -1,7 +1,12 @@
 import { Client } from '@discordjs/core';
 import { REST } from '@discordjs/rest';
 import { WebSocketManager } from '@discordjs/ws';
-import { ActivityType, GatewayIntentBits, PresenceUpdateStatus } from 'discord-api-types/v10';
+import {
+ ActivityType,
+ GatewayIntentBits,
+ PresenceUpdateStatus,
+ type APIUser,
+} from 'discord-api-types/v10';
 import { ClusterClient, getInfo } from 'discord-hybrid-sharding';
 
 const cleanedToken = (
@@ -59,6 +64,7 @@ export const cache: {
  roles: Map<string, number>;
  stickers: Map<string, number>;
  sounds: Map<string, number>;
+ user: APIUser | null;
 } = {
  guilds: 0,
  members: new Map(),
@@ -66,4 +72,5 @@ export const cache: {
  roles: new Map(),
  stickers: new Map(),
  sounds: new Map(),
+ user: null,
 };

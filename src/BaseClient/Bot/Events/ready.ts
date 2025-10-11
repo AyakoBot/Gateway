@@ -7,7 +7,7 @@ import {
 } from 'discord-api-types/v10';
 import { getInfo } from 'discord-hybrid-sharding';
 
-import { cluster, gateway } from '../Client.js';
+import { cache, cluster, gateway } from '../Client.js';
 
 let ready: boolean = false;
 
@@ -15,6 +15,7 @@ export default async (data: GatewayReadyDispatchData, shardId: number | string) 
  if (!ready) {
   ready = true;
 
+  cache.user = data.user ?? null;
   console.log(`[Login] ${new Date(Date.now()).toLocaleString()}`);
   console.log(`[Login] Bot: ${data.user?.username}#${data.user?.discriminator} / ${data.user?.id}`);
   console.log(`[Login] Cluster: ${Number(cluster.id) + 1}`);
