@@ -33,12 +33,10 @@ export const RInviteKeys = [
 export default class InviteCache extends Cache<APIInvite> {
  public keys = RInviteKeys;
  private codestorePrefix: string;
- private globalCodestore: string;
 
  constructor(redis: Redis) {
   super(redis, 'invites');
   this.codestorePrefix = 'codestore:invites';
-  this.globalCodestore = 'codestore:invites';
  }
 
  codestore(...ids: string[]) {
@@ -53,7 +51,7 @@ export default class InviteCache extends Cache<APIInvite> {
   await this.setValue(rData, [rData.guild_id], [rData.channel_id, rData.code]);
 
   const guildCodestoreKey = this.codestore(rData.guild_id);
-  const globalCodestoreKey = this.globalCodestore;
+  const globalCodestoreKey = this.codestore();
   const location = `${rData.guild_id}:${rData.channel_id}`;
   const ttl = 604800;
 
@@ -77,7 +75,7 @@ export default class InviteCache extends Cache<APIInvite> {
  }
 
  async search(code: string): Promise<RInvite | null> {
-  const location = await this.redis.hget(this.globalCodestore, code);
+  const location = await this.redis.hget(this.codestore(), code);
   if (!location) return null;
 
   const [guildId, channelId] = location.split(':');
@@ -88,7 +86,7 @@ export default class InviteCache extends Cache<APIInvite> {
 
  async del(channelId: string, code: string, guildId?: string) {
   if (!guildId) {
-   const location = await this.redis.hget(this.globalCodestore, code);
+   const location = await this.redis.hget(this.codestore(), code);
    if (location) [guildId] = location.split(':');
   }
 
@@ -101,7 +99,7 @@ export default class InviteCache extends Cache<APIInvite> {
    pipeline.hdel(guildCodestoreKey, code);
   }
 
-  pipeline.hdel(this.globalCodestore, code);
+  pipeline.hdel(this.codestore(), code);
 
   await pipeline.exec();
   return 1;
