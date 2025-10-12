@@ -1,15 +1,6 @@
 /* eslint-disable no-console */
 import 'dotenv/config';
-import 'longjohn';
-import sms from 'source-map-support';
-
 import './BaseClient/Bot/Client.js';
-
-sms.install({
- handleUncaughtExceptions: process.argv.includes('--debug'),
- environment: 'node',
- emptyCacheBetweenOperations: process.argv.includes('--debug'),
-});
 
 if (process.argv.includes('--debug')) console.log('[Debug] Debug mode enabled');
 if (process.argv.includes('--debug-db')) console.log('[Debug] Debug mode for database enabled');

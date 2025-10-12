@@ -1,20 +1,11 @@
 /* eslint-disable no-console */
-import 'longjohn';
 import { scheduleJob } from 'node-schedule';
-import sms from 'source-map-support';
 
 console.clear();
 console.log('+++++++++++ Welcome to Ayako/Gateway ++++++++++++');
-console.log('+      Restart all Clusters with "restart"      +');
 console.log('+                  Arguments:                   +');
 console.log('+             --debug --warn --dev              +');
 console.log('+++++++++++++++++++++++++++++++++++++++++++++++++');
-
-sms.install({
- handleUncaughtExceptions: process.argv.includes('--debug'),
- environment: 'node',
- emptyCacheBetweenOperations: process.argv.includes('--debug'),
-});
 
 (async () => {
  [
