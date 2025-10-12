@@ -263,7 +263,7 @@ export default {
 
   cache.requestingGuild = nextGuild.id;
   cache.requestGuildQueue.delete(nextGuild.id);
-  requestGuildMembers(nextGuild.id);
+  setImmediate(() => requestGuildMembers(nextGuild.id));
  },
 
  [GatewayDispatchEvents.GuildMemberUpdate]: async (data: GatewayGuildMemberUpdateDispatchData) => {
