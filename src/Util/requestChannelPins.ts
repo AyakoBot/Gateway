@@ -21,16 +21,26 @@ const processNext = async () => {
 
  const { channelId, guildId, resolve } = item;
 
- const hasPermission = await checkPermission(guildId, ['ViewChannel', 'ReadMessageHistory']);
- if (!hasPermission) {
+ try {
+  const hasPermission = await checkPermission(guildId, ['ViewChannel', 'ReadMessageHistory']);
+  if (!hasPermission) {
+   processing.delete(channelId);
+   resolve();
+   isProcessing = false;
+   setImmediate(() => processNext());
+   return;
+  }
+
+  await cache.pins.delAll(channelId);
+ } catch (error) {
+  // eslint-disable-next-line no-console
+  console.error('[PINS] Error in pre-fetch operations for', channelId, error);
   processing.delete(channelId);
   resolve();
   isProcessing = false;
   setImmediate(() => processNext());
   return;
  }
-
- await cache.pins.delAll(channelId);
 
  api.channels
   .getPins(channelId)
@@ -45,9 +55,10 @@ const processNext = async () => {
    isProcessing = false;
    setImmediate(() => processNext());
   })
-  .catch((error: DiscordAPIError) => {
-   if (error.status === 429) {
-    const retryAfter = error.retryAfter ?? 1000;
+  .catch((error: unknown) => {
+   const apiError = error as { status?: number; retryAfter?: number };
+   if (apiError.status === 429) {
+    const retryAfter = apiError.retryAfter ?? 1000;
     // eslint-disable-next-line no-console
     console.log(`[PINS] Rate limited, retrying ${channelId} after ${retryAfter}ms`);
     setTimeout(() => {
@@ -58,9 +69,9 @@ const processNext = async () => {
     return;
    }
 
-   if ([401, 403, 404].includes(error.status)) {
+   if (apiError.status && [401, 403, 404].includes(apiError.status)) {
     // eslint-disable-next-line no-console
-    console.log(`[PINS] Aborting ${channelId} due to ${error.status}`);
+    console.log(`[PINS] Aborting ${channelId} due to ${apiError.status}`);
     processing.delete(channelId);
     resolve();
     isProcessing = false;
