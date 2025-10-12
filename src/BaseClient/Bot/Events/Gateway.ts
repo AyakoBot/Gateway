@@ -6,11 +6,7 @@ import cache from '../../../BaseClient/Bot/CacheHandlers/index.js';
 import { gateway } from '../Client.js';
 import Metrics from '../Metrics.js';
 
-import ready from './ready.js';
-
 gateway.setMaxListeners(Object.keys(WebSocketShardEvents).length);
-
-gateway.on(WebSocketShardEvents.Ready, (data, shardId) => ready(data, shardId));
 
 gateway.on(WebSocketShardEvents.Hello, (shardId) =>
  console.log(`[Hello from Discord | Shard ${shardId}]`),
