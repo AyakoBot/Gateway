@@ -50,7 +50,6 @@ export default class InviteCache extends Cache<APIInvite> {
   if (!rData) return false;
   if (!rData.guild_id || !rData.code || !rData.channel_id) return false;
 
-  // Use base class logic for main cache + keystore + deduplication
   await this.setValue(rData, [rData.guild_id], [rData.channel_id, rData.code]);
 
   const guildCodestoreKey = this.codestore(rData.guild_id);
@@ -85,6 +84,27 @@ export default class InviteCache extends Cache<APIInvite> {
   if (!guildId || !channelId) return null;
 
   return this.get(channelId, code);
+ }
+
+ async del(channelId: string, code: string, guildId?: string) {
+  if (!guildId) {
+   const location = await this.redis.hget(this.globalCodestore, code);
+   if (location) [guildId] = location.split(':');
+  }
+
+  const pipeline = this.redis.pipeline();
+
+  pipeline.del(this.key(channelId, code, 'current'));
+
+  if (guildId) {
+   const guildCodestoreKey = this.codestore(guildId);
+   pipeline.hdel(guildCodestoreKey, code);
+  }
+
+  pipeline.hdel(this.globalCodestore, code);
+
+  await pipeline.exec();
+  return 1;
  }
 
  apiToR(data: APIInvite) {

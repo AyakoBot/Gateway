@@ -44,6 +44,6 @@ export default {
  },
 
  [GatewayDispatchEvents.InviteDelete]: (data: GatewayInviteDeleteDispatchData) => {
-  redis.invites.del(data.code);
+  redis.invites.del(data.channel_id, data.code, data.guild_id);
  },
 } as const;
