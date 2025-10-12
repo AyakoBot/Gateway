@@ -65,6 +65,7 @@ export const cache: {
  stickers: Map<string, number>;
  sounds: Map<string, number>;
  user: APIUser | null;
+ requestedGuilds: Map<string, number>;
 } = {
  guilds: 0,
  members: new Map(),
@@ -73,4 +74,5 @@ export const cache: {
  stickers: new Map(),
  sounds: new Map(),
  user: null,
+ requestedGuilds: new Map(),
 };

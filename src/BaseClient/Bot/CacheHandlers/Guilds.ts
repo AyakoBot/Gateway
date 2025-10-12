@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import {
  GatewayDispatchEvents,
  type GatewayGuildAuditLogEntryCreateDispatchData,
@@ -236,9 +237,23 @@ export default {
 
  [GatewayDispatchEvents.GuildMembersChunk]: async (data: GatewayGuildMembersChunkDispatchData) => {
   if (data.chunk_index === 0) {
+   console.log('[CHUNK] Receiving member chunks for', data.guild_id, data.chunk_count);
+   console.log(
+    '[CHUNK] Still receiving',
+    cache.requestedGuilds.size,
+    'other guilds with a combined chunk count of',
+    [...cache.requestedGuilds.values()].reduce((a, b) => a + b, 0),
+   );
+   cache.requestedGuilds.set(data.guild_id, data.chunk_count);
+
    const keystoreKey = redis.members.keystore(data.guild_id);
    const keys = await RedisClient.hkeys(keystoreKey);
    if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
+  }
+
+  if (data.chunk_index === data.chunk_count - 1) {
+   console.log('[CHUNK] Finished receiving member chunks for', data.guild_id);
+   cache.requestedGuilds.delete(data.guild_id);
   }
 
   await redis.members.setMany(data.members, data.guild_id);

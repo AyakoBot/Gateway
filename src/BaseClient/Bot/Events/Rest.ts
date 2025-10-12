@@ -29,11 +29,13 @@ client.rest.on(RESTEvents.RateLimited, (info) =>
  ),
 );
 
-client.rest.on(RESTEvents.Response, (request, response) =>
+client.rest.on(RESTEvents.Response, (request, response) => {
+ if (String(response.status).startsWith('2')) return;
+
  console.log(
   `[Request] ${response.status} | ${response.statusText} - ${request.method} ${request.path}`,
- ),
-);
+ );
+});
 
 if (process.argv.includes('--debug')) {
  client.rest.on(RESTEvents.Debug, (...args) => console.log('[Debug]', args));
