@@ -10,17 +10,17 @@ import { cache as redis } from '../Redis.js';
 
 export default {
  [GatewayDispatchEvents.IntegrationCreate]: async (data: GatewayIntegrationCreateDispatchData) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   redis.integrations.set(data, data.guild_id);
  },
 
  [GatewayDispatchEvents.IntegrationDelete]: async (data: GatewayIntegrationDeleteDispatchData) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   redis.integrations.del(data.id);
  },
 
  [GatewayDispatchEvents.IntegrationUpdate]: async (data: GatewayIntegrationUpdateDispatchData) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   redis.integrations.set(data, data.guild_id);
  },
 } as const;

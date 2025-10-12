@@ -35,17 +35,17 @@ export default {
  [GatewayDispatchEvents.GuildAuditLogEntryCreate]: async (
   data: GatewayGuildAuditLogEntryCreateDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   redis.auditlogs.set(data, data.guild_id);
  },
 
  [GatewayDispatchEvents.GuildBanAdd]: async (data: GatewayGuildBanAddDispatchData) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   redis.bans.set({ reason: '-', user: data.user }, data.guild_id);
   redis.users.set(data.user);
  },
  [GatewayDispatchEvents.GuildBanRemove]: async (data: GatewayGuildBanRemoveDispatchData) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   redis.bans.del(data.guild_id, data.user.id);
   redis.users.set(data.user);
  },
@@ -192,12 +192,12 @@ export default {
  },
 
  [GatewayDispatchEvents.GuildUpdate]: async (data: GatewayGuildUpdateDispatchData) => {
-  await firstGuildInteraction(data.id);
+  firstGuildInteraction(data.id);
   redis.guilds.set(data);
  },
 
  [GatewayDispatchEvents.GuildEmojisUpdate]: async (data: GatewayGuildEmojisUpdateDispatchData) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   cache.emojis.set(data.guild_id, data.emojis.length);
 
   const emojis = await RedisClient.hgetall(redis.emojis.keystore(data.guild_id));
@@ -219,7 +219,7 @@ export default {
  },
 
  [GatewayDispatchEvents.GuildMemberAdd]: async (data: GatewayGuildMemberAddDispatchData) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   cache.members.set(data.guild_id, (cache.members.get(data.guild_id) || 0) + 1);
 
   redis.members.set(data, data.guild_id);
@@ -227,7 +227,7 @@ export default {
  },
 
  [GatewayDispatchEvents.GuildMemberRemove]: async (data: GatewayGuildMemberRemoveDispatchData) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   cache.members.set(data.guild_id, (cache.members.get(data.guild_id) || 0) - 1);
 
   redis.members.del(data.guild_id, data.user.id);
@@ -245,7 +245,7 @@ export default {
  },
 
  [GatewayDispatchEvents.GuildMemberUpdate]: async (data: GatewayGuildMemberUpdateDispatchData) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
 
   if (data.joined_at && data.deaf && data.mute) {
    redis.members.set(data as Parameters<typeof redis.members.set>[0], data.guild_id);
@@ -283,62 +283,62 @@ export default {
  },
 
  [GatewayDispatchEvents.GuildRoleCreate]: async (data: GatewayGuildRoleCreateDispatchData) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   cache.roles.set(data.guild_id, (cache.roles.get(data.guild_id) || 1) + 1);
 
   redis.roles.set(data.role, data.guild_id);
  },
 
  [GatewayDispatchEvents.GuildRoleDelete]: async (data: GatewayGuildRoleDeleteDispatchData) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   cache.roles.set(data.guild_id, (cache.roles.get(data.guild_id) || 1) - 1);
 
   redis.roles.del(data.role_id);
  },
 
  [GatewayDispatchEvents.GuildRoleUpdate]: async (data: GatewayGuildRoleCreateDispatchData) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   redis.roles.set(data.role, data.guild_id);
  },
 
  [GatewayDispatchEvents.GuildScheduledEventCreate]: async (
   data: GatewayGuildScheduledEventCreateDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   redis.events.set(data);
  },
 
  [GatewayDispatchEvents.GuildScheduledEventDelete]: async (
   data: GatewayGuildScheduledEventDeleteDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   redis.events.del(data.id);
  },
 
  [GatewayDispatchEvents.GuildScheduledEventUpdate]: async (
   data: GatewayGuildScheduledEventUpdateDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   redis.events.set(data);
  },
 
  [GatewayDispatchEvents.GuildScheduledEventUserAdd]: async (
   data: GatewayGuildScheduledEventUserAddDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
  },
 
  [GatewayDispatchEvents.GuildScheduledEventUserRemove]: async (
   data: GatewayGuildScheduledEventUserRemoveDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
  },
 
  [GatewayDispatchEvents.GuildSoundboardSoundCreate]: async (
   data: GatewayGuildSoundboardSoundCreateDispatchData,
  ) => {
   if (!data.guild_id) return;
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
 
   cache.sounds.set(data.guild_id, (cache.sounds.get(data.guild_id) || 0) + 1);
 
@@ -348,7 +348,7 @@ export default {
  [GatewayDispatchEvents.GuildSoundboardSoundDelete]: async (
   data: GatewayGuildSoundboardSoundDeleteDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   cache.sounds.set(data.guild_id, (cache.sounds.get(data.guild_id) || 1) - 1);
 
   redis.soundboards.del(data.sound_id);
@@ -358,7 +358,7 @@ export default {
   data: GatewayGuildSoundboardSoundUpdateDispatchData,
  ) => {
   if (!data.guild_id) return;
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
 
   redis.soundboards.set(data);
  },
@@ -366,7 +366,7 @@ export default {
  [GatewayDispatchEvents.GuildSoundboardSoundsUpdate]: async (
   data: GatewayGuildSoundboardSoundsUpdateDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   cache.sounds.set(data.guild_id, data.soundboard_sounds.length);
 
   const sounds = await RedisClient.hgetall(redis.soundboards.keystore(data.guild_id));
@@ -383,7 +383,7 @@ export default {
  [GatewayDispatchEvents.GuildStickersUpdate]: async (
   data: GatewayGuildStickersUpdateDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   cache.stickers.set(data.guild_id, data.stickers.length);
 
   const stickers = await RedisClient.hgetall(redis.stickers.keystore(data.guild_id));

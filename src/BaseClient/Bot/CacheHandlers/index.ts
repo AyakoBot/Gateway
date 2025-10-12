@@ -70,23 +70,23 @@ const caches: Record<
  [GatewayDispatchEvents.ApplicationCommandPermissionsUpdate]: async (
   data: GatewayApplicationCommandPermissionsUpdateDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   data.permissions.forEach((perm) => redis.commandPermissions.set(perm, data.guild_id, data.id));
  },
 
  [GatewayDispatchEvents.SoundboardSounds]: async (
   data: GatewayGuildSoundboardSoundsUpdateDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
   data.soundboard_sounds.forEach((sound) =>
    redis.soundboards.set({ ...sound, guild_id: data.guild_id || sound.guild_id }),
   );
  },
 
  [GatewayDispatchEvents.InteractionCreate]: async (data: GatewayInteractionCreateDispatchData) => {
-  if (data.guild_id) await firstGuildInteraction(data.guild_id);
+  if (data.guild_id) firstGuildInteraction(data.guild_id);
   if (data.channel?.id && data.guild_id) {
-   await firstChannelInteraction(data.channel.id, data.guild_id);
+   firstChannelInteraction(data.channel.id, data.guild_id);
   }
   if (data.user) redis.users.set(data.user);
 
@@ -122,8 +122,8 @@ const caches: Record<
 
  [GatewayDispatchEvents.TypingStart]: async (data: GatewayTypingStartDispatchData) => {
   if (!data.member || !data.guild_id) return;
-  await firstGuildInteraction(data.guild_id);
-  await firstChannelInteraction(data.channel_id, data.guild_id);
+  firstGuildInteraction(data.guild_id);
+  firstChannelInteraction(data.channel_id, data.guild_id);
 
   redis.members.set(data.member, data.guild_id);
  },

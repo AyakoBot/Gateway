@@ -13,8 +13,8 @@ export default {
  [GatewayDispatchEvents.StageInstanceCreate]: async (
   data: GatewayStageInstanceCreateDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
-  await firstChannelInteraction(data.channel_id, data.guild_id);
+  firstGuildInteraction(data.guild_id);
+  firstChannelInteraction(data.channel_id, data.guild_id);
 
   redis.stages.set(data);
  },
@@ -22,8 +22,8 @@ export default {
  [GatewayDispatchEvents.StageInstanceDelete]: async (
   data: GatewayStageInstanceDeleteDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
-  await firstChannelInteraction(data.channel_id, data.guild_id);
+  firstGuildInteraction(data.guild_id);
+  firstChannelInteraction(data.channel_id, data.guild_id);
 
   redis.stages.del(data.id);
  },
@@ -31,8 +31,8 @@ export default {
  [GatewayDispatchEvents.StageInstanceUpdate]: async (
   data: GatewayStageInstanceUpdateDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
-  await firstChannelInteraction(data.channel_id, data.guild_id);
+  firstGuildInteraction(data.guild_id);
+  firstChannelInteraction(data.channel_id, data.guild_id);
 
   redis.stages.set(data);
  },

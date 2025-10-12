@@ -17,7 +17,7 @@ export default {
   if (data.target_user) redis.users.set(data.target_user);
 
   if (data.guild_id) {
-   await firstGuildInteraction(data.guild_id);
+   firstGuildInteraction(data.guild_id);
 
    redis.invites.set({
     ...data,

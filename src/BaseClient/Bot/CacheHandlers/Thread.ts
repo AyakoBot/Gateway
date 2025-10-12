@@ -16,7 +16,7 @@ export default {
  [GatewayDispatchEvents.ThreadCreate]: async (data: GatewayThreadCreateDispatchData) => {
   if (!data.guild_id) return;
 
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
 
   redis.threads.set(data);
  },
@@ -24,7 +24,7 @@ export default {
  [GatewayDispatchEvents.ThreadDelete]: async (data: GatewayThreadDeleteDispatchData) => {
   redis.threads.del(data.id);
 
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
 
   const selectPipeline = RedisClient.pipeline();
   selectPipeline.hgetall(redis.threadMembers.keystore(data.guild_id));
@@ -56,14 +56,14 @@ export default {
    return;
   }
 
-  await firstGuildInteraction(data.guild_id);
-  await firstChannelInteraction(data.id, data.guild_id);
+  firstGuildInteraction(data.guild_id);
+  firstChannelInteraction(data.id, data.guild_id);
 
   redis.threads.set(data);
  },
 
  [GatewayDispatchEvents.ThreadListSync]: async (data: GatewayThreadListSyncDispatchData) => {
-  await firstGuildInteraction(data.guild_id);
+  firstGuildInteraction(data.guild_id);
 
   data.threads.forEach((thread) =>
    redis.threads.set({ ...thread, guild_id: data.guild_id || thread.guild_id }),
@@ -80,8 +80,8 @@ export default {
  [GatewayDispatchEvents.ThreadMembersUpdate]: async (
   data: GatewayThreadMembersUpdateDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
-  await firstChannelInteraction(data.id, data.guild_id);
+  firstGuildInteraction(data.guild_id);
+  firstChannelInteraction(data.id, data.guild_id);
 
   data.added_members?.forEach((threadMember) => {
    redis.threadMembers.set(threadMember, data.guild_id);
@@ -96,8 +96,8 @@ export default {
  [GatewayDispatchEvents.ThreadMemberUpdate]: async (
   data: GatewayThreadMemberUpdateDispatchData,
  ) => {
-  await firstGuildInteraction(data.guild_id);
-  if (data.id) await firstChannelInteraction(data.id, data.guild_id);
+  firstGuildInteraction(data.guild_id);
+  if (data.id) firstChannelInteraction(data.id, data.guild_id);
 
   redis.threadMembers.set(data, data.guild_id);
 

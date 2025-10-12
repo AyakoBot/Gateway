@@ -22,8 +22,8 @@ export default {
   if (data.guild_id) {
    redis.messages.set(data, data.guild_id || '@me');
 
-   await firstGuildInteraction(data.guild_id);
-   await firstChannelInteraction(data.channel_id, data.guild_id);
+   firstGuildInteraction(data.guild_id);
+   firstChannelInteraction(data.channel_id, data.guild_id);
   }
 
   if (!data.webhook_id) redis.users.set(data.author);
@@ -38,8 +38,8 @@ export default {
 
  [GatewayDispatchEvents.MessageDelete]: async (data: GatewayMessageDeleteDispatchData) => {
   if (data.guild_id) {
-   await firstGuildInteraction(data.guild_id);
-   await firstChannelInteraction(data.channel_id, data.guild_id);
+   firstGuildInteraction(data.guild_id);
+   firstChannelInteraction(data.channel_id, data.guild_id);
   }
 
   redis.messages.del(data.channel_id, data.id);
@@ -48,8 +48,8 @@ export default {
 
  [GatewayDispatchEvents.MessageDeleteBulk]: async (data: GatewayMessageDeleteBulkDispatchData) => {
   if (data.guild_id) {
-   await firstGuildInteraction(data.guild_id);
-   await firstChannelInteraction(data.channel_id, data.guild_id);
+   firstGuildInteraction(data.guild_id);
+   firstChannelInteraction(data.channel_id, data.guild_id);
   }
 
   data.ids.forEach((id) => {
@@ -60,8 +60,8 @@ export default {
 
  [GatewayDispatchEvents.MessageUpdate]: async (data: GatewayMessageUpdateDispatchData) => {
   if (data.guild_id) {
-   await firstGuildInteraction(data.guild_id);
-   await firstChannelInteraction(data.channel_id, data.guild_id);
+   firstGuildInteraction(data.guild_id);
+   firstChannelInteraction(data.channel_id, data.guild_id);
 
    redis.messages.set(data, data.guild_id);
   }
@@ -69,16 +69,16 @@ export default {
 
  [GatewayDispatchEvents.MessagePollVoteAdd]: async (data: GatewayMessagePollVoteDispatchData) => {
   if (!data.guild_id) return;
-  await firstGuildInteraction(data.guild_id);
-  await firstChannelInteraction(data.channel_id, data.guild_id);
+  firstGuildInteraction(data.guild_id);
+  firstChannelInteraction(data.channel_id, data.guild_id);
  },
 
  [GatewayDispatchEvents.MessagePollVoteRemove]: async (
   data: GatewayMessagePollVoteDispatchData,
  ) => {
   if (!data.guild_id) return;
-  await firstGuildInteraction(data.guild_id);
-  await firstChannelInteraction(data.channel_id, data.guild_id);
+  firstGuildInteraction(data.guild_id);
+  firstChannelInteraction(data.channel_id, data.guild_id);
  },
 
  [GatewayDispatchEvents.MessageReactionAdd]: async (
@@ -90,8 +90,8 @@ export default {
 
   if (!data.guild_id) return;
 
-  await firstGuildInteraction(data.guild_id);
-  await firstChannelInteraction(data.channel_id, data.guild_id);
+  firstGuildInteraction(data.guild_id);
+  firstChannelInteraction(data.channel_id, data.guild_id);
 
   const cache = await redis.reactions.get(
    data.channel_id,
@@ -126,8 +126,8 @@ export default {
  ) => {
   if (!data.guild_id) return;
 
-  await firstGuildInteraction(data.guild_id);
-  await firstChannelInteraction(data.channel_id, data.guild_id);
+  firstGuildInteraction(data.guild_id);
+  firstChannelInteraction(data.channel_id, data.guild_id);
 
   const cache = await redis.reactions.get(
    data.channel_id,
@@ -161,8 +161,8 @@ export default {
   data: GatewayMessageReactionRemoveAllDispatchData,
  ) => {
   if (data.guild_id) {
-   await firstGuildInteraction(data.guild_id);
-   await firstChannelInteraction(data.channel_id, data.guild_id);
+   firstGuildInteraction(data.guild_id);
+   firstChannelInteraction(data.channel_id, data.guild_id);
   }
 
   const pipeline = RedisClient.pipeline();
@@ -179,8 +179,8 @@ export default {
   data: GatewayMessageReactionRemoveEmojiDispatchData,
  ) => {
   if (!data.guild_id) return;
-  await firstGuildInteraction(data.guild_id);
-  await firstChannelInteraction(data.channel_id, data.guild_id);
+  firstGuildInteraction(data.guild_id);
+  firstChannelInteraction(data.channel_id, data.guild_id);
 
   const reactions = await RedisClient.hgetall(redis.reactions.keystore(data.guild_id));
 
