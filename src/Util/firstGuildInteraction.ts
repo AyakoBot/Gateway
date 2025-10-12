@@ -26,7 +26,7 @@ export const tasks = {
   const keys = await RedisClient.hkeys(keystoreKey);
   if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
 
-  const rules = await api.guilds.getAutoModerationRules(guildId);
+  const rules = await api.guilds.getAutoModerationRules(guildId).catch(() => []);
   rules.forEach((r) => cache.automods.set(r));
  },
  commands: async (guildId: string) => {
@@ -36,7 +36,9 @@ export const tasks = {
   const keys = await RedisClient.hkeys(keystoreKey);
   if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
 
-  const commands = await api.applicationCommands.getGuildCommands(clientCache.user.id, guildId);
+  const commands = await api.applicationCommands
+   .getGuildCommands(clientCache.user.id, guildId)
+   .catch(() => []);
   commands.forEach((c) => cache.guildCommands.set({ ...c, guild_id: guildId }));
  },
  members: async (guildId: string) => requestGuildMembers(guildId),
@@ -47,10 +49,9 @@ export const tasks = {
   const keys = await RedisClient.hkeys(keystoreKey);
   if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
 
-  const commandPerms = await api.applicationCommands.getGuildCommandsPermissions(
-   clientCache.user.id,
-   guildId,
-  );
+  const commandPerms = await api.applicationCommands
+   .getGuildCommandsPermissions(clientCache.user.id, guildId)
+   .catch(() => []);
 
   commandPerms.forEach((command) =>
    command.permissions.forEach((perm) => cache.commandPermissions.set(perm, guildId, command.id)),
@@ -72,7 +73,7 @@ export const tasks = {
   const keys = await RedisClient.hkeys(keystoreKey);
   if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
 
-  const welcomeScreen = await api.guilds.getWelcomeScreen(guildId);
+  const welcomeScreen = await api.guilds.getWelcomeScreen(guildId).catch(() => null);
   if (!welcomeScreen) return;
 
   cache.welcomeScreens.set(welcomeScreen, guildId);
@@ -82,7 +83,9 @@ export const tasks = {
   const keys = await RedisClient.hkeys(keystoreKey);
   if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
 
-  const scheduledEvents = await api.guilds.getScheduledEvents(guildId, { with_user_count: true });
+  const scheduledEvents = await api.guilds
+   .getScheduledEvents(guildId, { with_user_count: true })
+   .catch(() => []);
   scheduledEvents.forEach((e) => cache.events.set(e));
  },
  webhooks: async (guildId: string) => {
@@ -92,7 +95,7 @@ export const tasks = {
   const keys = await RedisClient.hkeys(keystoreKey);
   if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
 
-  const webhooks = await api.guilds.getWebhooks(guildId);
+  const webhooks = await api.guilds.getWebhooks(guildId).catch(() => []);
   webhooks.forEach((w) => cache.webhooks.set(w));
  },
  integrations: async (guildId: string) => {
@@ -102,7 +105,7 @@ export const tasks = {
   const keys = await RedisClient.hkeys(keystoreKey);
   if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
 
-  const integrations = await api.guilds.getIntegrations(guildId);
+  const integrations = await api.guilds.getIntegrations(guildId).catch(() => []);
   integrations.forEach((i) => cache.integrations.set(i, guildId));
  },
  invites: async (guildId: string) => {
@@ -120,7 +123,7 @@ export const tasks = {
   if (keys.length > 0) await RedisClient.del(...keys, keystoreKey, guildCodestoreKey);
   if (codes.length > 0) await RedisClient.hdel(globalCodestoreKey, ...codes);
 
-  const invites = await api.guilds.getInvites(guildId);
+  const invites = await api.guilds.getInvites(guildId).catch(() => []);
   invites.forEach((i) => cache.invites.set(i));
  },
 };

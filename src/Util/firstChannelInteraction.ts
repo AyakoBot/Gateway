@@ -23,7 +23,7 @@ export const tasks = {
 
   await cache.pins.delAll(channelId);
 
-  const pins = await api.channels.getPins(channelId);
+  const pins = await api.channels.getPins(channelId).catch(() => []);
 
   pins.forEach((pin) => {
    cache.pins.set(channelId, pin.id);
@@ -55,7 +55,7 @@ export const tasks = {
    await RedisClient.hdel(globalCodestoreKey, ...inviteCodes);
   }
 
-  const invites = await api.channels.getInvites(channelId);
+  const invites = await api.channels.getInvites(channelId).catch(() => []);
   invites.forEach((invite) => cache.invites.set(invite));
  },
 };
