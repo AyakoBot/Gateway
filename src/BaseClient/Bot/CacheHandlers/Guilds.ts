@@ -256,10 +256,12 @@ export default {
    .map((id) => ({ id, members: cache.members.get(id) || 0 }))
    .sort((a, b) => b.members - a.members);
 
-  cache.requestingGuild = null;
+  if (!nextGuild) {
+   cache.requestingGuild = null;
+   return;
+  }
 
-  if (!nextGuild) return;
-
+  cache.requestingGuild = nextGuild.id;
   cache.requestGuildQueue.delete(nextGuild.id);
   requestGuildMembers(nextGuild.id);
  },

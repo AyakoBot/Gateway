@@ -5,11 +5,13 @@ import { cache, gateway } from '../BaseClient/Bot/Client.js';
 import calculateShardId from './calculateShardId.js';
 
 export default (guildId: string) => {
- if (cache.requestedGuilds.has(guildId)) return Promise.resolve();
- if (cache.requestingGuild) {
+ if (cache.requestingGuild !== guildId && cache.requestingGuild) {
   cache.requestGuildQueue.add(guildId);
   return Promise.resolve();
  }
+
+ if (cache.requestedGuilds.has(guildId)) return Promise.resolve();
+ cache.requestedGuilds.add(guildId);
 
  cache.requestingGuild = guildId;
 
