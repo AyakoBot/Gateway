@@ -28,10 +28,6 @@ const RUserKeys = [
 export default class UserCache extends Cache<APIUser> {
  public keys = RUserKeys;
 
- public extraKeys = {
-  avatar_decoration_data: ['asset_url', 'sku_id'] as const,
- };
-
  constructor(redis: Redis) {
   super(redis, 'users');
  }
