@@ -32,9 +32,17 @@ export const RInviteKeys = [
 
 export default class InviteCache extends Cache<APIInvite> {
  public keys = RInviteKeys;
+ private codestorePrefix: string;
+ private globalCodestore: string;
 
  constructor(redis: Redis) {
   super(redis, 'invites');
+  this.codestorePrefix = 'codestore:invites';
+  this.globalCodestore = 'codestore:invites';
+ }
+
+ codestore(...ids: string[]) {
+  return `${this.codestorePrefix}${ids.length ? `:${ids.join(':')}` : ''}`;
  }
 
  async set(data: APIInvite) {
@@ -42,12 +50,41 @@ export default class InviteCache extends Cache<APIInvite> {
   if (!rData) return false;
   if (!rData.guild_id || !rData.code || !rData.channel_id) return false;
 
+  // Use base class logic for main cache + keystore + deduplication
   await this.setValue(rData, [rData.guild_id], [rData.channel_id, rData.code]);
+
+  const guildCodestoreKey = this.codestore(rData.guild_id);
+  const globalCodestoreKey = this.globalCodestore;
+  const location = `${rData.guild_id}:${rData.channel_id}`;
+  const ttl = 604800;
+
+  const pipeline = this.redis.pipeline();
+  pipeline.hset(guildCodestoreKey, rData.code, rData.channel_id);
+  pipeline.hexpire(guildCodestoreKey, ttl, 'FIELDS', 1, rData.code);
+  pipeline.hset(globalCodestoreKey, rData.code, location);
+  pipeline.hexpire(globalCodestoreKey, ttl, 'FIELDS', 1, rData.code);
+  await pipeline.exec();
+
   return true;
  }
 
  async get(channelId: string, code: string) {
   return super.get(channelId, code);
+ }
+
+ async getAllCodes(guildId: string): Promise<string[]> {
+  const guildCodestoreKey = this.codestore(guildId);
+  return this.redis.hkeys(guildCodestoreKey);
+ }
+
+ async search(code: string): Promise<RInvite | null> {
+  const location = await this.redis.hget(this.globalCodestore, code);
+  if (!location) return null;
+
+  const [guildId, channelId] = location.split(':');
+  if (!guildId || !channelId) return null;
+
+  return this.get(channelId, code);
  }
 
  apiToR(data: APIInvite) {

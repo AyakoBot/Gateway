@@ -112,7 +112,13 @@ export const tasks = {
 
   const keystoreKey = cache.invites.keystore(guildId);
   const keys = await RedisClient.hkeys(keystoreKey);
-  if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
+  const guildCodestoreKey = cache.invites.codestore(guildId);
+  const globalCodestoreKey = cache.invites.codestore();
+
+  const codes = await RedisClient.hkeys(guildCodestoreKey);
+
+  if (keys.length > 0) await RedisClient.del(...keys, keystoreKey, guildCodestoreKey);
+  if (codes.length > 0) await RedisClient.hdel(globalCodestoreKey, ...codes);
 
   const invites = await api.guilds.getInvites(guildId);
   invites.forEach((i) => cache.invites.set(i));
