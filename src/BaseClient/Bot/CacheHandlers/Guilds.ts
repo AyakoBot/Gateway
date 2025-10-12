@@ -241,7 +241,12 @@ export default {
 
    const keystoreKey = redis.members.keystore(data.guild_id);
    const keys = await RedisClient.hkeys(keystoreKey);
-   if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
+   if (keys.length > 0) {
+    const pipeline = RedisClient.pipeline();
+    keys.forEach((key) => pipeline.del(key));
+    pipeline.del(keystoreKey);
+    await pipeline.exec();
+   }
   }
 
   await redis.members.setMany(data.members, data.guild_id);
