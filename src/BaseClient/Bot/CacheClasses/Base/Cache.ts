@@ -241,7 +241,7 @@ export default abstract class Cache<
   return `${this.prefix}${ids.length ? `:${ids.join(':')}` : ''}`;
  }
 
- abstract set(...args: [T, string, string, string]): Promise<boolean>;
+ abstract set(data: T, ...additionalArgs: string[]): Promise<boolean>;
 
  get(...ids: string[]): Promise<null | DeriveRFromAPI<T, K>> {
   return this.redis.get(this.key(...ids, 'current')).then((data) => this.stringToData(data));
@@ -307,5 +307,5 @@ export default abstract class Cache<
   return this.redis.del(this.key(...ids, 'current'));
  }
 
- abstract apiToR(...args: [T, string, string, string]): DeriveRFromAPI<T, K> | false;
+ abstract apiToR(data: T, ...additionalArgs: string[]): DeriveRFromAPI<T, K> | false;
 }
