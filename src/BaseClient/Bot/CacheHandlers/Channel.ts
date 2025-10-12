@@ -48,7 +48,7 @@ export default {
  VOICE_CHANNEL_STATUS_UPDATE: async (data: { status: string; id: string; guild_id: string }) => {
   await firstChannelInteraction(data.id, data.guild_id);
 
-  if (!data.status.length) {
+  if (!data.status?.length) {
    redis.channelStatuses.del(data.guild_id, data.id);
    return;
   }
