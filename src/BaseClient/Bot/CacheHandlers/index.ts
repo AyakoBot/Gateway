@@ -38,11 +38,16 @@ import Subscription from './Subscription.js';
 import Thread from './Thread.js';
 import Voice from './Voice.js';
 
-export default async (data: GatewayDispatchPayload, shardId: number) => {
+export default (data: GatewayDispatchPayload, shardId: number) => {
  const cache = caches[data.t];
  if (!cache) return;
 
- await cache(data.d as Parameters<typeof cache>[0], shardId);
+ const res = cache(data.d as Parameters<typeof cache>[0], shardId) as Promise<unknown> | unknown;
+
+ if (res instanceof Promise) {
+  res.then(() => emit(data.t, data.d));
+  return;
+ }
  emit(data.t, data.d);
 };
 
