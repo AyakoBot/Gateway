@@ -11,31 +11,31 @@ import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
 import { cache as redis } from '../Redis.js';
 
 export default {
- [GatewayDispatchEvents.AutoModerationActionExecution]: (
+ [GatewayDispatchEvents.AutoModerationActionExecution]: async (
   data: GatewayAutoModerationActionExecutionDispatchData,
  ) => {
-  firstGuildInteraction(data.guild_id);
-  if (data.channel_id) firstChannelInteraction(data.channel_id, data.guild_id);
+  await firstGuildInteraction(data.guild_id);
+  if (data.channel_id) await firstChannelInteraction(data.channel_id, data.guild_id);
  },
 
- [GatewayDispatchEvents.AutoModerationRuleCreate]: (
+ [GatewayDispatchEvents.AutoModerationRuleCreate]: async (
   data: GatewayAutoModerationRuleCreateDispatchData,
  ) => {
-  firstGuildInteraction(data.guild_id);
+  await firstGuildInteraction(data.guild_id);
   redis.automods.set(data);
  },
 
- [GatewayDispatchEvents.AutoModerationRuleDelete]: (
+ [GatewayDispatchEvents.AutoModerationRuleDelete]: async (
   data: GatewayAutoModerationRuleDeleteDispatchData,
  ) => {
-  firstGuildInteraction(data.guild_id);
+  await firstGuildInteraction(data.guild_id);
   redis.automods.del(data.id);
  },
 
- [GatewayDispatchEvents.AutoModerationRuleUpdate]: (
+ [GatewayDispatchEvents.AutoModerationRuleUpdate]: async (
   data: GatewayAutoModerationRuleUpdateDispatchData,
  ) => {
-  firstGuildInteraction(data.guild_id);
+  await firstGuildInteraction(data.guild_id);
   redis.automods.set(data);
  },
 } as const;

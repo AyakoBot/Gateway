@@ -42,7 +42,7 @@ export default async (data: GatewayDispatchPayload, shardId: number) => {
  const cache = caches[data.t];
  if (!cache) return;
 
- cache(data.d as Parameters<typeof cache>[0], shardId);
+ await cache(data.d as Parameters<typeof cache>[0], shardId);
  emit(data.t, data.d);
 };
 
@@ -62,25 +62,27 @@ const caches: Record<
  ...Voice,
  ...Subscription,
 
- [GatewayDispatchEvents.ApplicationCommandPermissionsUpdate]: (
+ [GatewayDispatchEvents.ApplicationCommandPermissionsUpdate]: async (
   data: GatewayApplicationCommandPermissionsUpdateDispatchData,
  ) => {
-  firstGuildInteraction(data.guild_id);
+  await firstGuildInteraction(data.guild_id);
   data.permissions.forEach((perm) => redis.commandPermissions.set(perm, data.guild_id, data.id));
  },
 
- [GatewayDispatchEvents.SoundboardSounds]: (
+ [GatewayDispatchEvents.SoundboardSounds]: async (
   data: GatewayGuildSoundboardSoundsUpdateDispatchData,
  ) => {
-  firstGuildInteraction(data.guild_id);
+  await firstGuildInteraction(data.guild_id);
   data.soundboard_sounds.forEach((sound) =>
    redis.soundboards.set({ ...sound, guild_id: data.guild_id || sound.guild_id }),
   );
  },
 
- [GatewayDispatchEvents.InteractionCreate]: (data: GatewayInteractionCreateDispatchData) => {
-  if (data.guild_id) firstGuildInteraction(data.guild_id);
-  if (data.channel?.id && data.guild_id) firstChannelInteraction(data.channel.id, data.guild_id);
+ [GatewayDispatchEvents.InteractionCreate]: async (data: GatewayInteractionCreateDispatchData) => {
+  if (data.guild_id) await firstGuildInteraction(data.guild_id);
+  if (data.channel?.id && data.guild_id) {
+   await firstChannelInteraction(data.channel.id, data.guild_id);
+  }
   if (data.user) redis.users.set(data.user);
 
   if (data.message && data.guild_id) {
@@ -113,10 +115,10 @@ const caches: Record<
   tasks.webhooks(data.guild_id);
  },
 
- [GatewayDispatchEvents.TypingStart]: (data: GatewayTypingStartDispatchData) => {
+ [GatewayDispatchEvents.TypingStart]: async (data: GatewayTypingStartDispatchData) => {
   if (!data.member || !data.guild_id) return;
-  firstGuildInteraction(data.guild_id);
-  firstChannelInteraction(data.channel_id, data.guild_id);
+  await firstGuildInteraction(data.guild_id);
+  await firstChannelInteraction(data.channel_id, data.guild_id);
 
   redis.members.set(data.member, data.guild_id);
  },

@@ -11,13 +11,13 @@ import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
 import { cache as redis } from '../Redis.js';
 
 export default {
- [GatewayDispatchEvents.InviteCreate]: (data: GatewayInviteCreateDispatchData) => {
+ [GatewayDispatchEvents.InviteCreate]: async (data: GatewayInviteCreateDispatchData) => {
   if (data.inviter) redis.users.set(data.inviter);
 
   if (data.target_user) redis.users.set(data.target_user);
 
   if (data.guild_id) {
-   firstGuildInteraction(data.guild_id);
+   await firstGuildInteraction(data.guild_id);
 
    redis.invites.set({
     ...data,

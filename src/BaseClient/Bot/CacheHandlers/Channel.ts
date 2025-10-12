@@ -39,14 +39,14 @@ export default {
   tasks.pins(data.channel_id, data.guild_id);
  },
 
- [GatewayDispatchEvents.ChannelUpdate]: (data: GatewayChannelUpdateDispatchData) => {
-  firstChannelInteraction(data.id, data.guild_id);
+ [GatewayDispatchEvents.ChannelUpdate]: async (data: GatewayChannelUpdateDispatchData) => {
+  await firstChannelInteraction(data.id, data.guild_id);
   redis.channels.set(data);
  },
 
  // eslint-disable-next-line @typescript-eslint/naming-convention
- VOICE_CHANNEL_STATUS_UPDATE: (data: { status: string; id: string; guild_id: string }) => {
-  firstChannelInteraction(data.id, data.guild_id);
+ VOICE_CHANNEL_STATUS_UPDATE: async (data: { status: string; id: string; guild_id: string }) => {
+  await firstChannelInteraction(data.id, data.guild_id);
 
   if (!data.status.length) {
    redis.channelStatuses.del(data.guild_id, data.id);
@@ -61,7 +61,9 @@ export default {
   guild_id: string;
   channels: { status: string; id: string }[];
  }) => {
-  data.channels.forEach((c) => firstChannelInteraction(c.id, data.guild_id));
+  await Promise.all(
+   data.channels.map(async (c) => await firstChannelInteraction(c.id, data.guild_id)),
+  );
 
   await redis.channelStatuses.delAll(data.guild_id);
 
