@@ -29,6 +29,7 @@ import {
 } from 'discord-api-types/v10';
 
 import firstGuildInteraction, { tasks } from '../../../Util/firstGuildInteraction.js';
+import requestGuildMembers from '../../../Util/requestGuildMembers.js';
 import { cache } from '../Client.js';
 import RedisClient, { cache as redis } from '../Redis.js';
 
@@ -238,25 +239,29 @@ export default {
  [GatewayDispatchEvents.GuildMembersChunk]: async (data: GatewayGuildMembersChunkDispatchData) => {
   if (data.chunk_index === 0) {
    console.log('[CHUNK] Receiving member chunks for', data.guild_id, data.chunk_count);
-   console.log(
-    '[CHUNK] Still receiving',
-    cache.requestedGuilds.size,
-    'other guilds with a combined chunk count of',
-    [...cache.requestedGuilds.values()].reduce((a, b) => a + b, 0),
-   );
-   cache.requestedGuilds.set(data.guild_id, data.chunk_count);
 
    const keystoreKey = redis.members.keystore(data.guild_id);
    const keys = await RedisClient.hkeys(keystoreKey);
    if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
   }
 
-  if (data.chunk_index === data.chunk_count - 1) {
-   console.log('[CHUNK] Finished receiving member chunks for', data.guild_id);
-   cache.requestedGuilds.delete(data.guild_id);
-  }
-
   await redis.members.setMany(data.members, data.guild_id);
+
+  if (data.chunk_index !== data.chunk_count - 1) return;
+
+  console.log('[CHUNK] Finished receiving member chunks for', data.guild_id);
+  cache.requestedGuilds.add(data.guild_id);
+
+  const [nextGuild] = [...cache.requestGuildQueue.values()]
+   .map((id) => ({ id, members: cache.members.get(id) || 0 }))
+   .sort((a, b) => b.members - a.members);
+
+  cache.requestingGuild = null;
+
+  if (!nextGuild) return;
+
+  cache.requestGuildQueue.delete(nextGuild.id);
+  requestGuildMembers(nextGuild.id);
  },
 
  [GatewayDispatchEvents.GuildMemberUpdate]: async (data: GatewayGuildMemberUpdateDispatchData) => {

@@ -1,10 +1,18 @@
 import { GatewayOpcodes } from 'discord-api-types/v10';
 
-import { gateway } from '../BaseClient/Bot/Client.js';
+import { cache, gateway } from '../BaseClient/Bot/Client.js';
 
 import calculateShardId from './calculateShardId.js';
 
 export default (guildId: string) => {
+ if (cache.requestedGuilds.has(guildId)) return Promise.resolve();
+ if (cache.requestingGuild) {
+  cache.requestGuildQueue.add(guildId);
+  return Promise.resolve();
+ }
+
+ cache.requestingGuild = guildId;
+
  // eslint-disable-next-line no-console
  console.log('[CHUNK] Requesting guild members for', guildId);
 
