@@ -100,6 +100,7 @@ export default class InviteCache extends Cache<APIInvite> {
   rData.inviter_id = data.inviter?.id || null;
   rData.guild_scheduled_event_id = data.guild_scheduled_event?.id || null;
   rData.application_id = data.target_application?.id || null;
+  rData.target_user_id = data.target_user?.id || null;
 
   keysNotToCache.forEach((k) => delete (rData as Record<string, unknown>)[k as string]);
 
