@@ -13,7 +13,7 @@ export default async (guildId: string) => {
  if (guilds.has(guildId)) return false;
  guilds.add(guildId);
 
- Object.values(tasks).forEach((t) => t(guildId));
+ await Promise.allSettled(Object.values(tasks).map((t) => t(guildId)));
  return true;
 };
 

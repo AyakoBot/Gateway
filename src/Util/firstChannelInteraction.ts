@@ -11,7 +11,7 @@ export default async (channelId: string, guildId: string) => {
  if (channels.has(channelId)) return false;
  channels.add(channelId);
 
- Object.values(tasks).forEach((t) => t(channelId, guildId));
+ await Promise.allSettled(Object.values(tasks).map((t) => t(channelId, guildId)));
  return true;
 };
 
