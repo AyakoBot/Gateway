@@ -241,8 +241,7 @@ export default {
    if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
   }
 
-  await firstGuildInteraction(data.guild_id);
-  data.members.forEach((member) => redis.members.set(member, data.guild_id));
+  await redis.members.setMany(data.members, data.guild_id);
  },
 
  [GatewayDispatchEvents.GuildMemberUpdate]: async (data: GatewayGuildMemberUpdateDispatchData) => {

@@ -276,6 +276,7 @@ export default abstract class Cache<
   keystoreIds: string[],
   ids: string[],
   ttl: number = 604800,
+  pipeline?: ChainableCommander,
  ) {
   const now = Date.now();
   const valueStr = JSON.stringify(value);
@@ -283,7 +284,7 @@ export default abstract class Cache<
   const timestampKey = this.key(...ids, String(now));
   const historyKey = this.history(...ids);
 
-  const result = await this.redis.eval(
+  const result = await (pipeline || this.redis).eval(
    this.dedupeScript,
    3,
    currentKey,
@@ -295,9 +296,9 @@ export default abstract class Cache<
   );
 
   if (result === 1 || keystoreIds.length > 0) {
-   const pipeline = this.redis.pipeline();
-   this.setKeystore(pipeline, ttl, keystoreIds, ids);
-   return pipeline.exec();
+   const p = pipeline || this.redis.pipeline();
+   this.setKeystore(p, ttl, keystoreIds, ids);
+   return pipeline ? null : p.exec();
   }
 
   return [];

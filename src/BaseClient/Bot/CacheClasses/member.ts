@@ -42,6 +42,24 @@ export default class MemberCache extends Cache<APIGuildMember> {
   return `https://cdn.discordapp.com/guilds/${guildId}/users/${userId}/avatars/${avatar}.${avatar.startsWith('a_') ? 'gif' : 'webp'}`;
  }
 
+ async setMany(data: APIGuildMember[], guildId: string) {
+  const rDatas = data
+   .map((d) => this.apiToR(d, guildId))
+   .filter((d): d is RMember => !!d)
+   .filter((d) => !!d.guild_id && !!d.user_id);
+  if (!rDatas.length) return false;
+
+  const pipeline = this.redis.pipeline();
+
+  await Promise.all(
+   rDatas.map((rData) =>
+    this.setValue(rData, [rData.guild_id], [rData.guild_id, rData.user_id], undefined, pipeline),
+   ),
+  );
+
+  return pipeline.exec();
+ }
+
  async set(data: APIGuildMember, guildId: string) {
   const rData = this.apiToR(data, guildId);
   if (!rData) return false;
