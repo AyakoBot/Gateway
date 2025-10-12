@@ -1,6 +1,7 @@
 import { StickerFormatType, type APISticker } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
-import type { MakeRequired } from 'src/Typings/Typings';
+
+import type { MakeRequired } from '../../../Typings/Typings';
 
 import Cache from './Base/Cache.js';
 

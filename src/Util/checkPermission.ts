@@ -1,6 +1,7 @@
 import { PermissionFlagsBits } from 'discord-api-types/v10';
-import { cache as clientCache } from 'src/BaseClient/Bot/Client.js';
-import { cache } from 'src/BaseClient/Bot/Redis.js';
+
+import { cache as clientCache } from '../BaseClient/Bot/Client.js';
+import { cache } from '../BaseClient/Bot/Redis.js';
 
 export default async (
  guildId: string,
