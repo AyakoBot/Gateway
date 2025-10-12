@@ -31,7 +31,7 @@ client.rest.on(RESTEvents.RateLimited, (info) =>
 
 client.rest.on(RESTEvents.Response, (request, response) =>
  console.log(
-  `[Request] ${request.method} ${request.path} - [Response] ${response.status} | ${response.statusText}`,
+  `[Request] ${response.status} | ${response.statusText} - ${request.method} ${request.path}`,
  ),
 );
 
