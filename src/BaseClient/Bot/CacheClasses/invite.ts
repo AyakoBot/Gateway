@@ -40,14 +40,14 @@ export default class InviteCache extends Cache<APIInvite> {
  async set(data: APIInvite) {
   const rData = this.apiToR(data);
   if (!rData) return false;
-  if (!rData.guild_id || !rData.code) return false;
+  if (!rData.guild_id || !rData.code || !rData.channel_id) return false;
 
-  await this.setValue(rData, [rData.guild_id], [rData.code]);
+  await this.setValue(rData, [rData.guild_id], [rData.channel_id, rData.code]);
   return true;
  }
 
- async get(code: string) {
-  return super.get(code);
+ async get(channelId: string, code: string) {
+  return super.get(channelId, code);
  }
 
  apiToR(data: APIInvite) {
