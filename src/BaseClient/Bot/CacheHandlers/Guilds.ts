@@ -234,7 +234,13 @@ export default {
   redis.users.set(data.user);
  },
 
- [GatewayDispatchEvents.GuildMembersChunk]: (data: GatewayGuildMembersChunkDispatchData) => {
+ [GatewayDispatchEvents.GuildMembersChunk]: async (data: GatewayGuildMembersChunkDispatchData) => {
+  if (data.chunk_index === 0) {
+   const keystoreKey = redis.members.keystore(data.guild_id);
+   const keys = await RedisClient.hkeys(keystoreKey);
+   if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
+  }
+
   firstGuildInteraction(data.guild_id);
   data.members.forEach((member) => redis.members.set(member, data.guild_id));
  },
