@@ -29,7 +29,6 @@ import {
 } from 'discord-api-types/v10';
 
 import firstGuildInteraction, { tasks } from '../../../Util/firstGuildInteraction.js';
-import requestGuildMembers from '../../../Util/requestGuildMembers.js';
 import { cache } from '../Client.js';
 import RedisClient, { cache as redis } from '../Redis.js';
 
@@ -251,19 +250,7 @@ export default {
 
   console.log('[CHUNK] Finished receiving member chunks for', data.guild_id);
   cache.requestedGuilds.add(data.guild_id);
-
-  const [nextGuild] = [...cache.requestGuildQueue.values()]
-   .map((id) => ({ id, members: cache.members.get(id) || 0 }))
-   .sort((a, b) => b.members - a.members);
-
-  if (!nextGuild) {
-   cache.requestingGuild = null;
-   return;
-  }
-
-  cache.requestingGuild = nextGuild.id;
-  cache.requestGuildQueue.delete(nextGuild.id);
-  setImmediate(() => requestGuildMembers(nextGuild.id));
+  cache.requestingGuild = null;
  },
 
  [GatewayDispatchEvents.GuildMemberUpdate]: async (data: GatewayGuildMemberUpdateDispatchData) => {
