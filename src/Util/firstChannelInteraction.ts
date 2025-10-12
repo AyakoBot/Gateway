@@ -1,5 +1,5 @@
 import { api } from '../BaseClient/Bot/Client.js';
-import { cache } from '../BaseClient/Bot/Redis.js';
+import RedisClient, { cache } from '../BaseClient/Bot/Redis.js';
 
 import checkPermission from './checkPermission.js';
 
@@ -21,6 +21,8 @@ export const tasks = {
 
   if (!(await checkPermission(guildId, ['ViewChannel']))) return;
 
+  await cache.pins.delAll(channelId);
+
   const pins = await api.channels.getPins(channelId);
 
   pins.forEach((pin) => {
@@ -31,6 +33,13 @@ export const tasks = {
  invites: async (channelId: string, guildId: string) => {
   if (!guildId) return;
   if (!(await checkPermission(guildId, ['ManageChannels']))) return;
+
+  const keystoreKey = cache.invites.keystore(guildId);
+  const allKeys = await RedisClient.hkeys(keystoreKey);
+
+  const channelInvitePrefix = cache.invites.key(channelId);
+  const channelKeys = allKeys.filter((key) => key.startsWith(channelInvitePrefix));
+  if (channelKeys.length > 0) await RedisClient.del(...channelKeys);
 
   const invites = await api.channels.getInvites(channelId);
   invites.forEach((invite) => cache.invites.set(invite));
