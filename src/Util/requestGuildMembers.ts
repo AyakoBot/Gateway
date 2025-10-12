@@ -4,8 +4,11 @@ import { gateway } from '../BaseClient/Bot/Client.js';
 
 import calculateShardId from './calculateShardId.js';
 
-export default (guildId: string) =>
- gateway.send(calculateShardId(guildId), {
+export default (guildId: string) => {
+ // eslint-disable-next-line no-console
+ console.log('[CHUNK] Requesting guild members for', guildId);
+
+ return gateway.send(calculateShardId(guildId), {
   op: GatewayOpcodes.RequestGuildMembers,
   d: {
    guild_id: guildId,
@@ -14,3 +17,4 @@ export default (guildId: string) =>
    query: '',
   },
  });
+};
