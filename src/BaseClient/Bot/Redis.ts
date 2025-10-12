@@ -31,7 +31,7 @@ import WelcomeScreenCache from './CacheClasses/welcomeScreen.js';
 export const prefix = 'cache';
 const cacheDBnum = process.argv.includes('--dev') ? process.env.devCacheDB : process.env.cacheDB;
 
-if (!cacheDBnum && typeof cacheDBnum !== 'number') {
+if (!cacheDBnum || isNaN(Number(cacheDBnum))) {
  throw new Error('No cache DB number provided in env vars');
 }
 
