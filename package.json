@@ -7,7 +7,7 @@
     "build": "swc src -d dist --strip-leading-paths --copy-files",
     "dev": "node --enable-source-maps --experimental-wasm-modules --experimental-json-modules ./dist/index.js --debug --warn --dev --debug-db",
     "lint": "pnpx eslint 'src/**/*.ts' --fix",
-    "run": "node --max-old-space-size=2048 --no-deprecation --no-warnings --experimental-json-modules ./dist/index.js",
+    "run": "node --max-old-space-size=512 --no-deprecation --no-warnings --experimental-json-modules ./dist/index.js",
     "start": "pnpm run run",
     "watch": "swc src -d dist --strip-leading-paths --copy-files --watch"
   },
