@@ -5,7 +5,6 @@ import RedisClient, { cache } from '../BaseClient/Bot/Redis.js';
 
 import checkPermission from './checkPermission.js';
 import requestGuildMembers from './requestGuildMembers.js';
-import requestScheduledEvents from './requestScheduledEvents.js';
 import requestVoiceChannelStatuses from './requestVoiceChannelStatuses.js';
 
 const guilds = new Set<string>();
@@ -79,7 +78,16 @@ export const tasks = {
 
   cache.welcomeScreens.set(welcomeScreen, guildId);
  },
- scheduledEvents: (guildId: string) => requestScheduledEvents(guildId),
+ scheduledEvents: async (guildId: string) => {
+  const keystoreKey = cache.events.keystore(guildId);
+  const keys = await RedisClient.hkeys(keystoreKey);
+  if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
+
+  const scheduledEvents = await api.guilds
+   .getScheduledEvents(guildId, { with_user_count: true })
+   .catch(() => []);
+  scheduledEvents.forEach((e) => cache.events.set(e));
+ },
  webhooks: async (guildId: string) => {
   if (!(await checkPermission(guildId, ['ManageWebhooks']))) return;
 
