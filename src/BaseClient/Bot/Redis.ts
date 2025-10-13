@@ -36,12 +36,9 @@ if (!cacheDBnum || isNaN(Number(cacheDBnum))) {
 }
 
 export const cacheDB = new Redis({ host: 'redis', db: Number(cacheDBnum) });
-export const cacheSub = new Redis({ host: 'redis', db: Number(cacheDBnum) });
+await cacheDB.config('SET', 'notify-keyspace-events', 'Ex');
 
 export default cacheDB;
-
-await cacheDB.config('SET', 'notify-keyspace-events', 'Ex');
-await cacheSub.subscribe(`__keyevent@${cacheDBnum}__:expired`);
 
 export const cache = {
  auditlogs: new AuditLogCache(cacheDB),
