@@ -6,14 +6,15 @@ import { cache } from '../BaseClient/Bot/Redis.js';
 export default async (
  guildId: string,
  requiredPermissions: (keyof typeof PermissionFlagsBits)[],
+ userId: string = clientCache.user?.id || '',
 ) => {
  if (!requiredPermissions.length) return true;
  if (!clientCache.user) return false;
 
- const me = await cache.members.get(guildId, clientCache.user.id);
- if (!me) return false;
+ const member = await cache.members.get(guildId, userId);
+ if (!member) return false;
 
- const roles = await Promise.all(me.roles.map((roleId) => cache.roles.get(roleId)));
+ const roles = await Promise.all(member.roles.map((roleId) => cache.roles.get(roleId)));
  const permissions = roles.reduce((acc, role) => BigInt(role?.permissions || '0') | acc, 0n);
 
  if (permissions & BigInt(PermissionFlagsBits.Administrator)) return true;
