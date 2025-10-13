@@ -9,7 +9,7 @@ export default async (
  userId: string = clientCache.user?.id || '',
 ) => {
  if (!requiredPermissions.length) return true;
- if (!clientCache.user) return false;
+ if (!userId.length) return false;
 
  const member = await cache.members.get(guildId, userId);
  if (!member) return false;
