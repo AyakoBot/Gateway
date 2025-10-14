@@ -18,6 +18,7 @@ export type RThread = Pick<
  | 'member_count'
  | 'total_message_sent'
  | 'applied_tags'
+ | 'parent_id'
 > & {
  guild_id: string;
  member_id: string | null;
@@ -39,6 +40,7 @@ export const RThreadKeys = [
  'applied_tags',
  'guild_id',
  'member_id',
+ 'parent_id',
 ] as const;
 
 export default class ThreadCache extends Cache<
