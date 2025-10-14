@@ -251,10 +251,19 @@ export default abstract class Cache<
   return this.redis.get(this.key(...ids, String(time))).then((data) => this.stringToData(data));
  }
 
- getAll(...ids: string[]): Promise<Array<DeriveRFromAPI<T, K>>> {
+ getAllTimes(...ids: string[]): Promise<Array<DeriveRFromAPI<T, K>>> {
   return this.getTimes(...ids).then((times) =>
    Promise.all(times.map((t) => this.getAt(Number(t), ...ids))).then((d) => d.filter((v) => !!v)),
   );
+ }
+
+ getAll(...keystoreIds: string[]): Promise<Array<DeriveRFromAPI<T, K>>> {
+  return this.redis
+   .hkeys(this.keystore(...keystoreIds))
+   .then((keys) => keys.map((k) => k.split(':').slice(2).join(':')))
+   .then((ids) =>
+    Promise.all(ids.map((id) => this.get(...id.split(':')))).then((d) => d.filter((v) => !!v)),
+   );
  }
 
  getTimes(...ids: string[]): Promise<number[]> {
