@@ -10,7 +10,7 @@ const Manager = new ClusterManager('./dist/bot.js', {
  token: (process.argv.includes('--dev') ? process.env.DevToken : process.env.Token) ?? '',
  shardArgs: process.argv,
  execArgv: [
-  '--max-old-space-size=512',
+  '--max-old-space-size=2048',
   '--experimental-json-modules',
   ...(process.argv.includes('--dev') ? [] : ['--no-deprecation', '--no-warnings']),
  ],

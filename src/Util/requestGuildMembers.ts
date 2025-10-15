@@ -18,7 +18,7 @@ const runWorkerThread = async (guildId: string, shardId: number) => {
  console.log('[CHUNK] Spawning child process for', guildId);
  const worker = fork(join(dirname(filename), '../BaseClient/MemberWorker/Worker.js'), [], {
   execArgv: [
-   '--max-old-space-size=4096',
+   '--max-old-space-size=1024',
    process.env.argv?.includes('--dev') ? '--dev' : '',
   ].filter((v) => !!v.length),
   env: {
