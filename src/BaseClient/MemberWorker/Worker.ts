@@ -16,6 +16,11 @@ if (!process.env.guildId) throw new Error('No guildId provided in env vars');
 if (!process.env.token) throw new Error('No token provided in env vars');
 if (!process.env.totalShards) throw new Error('No totalShards provided in env vars');
 
+setTimeout(() => {
+ console.log('[CHUNK] Worker timed out - Exiting');
+ process.exit();
+}, 120000);
+
 export type Message = {
  type: 'ready' | 'fin';
  guildId: string;
