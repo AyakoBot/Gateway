@@ -52,7 +52,9 @@ const runWorkerThread = async (guildId: string, shardId: number) => {
   process.off('SIGTERM', boundHandler);
   process.off('uncaughtException', boundHandler);
 
+  cache.requestGuildQueue.add(guildId);
   cache.requestingGuild = null;
+
   console.log(`[CHUNK] Worker timed out for guild ${guildId} - Ready state: ${isReady}`);
   throw new Error(`Timed out waiting for worker for guild ${guildId} - Ready state: ${isReady}`);
  }, 60000);
@@ -90,6 +92,8 @@ const runWorkerThread = async (guildId: string, shardId: number) => {
 
    console.log(`[CHUNK] Worker errored for guild ${guildId}`);
    console.log(error);
+
+   cache.requestGuildQueue.add(guildId);
    throw error;
   });
  });
@@ -123,6 +127,7 @@ setInterval(() => {
  if (!nextGuild) return;
 
  cache.requestGuildQueue.delete(nextGuild.id);
+ console.log('[CHUNK] Left in queue:', cache.requestGuildQueue.size);
  requestGuildMembers(nextGuild.id);
 }, 100);
 
