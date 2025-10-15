@@ -1,43 +1,52 @@
+/* eslint-disable no-console */
 import { Worker } from 'worker_threads';
 
-import { GatewayOpcodes } from 'discord-api-types/v10';
 import { shardIdForGuildId } from 'discord-hybrid-sharding';
 
-import { cache, gateway } from '../BaseClient/Bot/Client.js';
+import { cache } from '../BaseClient/Bot/Client.js';
 import type { Message, PassObject } from '../BaseClient/MemberWorker/Worker.js';
 
-const spawnWorkerThread = async (guildId: string, shardId: number) => {
+const runWorkerThread = async (guildId: string, shardId: number) => {
+ console.log('[CHUNK] Spawning worker thread for', guildId);
  const worker = new Worker('./dist/BaseClient/MemberWorker/Worker.js', {
-  workerData: {
-   guildId,
-   shardId,
-  } as PassObject,
+  argv: process.argv,
+  // execArgv: ['--max-old-space-size=4096'], // 8192
+  workerData: { guildId, shardId } as PassObject,
  });
+ console.log(`[CHUNK] Worker spawned for guild ${guildId}`);
 
  let isReady: boolean = false;
 
  setTimeout(() => {
-  if (isReady) return;
+  if (worker.threadId === -1) return;
+
   worker.terminate();
   cache.requestingGuild = null;
-  throw new Error(`Timed out waiting for worker to be ready for guild ${guildId}`);
+  console.log(`[CHUNK] Worker timed out for guild ${guildId} - Ready state: ${isReady}`);
+  throw new Error(`Timed out waiting for worker for guild ${guildId} - Ready state: ${isReady}`);
  }, 60000);
 
  await new Promise((resolve, reject) => {
-  worker.once('message', (result: Message) => {
+  worker.on('message', (result: Message) => {
    if (result.type === 'ready') {
+    console.log(`[CHUNK] Worker ready for guild ${guildId}`);
     isReady = true;
     return;
    }
 
-   resolve(void 0);
+   console.log(`[CHUNK] Worker finished for guild ${guildId}`);
+
    worker.terminate();
    cache.requestingGuild = null;
    cache.requestedGuilds.add(result.guildId);
+
+   resolve(void 0);
   });
   worker.once('error', (error: Message) => {
    reject();
    worker.terminate();
+   console.log(`[CHUNK] Worker errored for guild ${guildId}`);
+   console.log(error);
    throw error;
   });
  });
@@ -50,26 +59,14 @@ const requestGuildMembers = async (guildId: string) => {
  }
 
  if (cache.requestedGuilds.has(guildId)) return Promise.resolve();
- cache.requestedGuilds.add(guildId);
 
  cache.requestingGuild = guildId;
 
- // eslint-disable-next-line no-console
  console.log('[CHUNK] Requesting guild members for', guildId);
 
  const shardId = shardIdForGuildId(guildId);
 
- await spawnWorkerThread(guildId, shardId);
-
- return gateway.send(shardId, {
-  op: GatewayOpcodes.RequestGuildMembers,
-  d: {
-   guild_id: guildId,
-   presences: false,
-   limit: 0,
-   query: '',
-  },
- });
+ await runWorkerThread(guildId, shardId);
 };
 
 setInterval(() => {

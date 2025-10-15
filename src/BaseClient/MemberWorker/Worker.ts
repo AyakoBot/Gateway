@@ -8,6 +8,7 @@ import { WebSocketManager, WebSocketShardEvents } from '@discordjs/ws';
 import {
  GatewayDispatchEvents,
  GatewayIntentBits,
+ GatewayOpcodes,
  type GatewayDispatchPayload,
 } from 'discord-api-types/v10';
 import { getInfo } from 'discord-hybrid-sharding';
@@ -46,6 +47,8 @@ gateway.connect();
 export const client = new Client({ rest, gateway });
 
 gateway.on(WebSocketShardEvents.Dispatch, (event, shardId) => {
+ console.log('[CHUNK] WS event', event.t);
+
  ready(event, shardId);
  chunks(event);
 });
@@ -55,6 +58,11 @@ const ready = (event: GatewayDispatchPayload, shardId: number) => {
 
  console.log(`[READY] Worker connected to gateway | Shard ${shardId}`);
  parentPort?.postMessage({ type: 'ready', guildId: workerData.guildId } as Message);
+
+ gateway.send(shardId, {
+  op: GatewayOpcodes.RequestGuildMembers,
+  d: { guild_id: workerData.guildId, presences: false, limit: 0, query: '' },
+ });
 };
 
 const chunks = async (event: GatewayDispatchPayload) => {
@@ -84,5 +92,4 @@ const chunks = async (event: GatewayDispatchPayload) => {
  console.log('[CHUNK] Finished receiving member chunks for', data.guild_id);
 
  parentPort?.postMessage({ type: 'fin', guildId: data.guild_id } as Message);
- process.exit();
 };

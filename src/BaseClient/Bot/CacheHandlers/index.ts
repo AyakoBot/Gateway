@@ -39,6 +39,8 @@ import Thread from './Thread.js';
 import Voice from './Voice.js';
 
 export default (data: GatewayDispatchPayload, shardId: number) => {
+ if (data.t === GatewayDispatchEvents.GuildMembersChunk) return;
+
  const cache = caches[data.t];
  if (!cache) return;
 
