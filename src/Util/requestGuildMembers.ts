@@ -1,26 +1,57 @@
 /* eslint-disable no-console */
-import { Worker } from 'worker_threads';
+import { type ChildProcess, fork } from 'child_process';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
-import { shardIdForGuildId } from 'discord-hybrid-sharding';
+import { getInfo, shardIdForGuildId } from 'discord-hybrid-sharding';
 
 import { cache } from '../BaseClient/Bot/Client.js';
-import type { Message, PassObject } from '../BaseClient/MemberWorker/Worker.js';
+import type { Message } from '../BaseClient/MemberWorker/Worker.js';
+
+const filename = fileURLToPath(import.meta.url);
+
+const exitHandler = (worker: ChildProcess) => {
+ worker.kill();
+};
 
 const runWorkerThread = async (guildId: string, shardId: number) => {
- console.log('[CHUNK] Spawning worker thread for', guildId);
- const worker = new Worker('./dist/BaseClient/MemberWorker/Worker.js', {
-  argv: process.argv,
-  // execArgv: ['--max-old-space-size=4096'], // 8192
-  workerData: { guildId, shardId } as PassObject,
+ console.log('[CHUNK] Spawning child process for', guildId);
+ const worker = fork(join(dirname(filename), '../BaseClient/MemberWorker/Worker.js'), [], {
+  execArgv: [
+   '--max-old-space-size=4096',
+   process.env.argv?.includes('--dev') ? '--dev' : '',
+  ].filter((v) => !!v.length),
+  env: {
+   guildId,
+   shardId: String(shardId),
+   totalShards: String(getInfo().TOTAL_SHARDS),
+   token: (
+    (process.argv.includes('--dev') ? process.env.DevToken : process.env.Token) ?? ''
+   ).replace('Bot ', ''),
+   cacheDB: process.env.cacheDB,
+   devCacheDB: process.env.devCacheDB,
+  },
  });
  console.log(`[CHUNK] Worker spawned for guild ${guildId}`);
+
+ const boundHandler = () => exitHandler(worker);
+ process.on('exit', boundHandler);
+ process.on('SIGINT', boundHandler);
+ process.on('SIGTERM', boundHandler);
+ process.on('uncaughtException', boundHandler);
 
  let isReady: boolean = false;
 
  setTimeout(() => {
-  if (worker.threadId === -1) return;
+  if (worker.exitCode === null) return;
 
-  worker.terminate();
+  worker.kill();
+
+  process.off('exit', boundHandler);
+  process.off('SIGINT', boundHandler);
+  process.off('SIGTERM', boundHandler);
+  process.off('uncaughtException', boundHandler);
+
   cache.requestingGuild = null;
   console.log(`[CHUNK] Worker timed out for guild ${guildId} - Ready state: ${isReady}`);
   throw new Error(`Timed out waiting for worker for guild ${guildId} - Ready state: ${isReady}`);
@@ -36,7 +67,13 @@ const runWorkerThread = async (guildId: string, shardId: number) => {
 
    console.log(`[CHUNK] Worker finished for guild ${guildId}`);
 
-   worker.terminate();
+   worker.kill();
+
+   process.off('exit', boundHandler);
+   process.off('SIGINT', boundHandler);
+   process.off('SIGTERM', boundHandler);
+   process.off('uncaughtException', boundHandler);
+
    cache.requestingGuild = null;
    cache.requestedGuilds.add(result.guildId);
 
@@ -44,7 +81,13 @@ const runWorkerThread = async (guildId: string, shardId: number) => {
   });
   worker.once('error', (error: Message) => {
    reject();
-   worker.terminate();
+   worker.kill();
+
+   process.off('exit', boundHandler);
+   process.off('SIGINT', boundHandler);
+   process.off('SIGTERM', boundHandler);
+   process.off('uncaughtException', boundHandler);
+
    console.log(`[CHUNK] Worker errored for guild ${guildId}`);
    console.log(error);
    throw error;

@@ -1,7 +1,4 @@
 /* eslint-disable no-console */
-import 'dotenv/config';
-import { parentPort, workerData as rawWorkerData } from 'worker_threads';
-
 import { Client } from '@discordjs/core';
 import { REST } from '@discordjs/rest';
 import { WebSocketManager, WebSocketShardEvents } from '@discordjs/ws';
@@ -11,44 +8,35 @@ import {
  GatewayOpcodes,
  type GatewayDispatchPayload,
 } from 'discord-api-types/v10';
-import { getInfo } from 'discord-hybrid-sharding';
 
 import RedisClient, { cache } from '../Bot/Redis.js';
 
-export type PassObject = {
- guildId: string;
- shardId: number;
-};
+if (!process.env.shardId) throw new Error('No shardId provided in env vars');
+if (!process.env.guildId) throw new Error('No guildId provided in env vars');
+if (!process.env.token) throw new Error('No token provided in env vars');
+if (!process.env.totalShards) throw new Error('No totalShards provided in env vars');
 
 export type Message = {
  type: 'ready' | 'fin';
  guildId: string;
 };
 
-const workerData = rawWorkerData as PassObject;
-
-const cleanedToken = (
- (process.argv.includes('--dev') ? process.env.DevToken : process.env.Token) ?? ''
-).replace('Bot ', '');
-
-const rest = new REST({ api: 'http://127.0.0.1:8080/api' }).setToken(cleanedToken);
+const rest = new REST({ api: 'http://127.0.0.1:8080/api' }).setToken(process.env.token);
 
 export const gateway = new WebSocketManager({
  rest,
  intents: GatewayIntentBits.Guilds | GatewayIntentBits.GuildMembers,
- shardCount: getInfo().TOTAL_SHARDS,
- shardIds: [workerData.shardId],
+ shardCount: Number(process.env.totalShards),
+ shardIds: [Number(process.env.shardId)],
  initialPresence: null,
 });
 
-gateway.setToken(cleanedToken);
+gateway.setToken(process.env.token);
 gateway.connect();
 
 export const client = new Client({ rest, gateway });
 
 gateway.on(WebSocketShardEvents.Dispatch, (event, shardId) => {
- console.log('[CHUNK] WS event', event.t);
-
  ready(event, shardId);
  chunks(event);
 });
@@ -57,11 +45,11 @@ const ready = (event: GatewayDispatchPayload, shardId: number) => {
  if (event.t !== GatewayDispatchEvents.Ready) return;
 
  console.log(`[READY] Worker connected to gateway | Shard ${shardId}`);
- parentPort?.postMessage({ type: 'ready', guildId: workerData.guildId } as Message);
+ process.send?.({ type: 'ready', guildId: process.env.guildId } as Message);
 
  gateway.send(shardId, {
   op: GatewayOpcodes.RequestGuildMembers,
-  d: { guild_id: workerData.guildId, presences: false, limit: 0, query: '' },
+  d: { guild_id: String(process.env.guildId), presences: false, limit: 0, query: '' },
  });
 };
 
@@ -70,7 +58,7 @@ const chunks = async (event: GatewayDispatchPayload) => {
 
  const data = event.d;
 
- if (data.guild_id !== workerData.guildId) return;
+ if (data.guild_id !== process.env.guildId) return;
 
  if (data.chunk_index === 0) {
   console.log('[CHUNK] Receiving member chunks for', data.guild_id, data.chunk_count);
@@ -91,5 +79,10 @@ const chunks = async (event: GatewayDispatchPayload) => {
 
  console.log('[CHUNK] Finished receiving member chunks for', data.guild_id);
 
- parentPort?.postMessage({ type: 'fin', guildId: data.guild_id } as Message);
+ process.send?.({ type: 'fin', guildId: data.guild_id } as Message);
+
+ setTimeout(() => {
+  console.log('[CHUNK] Still alive. Exiting worker for guild', data.guild_id);
+  process.exit(0);
+ }, 1000);
 };
