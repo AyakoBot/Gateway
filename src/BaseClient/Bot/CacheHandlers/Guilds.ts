@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import {
  GatewayDispatchEvents,
  type GatewayGuildAuditLogEntryCreateDispatchData,
@@ -10,7 +9,6 @@ import {
  type GatewayGuildIntegrationsUpdateDispatchData,
  type GatewayGuildMemberAddDispatchData,
  type GatewayGuildMemberRemoveDispatchData,
- type GatewayGuildMembersChunkDispatchData,
  type GatewayGuildMemberUpdateDispatchData,
  type GatewayGuildRoleCreateDispatchData,
  type GatewayGuildRoleDeleteDispatchData,
@@ -235,28 +233,7 @@ export default {
   redis.users.set(data.user);
  },
 
- [GatewayDispatchEvents.GuildMembersChunk]: async (data: GatewayGuildMembersChunkDispatchData) => {
-  if (data.chunk_index === 0) {
-   console.log('[CHUNK] Receiving member chunks for', data.guild_id, data.chunk_count);
-
-   const keystoreKey = redis.members.keystore(data.guild_id);
-   const keys = await RedisClient.hkeys(keystoreKey);
-   if (keys.length > 0) {
-    const pipeline = RedisClient.pipeline();
-    keys.forEach((key) => pipeline.del(key));
-    pipeline.del(keystoreKey);
-    await pipeline.exec();
-   }
-  }
-
-  await redis.members.setMany(data.members, data.guild_id);
-
-  if (data.chunk_index !== data.chunk_count - 1) return;
-
-  console.log('[CHUNK] Finished receiving member chunks for', data.guild_id);
-  cache.requestedGuilds.add(data.guild_id);
-  cache.requestingGuild = null;
- },
+ [GatewayDispatchEvents.GuildMembersChunk]: () => {},
 
  [GatewayDispatchEvents.GuildMemberUpdate]: async (data: GatewayGuildMemberUpdateDispatchData) => {
   firstGuildInteraction(data.guild_id);
