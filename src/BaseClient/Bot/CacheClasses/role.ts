@@ -9,6 +9,7 @@ export const RRoleKeys = [
  'id',
  'name',
  'color',
+ 'colors',
  'hoist',
  'icon_url',
  'unicode_emoji',
