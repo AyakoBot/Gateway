@@ -1,10 +1,10 @@
-import type { APIInvite } from 'discord-api-types/v10';
+import type { APIExtendedInvite, APIInvite } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
 
 import Cache from './Base/Cache.js';
 
 export type RInvite = Omit<
- APIInvite,
+ APIExtendedInvite,
  'guild' | 'channel' | 'inviter' | 'target_user' | 'guild_scheduled_event' | 'stage_instance'
 > & {
  guild_id: string;
@@ -28,9 +28,14 @@ export const RInviteKeys = [
  'target_user_id',
  'guild_scheduled_event_id',
  'application_id',
+ 'uses',
+ 'max_uses',
+ 'max_age',
+ 'temporary',
+ 'created_at',
 ] as const;
 
-export default class InviteCache extends Cache<APIInvite> {
+export default class InviteCache extends Cache<APIInvite | APIExtendedInvite> {
  public keys = RInviteKeys;
  private codestorePrefix: string;
 
@@ -43,7 +48,7 @@ export default class InviteCache extends Cache<APIInvite> {
   return `${this.codestorePrefix}${ids.length ? `:${ids.join(':')}` : ''}`;
  }
 
- async set(data: APIInvite) {
+ async set(data: APIInvite | APIExtendedInvite) {
   const rData = this.apiToR(data);
   if (!rData) return false;
   if (!rData.guild_id || !rData.code || !rData.channel_id) return false;
