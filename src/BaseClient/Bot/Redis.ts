@@ -9,6 +9,7 @@ import CommandCache from './CacheClasses/command.js';
 import CommandPermissionCache from './CacheClasses/commandPermission.js';
 import EmojiCache from './CacheClasses/emoji.js';
 import EventCache from './CacheClasses/event.js';
+import EventUserCache from './CacheClasses/eventUser.js';
 import GuildCache from './CacheClasses/guild.js';
 import GuildCommandCache from './CacheClasses/guildCommand.js';
 import IntegrationCache from './CacheClasses/integration.js';
@@ -69,5 +70,6 @@ export const cache = {
  voices: new VoiceCache(cacheDB),
  webhooks: new WebhookCache(cacheDB),
  welcomeScreens: new WelcomeScreenCache(cacheDB),
- onboarding: new OnboardingCache(cacheDB),
+ onboardings: new OnboardingCache(cacheDB),
+ eventUsers: new EventUserCache(cacheDB),
 };

@@ -4,6 +4,7 @@ import { api, cache as clientCache } from '../BaseClient/Bot/Client.js';
 import RedisClient, { cache } from '../BaseClient/Bot/Redis.js';
 
 import checkPermission from './checkPermission.js';
+import requestEventSubscribers from './requestEventSubscribers.js';
 import requestGuildMembers from './requestGuildMembers.js';
 import requestVoiceChannelStatuses from './requestVoiceChannelStatuses.js';
 
@@ -85,7 +86,7 @@ export const tasks = {
   if (!(await checkPermission(guildId, ['ManageGuild']))) return;
 
   const onboarding = await api.guilds.getOnboarding(guildId);
-  cache.onboarding.set(onboarding);
+  cache.onboardings.set(onboarding);
  },
  scheduledEvents: async (guildId: string) => {
   const keystoreKey = cache.events.keystore(guildId);
@@ -96,6 +97,26 @@ export const tasks = {
    .getScheduledEvents(guildId, { with_user_count: true })
    .catch(() => []);
   scheduledEvents.forEach((e) => cache.events.set(e));
+
+  const members = (
+   await Promise.all(scheduledEvents.map((e) => requestEventSubscribers(e)))
+  ).flat();
+
+  members.forEach((u) => {
+   cache.users.set(u.user);
+   cache.eventUsers.set(
+    {
+     guild_id: guildId,
+     guild_scheduled_event_id: u.guildScheduledEventId,
+     user: u.user,
+     user_id: u.user.id,
+     member: u.member,
+    },
+    guildId,
+   );
+
+   if (u.member) cache.members.set(u.member, guildId);
+  });
  },
  webhooks: async (guildId: string) => {
   if (!(await checkPermission(guildId, ['ManageWebhooks']))) return;

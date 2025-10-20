@@ -110,6 +110,8 @@ export default {
   getPipeline.hgetall(redis.voices.keystore(data.id));
   getPipeline.hgetall(redis.webhooks.keystore(data.id));
   getPipeline.hgetall(redis.welcomeScreens.keystore(data.id));
+  getPipeline.hgetall(redis.onboardings.keystore(data.id));
+  getPipeline.hgetall(redis.eventUsers.keystore(data.id));
 
   const results = await getPipeline.exec();
   if (!results) return;
@@ -137,6 +139,8 @@ export default {
    voices,
    webhooks,
    welcomeScreens,
+   onboarding,
+   eventUsers,
   ] = results.map((result) => result[1] || {});
 
   const deletePipeline = RedisClient.pipeline();
@@ -163,6 +167,8 @@ export default {
   deletePipeline.del(redis.voices.keystore(data.id));
   deletePipeline.del(redis.webhooks.keystore(data.id));
   deletePipeline.del(redis.welcomeScreens.keystore(data.id));
+  deletePipeline.del(redis.onboardings.keystore(data.id));
+  deletePipeline.del(redis.eventUsers.keystore(data.id));
 
   deletePipeline.del(...Object.keys(auditlogs));
   deletePipeline.del(...Object.keys(automods));
@@ -186,6 +192,8 @@ export default {
   deletePipeline.del(...Object.keys(voices));
   deletePipeline.del(...Object.keys(webhooks));
   deletePipeline.del(...Object.keys(welcomeScreens));
+  deletePipeline.del(...Object.keys(onboarding));
+  deletePipeline.del(...Object.keys(eventUsers));
 
   await deletePipeline.exec();
  },
@@ -317,12 +325,16 @@ export default {
   data: GatewayGuildScheduledEventUserAddDispatchData,
  ) => {
   firstGuildInteraction(data.guild_id);
+
+  redis.eventUsers.set(data, data.guild_id);
  },
 
  [GatewayDispatchEvents.GuildScheduledEventUserRemove]: async (
   data: GatewayGuildScheduledEventUserRemoveDispatchData,
  ) => {
   firstGuildInteraction(data.guild_id);
+
+  redis.eventUsers.del(data.guild_scheduled_event_id, data.user_id);
  },
 
  [GatewayDispatchEvents.GuildSoundboardSoundCreate]: async (

@@ -11,6 +11,7 @@ import type {
  APIGuildMember,
  APIGuildOnboarding,
  APIGuildScheduledEvent,
+ APIGuildScheduledEventUser,
  APIGuildWelcomeScreen,
  APIInvite,
  APIMessage,
@@ -36,6 +37,7 @@ import type { RCommand } from '../command';
 import type { RCommandPermission } from '../commandPermission';
 import type { REmoji } from '../emoji';
 import type { REvent } from '../event';
+import type { REventUser } from '../eventUser';
 import type { RGuild } from '../guild';
 import type { RGuildCommand } from '../guildCommand';
 import type { RIntegration } from '../integration';
@@ -125,7 +127,9 @@ export type DeriveRFromAPI<T, K extends boolean> = T extends APIThreadChannel & 
                                                      ? RWelcomeScreen
                                                      : T extends APIGuildOnboarding
                                                        ? ROnboarding
-                                                       : never;
+                                                       : T extends APIGuildScheduledEventUser
+                                                         ? REventUser
+                                                         : never;
 
 export default abstract class Cache<
  T extends
@@ -153,7 +157,8 @@ export default abstract class Cache<
   | APIThreadMember
   | APIAuditLogEntry
   | APIGuildWelcomeScreen
-  | APIGuildOnboarding,
+  | APIGuildOnboarding
+  | APIGuildScheduledEventUser,
  K extends boolean = false,
 > {
  abstract keys: ReadonlyArray<keyof DeriveRFromAPI<T, K>>;
