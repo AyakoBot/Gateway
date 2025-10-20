@@ -14,12 +14,11 @@ export default class OnboardingCache extends Cache<APIGuildOnboarding> {
   super(redis, 'onboarding');
  }
 
- async set(data: APIGuildOnboarding, guildId: string) {
+ async set(data: APIGuildOnboarding) {
   const rData = this.apiToR(data);
   if (!rData) return false;
-  if (!guildId) return false;
 
-  await this.setValue(rData, [guildId], [guildId]);
+  await this.setValue(rData, [data.guild_id], [data.guild_id]);
   return true;
  }
 

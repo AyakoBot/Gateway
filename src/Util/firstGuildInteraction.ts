@@ -78,6 +78,15 @@ export const tasks = {
 
   cache.welcomeScreens.set(welcomeScreen, guildId);
  },
+ onboarding: async (guildId: string) => {
+  const guild = await cache.guilds.get(guildId);
+  if (!guild) return;
+
+  if (!(await checkPermission(guildId, ['ManageGuild']))) return;
+
+  const onboarding = await api.guilds.getOnboarding(guildId);
+  cache.onboarding.set(onboarding);
+ },
  scheduledEvents: async (guildId: string) => {
   const keystoreKey = cache.events.keystore(guildId);
   const keys = await RedisClient.hkeys(keystoreKey);
