@@ -15,6 +15,7 @@ import IntegrationCache from './CacheClasses/integration.js';
 import InviteCache from './CacheClasses/invite.js';
 import MemberCache from './CacheClasses/member.js';
 import MessageCache from './CacheClasses/message.js';
+import OnboardingCache from './CacheClasses/onboarding.js';
 import PinCache from './CacheClasses/pin.js';
 import ReactionCache from './CacheClasses/reaction.js';
 import RoleCache from './CacheClasses/role.js';
@@ -68,4 +69,5 @@ export const cache = {
  voices: new VoiceCache(cacheDB),
  webhooks: new WebhookCache(cacheDB),
  welcomeScreens: new WelcomeScreenCache(cacheDB),
+ onboarding: new OnboardingCache(cacheDB),
 };

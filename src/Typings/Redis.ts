@@ -11,6 +11,7 @@ export { type RIntegration } from '../BaseClient/Bot/CacheClasses/integration.js
 export { type RInvite } from '../BaseClient/Bot/CacheClasses/invite.js';
 export { type RMember } from '../BaseClient/Bot/CacheClasses/member.js';
 export { type RMessage } from '../BaseClient/Bot/CacheClasses/message.js';
+export { type ROnboarding } from '../BaseClient/Bot/CacheClasses/onboarding.js';
 export { type RReaction } from '../BaseClient/Bot/CacheClasses/reaction.js';
 export { type RRole } from '../BaseClient/Bot/CacheClasses/role.js';
 export { type RSoundboardSound } from '../BaseClient/Bot/CacheClasses/soundboard.js';

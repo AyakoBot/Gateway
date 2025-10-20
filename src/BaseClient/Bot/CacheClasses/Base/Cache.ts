@@ -9,6 +9,7 @@ import type {
  APIGuildChannel,
  APIGuildIntegration,
  APIGuildMember,
+ APIGuildOnboarding,
  APIGuildScheduledEvent,
  APIGuildWelcomeScreen,
  APIInvite,
@@ -41,6 +42,7 @@ import type { RIntegration } from '../integration';
 import type { RInvite } from '../invite';
 import type { RMember } from '../member';
 import type { RMessage } from '../message';
+import type { ROnboarding } from '../onboarding';
 import type { RReaction } from '../reaction';
 import type { RRole } from '../role';
 import type { RSoundboardSound } from '../soundboard';
@@ -121,7 +123,9 @@ export type DeriveRFromAPI<T, K extends boolean> = T extends APIThreadChannel & 
                                                    ? RAuditLog
                                                    : T extends APIGuildWelcomeScreen
                                                      ? RWelcomeScreen
-                                                     : never;
+                                                     : T extends APIGuildOnboarding
+                                                       ? ROnboarding
+                                                       : never;
 
 export default abstract class Cache<
  T extends
@@ -148,7 +152,8 @@ export default abstract class Cache<
   | APIReaction
   | APIThreadMember
   | APIAuditLogEntry
-  | APIGuildWelcomeScreen,
+  | APIGuildWelcomeScreen
+  | APIGuildOnboarding,
  K extends boolean = false,
 > {
  abstract keys: ReadonlyArray<keyof DeriveRFromAPI<T, K>>;
