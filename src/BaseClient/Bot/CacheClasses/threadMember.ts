@@ -36,7 +36,7 @@ export default class ThreadMemberCache extends Cache<APIThreadMember> {
   if (!data.id) return false;
 
   const keysNotToCache = Object.keys(data).filter(
-   (key): key is keyof typeof data => !this.keys.includes(key),
+   (key): key is keyof typeof data => !this.keys.includes(key as (typeof this.keys)[number]),
   );
 
   const rData = structuredClone(data) as unknown as RThreadMember;

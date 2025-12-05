@@ -48,7 +48,7 @@ export default class RoleCache extends Cache<APIRole> {
 
  apiToR(data: APIRole, guildId: string) {
   const keysNotToCache = Object.keys(data).filter(
-   (key): key is keyof typeof data => !this.keys.includes(key),
+   (key): key is keyof typeof data => !this.keys.includes(key as (typeof this.keys)[number]),
   );
 
   const rData = structuredClone(data) as unknown as RRole;

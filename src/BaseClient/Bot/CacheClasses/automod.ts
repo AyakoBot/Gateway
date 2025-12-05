@@ -41,7 +41,7 @@ export default class AutomodCache extends Cache<APIAutoModerationRule> {
 
  apiToR(data: APIAutoModerationRule) {
   const keysNotToCache = Object.keys(data).filter(
-   (key): key is keyof typeof data => !this.keys.includes(key),
+   (key): key is keyof typeof data => !this.keys.includes(key as (typeof this.keys)[number]),
   );
 
   keysNotToCache.forEach((k) => delete data[k]);

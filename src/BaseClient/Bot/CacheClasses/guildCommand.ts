@@ -55,7 +55,7 @@ export default class GuildCommandCache extends Cache<
  apiToR(data: APIApplicationCommand & { guild_id: string }) {
   if (!data.guild_id) return false;
   const keysNotToCache = Object.keys(data).filter(
-   (key): key is keyof typeof data => !this.keys.includes(key),
+   (key): key is keyof typeof data => !this.keys.includes(key as (typeof this.keys)[number]),
   );
   keysNotToCache.forEach((k) => delete data[k]);
 
