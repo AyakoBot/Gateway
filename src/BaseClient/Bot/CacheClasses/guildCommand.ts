@@ -44,7 +44,7 @@ export default class GuildCommandCache extends Cache<
   if (!rData) return false;
   if (!rData.guild_id || !rData.id) return false;
 
-  await this.setValue(rData, [rData.guild_id], [rData.id]);
+  await this.setValue(rData, [rData.guild_id, rData.application_id], [rData.id]);
   return true;
  }
 

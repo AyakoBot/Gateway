@@ -38,7 +38,7 @@ export default class CommandCache extends Cache<APIApplicationCommand> {
   if (!rData) return false;
   if (!rData.id) return false;
 
-  await this.setValue(rData, [], [rData.id]);
+  await this.setValue(rData, [rData.application_id], [rData.id]);
   return true;
  }
 
