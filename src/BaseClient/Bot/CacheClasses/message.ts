@@ -20,6 +20,7 @@ export type RMessage = Omit<
  mention_users: string[];
  thread_id: string | null;
  message_snapshots: Omit<APIMessageSnapshotFields, 'stickers'>[] | null;
+ is_message: boolean;
 };
 
 export const RMessageKeys = [
@@ -53,6 +54,7 @@ export const RMessageKeys = [
  'role_subscription_data',
  'poll',
  'message_snapshots',
+ 'is_message',
 ] as const;
 
 export default class MessageCache extends Cache<APIMessage> {
@@ -86,6 +88,7 @@ export default class MessageCache extends Cache<APIMessage> {
   rData.application_id = data.application_id || data.application?.id || null;
   rData.mention_users = data.mentions.map((u) => u.id);
   rData.thread_id = data.thread?.id || null;
+  rData.is_message = true;
   rData.message_snapshots =
    data.message_snapshots?.map((s) => {
     const rS = structuredClone(s) as unknown as NonNullable<RMessage['message_snapshots']>[number];
