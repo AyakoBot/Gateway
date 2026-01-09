@@ -35,10 +35,11 @@ export default class CommandCache extends Cache<APIApplicationCommand> {
 
  async set(data: APIApplicationCommand) {
   const rData = this.apiToR(data);
+
   if (!rData) return false;
   if (!rData.id) return false;
 
-  await this.setValue(rData, [rData.application_id], [rData.id]);
+  await this.setValue(rData, [rData.application_id], [rData.id], 3600);
   return true;
  }
 
@@ -47,8 +48,6 @@ export default class CommandCache extends Cache<APIApplicationCommand> {
  }
 
  apiToR(data: APIApplicationCommand) {
-  if (!data.guild_id) return false;
-
   const keysNotToCache = Object.keys(data).filter(
    (key): key is keyof typeof data => !this.keys.includes(key as (typeof this.keys)[number]),
   );

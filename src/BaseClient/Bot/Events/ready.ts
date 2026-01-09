@@ -6,8 +6,10 @@ import {
  type GatewayReadyDispatchData,
 } from 'discord-api-types/v10';
 import { getInfo } from 'discord-hybrid-sharding';
+import { scheduleJob } from 'node-schedule';
 
-import { cache, cluster, gateway } from '../Client.js';
+import { cache, client, cluster, gateway } from '../Client.js';
+import { cache as redis } from '../Redis.js';
 
 let ready: boolean = false;
 
@@ -44,6 +46,19 @@ export default async (data: GatewayReadyDispatchData, shardId: number | string) 
     since: Date.now(),
    },
   });
+ });
+
+ const getGuildCommands = async () => {
+  console.log('Getting commands');
+  const globalCommands = await client.api.applicationCommands.getGlobalCommands(
+   new Buffer(gateway.token.split('.')[0], 'base64').toString(),
+  );
+  globalCommands.forEach((c) => redis.commands.set(c));
+ };
+
+ getGuildCommands();
+ scheduleJob('0 * * * *', async () => {
+  getGuildCommands();
  });
 };
 
