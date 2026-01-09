@@ -26,7 +26,9 @@ export type Message = {
  guildId: string;
 };
 
-const rest = new REST({ api: 'http://nirn:8080/api' }).setToken(process.env.token);
+const rest = new REST({
+ api: `http://${process.argv.includes('--local') ? 'localhost' : 'nirn'}:8080/api`,
+}).setToken(process.env.token);
 
 export const gateway = new WebSocketManager({
  rest,

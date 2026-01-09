@@ -13,7 +13,9 @@ const cleanedToken = (
  (process.argv.includes('--dev') ? process.env.DevToken : process.env.Token) ?? ''
 ).replace('Bot ', '');
 
-const rest = new REST({ api: 'http://nirn:8080/api' }).setToken(cleanedToken);
+const rest = new REST({
+ api: `http://${process.argv.includes('--dev') ? 'localhost' : 'nirn'}:8080/api`,
+}).setToken(cleanedToken);
 
 export const gateway = new WebSocketManager({
  rest,

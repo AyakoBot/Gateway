@@ -4,7 +4,7 @@ import { scheduleJob } from 'node-schedule';
 console.clear();
 console.log('+++++++++++ Welcome to Ayako/Gateway ++++++++++++');
 console.log('+                  Arguments:                   +');
-console.log('+             --debug --warn --dev              +');
+console.log('+         --debug --warn --dev --local          +');
 console.log('+++++++++++++++++++++++++++++++++++++++++++++++++');
 
 (async () => {

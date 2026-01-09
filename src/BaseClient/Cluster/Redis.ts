@@ -5,4 +5,7 @@ if (!cacheDBnum && typeof cacheDBnum !== 'number') {
  throw new Error('No cache DB number provided in env vars');
 }
 
-export const cacheDB = new Redis({ host: 'redis', db: Number(cacheDBnum) });
+export const cacheDB = new Redis({
+ host: process.argv.includes('--local') ? 'localhost' : 'redis',
+ db: Number(cacheDBnum),
+});
