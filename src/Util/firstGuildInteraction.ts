@@ -8,11 +8,14 @@ import requestEventSubscribers from './requestEventSubscribers.js';
 import requestGuildMembers from './requestGuildMembers.js';
 import requestVoiceChannelStatuses from './requestVoiceChannelStatuses.js';
 
-const guilds = new Set<string>();
-
 export default async (guildId: string) => {
- if (guilds.has(guildId)) return false;
- guilds.add(guildId);
+ const pipeline = RedisClient.pipeline();
+ pipeline.hget('guild-interacts', guildId);
+ pipeline.hset('guild-interacts', guildId, '1');
+ pipeline.call('hexpire', 'guild-interacts', 604800, 'NX', 'FIELDS', 1, guildId);
+
+ const [isMember] = await pipeline.exec().then((res) => (res || [])?.map((r) => r[1]));
+ if (isMember === '1') return false;
 
  await Promise.allSettled(Object.values(tasks).map((t) => t(guildId)));
  return true;

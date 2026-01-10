@@ -68,7 +68,6 @@ export const cache: {
  sounds: Map<string, number>;
  user: APIUser | null;
  requestingGuild: string | null;
- requestedGuilds: Set<string>;
  requestGuildQueue: Set<string>;
 } = {
  guilds: 0,
@@ -79,6 +78,5 @@ export const cache: {
  sounds: new Map(),
  user: null,
  requestingGuild: null,
- requestedGuilds: new Set(),
  requestGuildQueue: new Set(),
 };

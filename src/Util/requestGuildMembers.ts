@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { getInfo, shardIdForGuildId } from 'discord-hybrid-sharding';
 
 import { cache } from '../BaseClient/Bot/Client.js';
+import RedisCache from '../BaseClient/Bot/Redis.js';
 import type { Message } from '../BaseClient/MemberWorker/Worker.js';
 
 const filename = fileURLToPath(import.meta.url);
@@ -43,7 +44,7 @@ const runWorkerThread = async (guildId: string, shardId: number) => {
  let isReady: boolean = false;
 
  setTimeout(() => {
-  if (worker.exitCode === null) return;
+  if (worker.exitCode !== null) return;
 
   worker.kill();
 
@@ -55,8 +56,12 @@ const runWorkerThread = async (guildId: string, shardId: number) => {
   cache.requestGuildQueue.add(guildId);
   cache.requestingGuild = null;
 
-  console.log(`[CHUNK] Worker timed out for guild ${guildId} - Ready state: ${isReady}`);
-  throw new Error(`Timed out waiting for worker for guild ${guildId} - Ready state: ${isReady}`);
+  console.log(
+   `[CHUNK] Worker timed out for guild ${guildId} - Ready state: ${isReady} - Exit code: ${worker.exitCode}`,
+  );
+  throw new Error(
+   `Timed out waiting for worker for guild ${guildId} - Ready state: ${isReady} - Exit code: ${worker.exitCode}`,
+  );
  }, 60000);
 
  await new Promise((resolve, reject) => {
@@ -77,7 +82,8 @@ const runWorkerThread = async (guildId: string, shardId: number) => {
    process.off('uncaughtException', boundHandler);
 
    cache.requestingGuild = null;
-   cache.requestedGuilds.add(result.guildId);
+   RedisCache.hset('guild-members-requested', result.guildId, '1');
+   RedisCache.call('hexpire', 'guild-members-requested', 604800, 'NX', 'FIELDS', 1, result.guildId);
 
    resolve(void 0);
   });
@@ -105,7 +111,8 @@ const requestGuildMembers = async (guildId: string) => {
   return Promise.resolve();
  }
 
- if (cache.requestedGuilds.has(guildId)) return Promise.resolve();
+ const isMember = await RedisCache.hget('guild-members-requested', guildId);
+ if (isMember === '1') return Promise.resolve();
 
  cache.requestingGuild = guildId;
 

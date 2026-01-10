@@ -12,6 +12,7 @@ import { cache, client, cluster, gateway } from '../Client.js';
 import { cache as redis } from '../Redis.js';
 
 let ready: boolean = false;
+let commandJobScheduled: boolean = false;
 
 export default async (data: GatewayReadyDispatchData, shardId: number | string) => {
  if (!ready) {
@@ -48,8 +49,12 @@ export default async (data: GatewayReadyDispatchData, shardId: number | string) 
   });
  });
 
+ if (commandJobScheduled) return;
+ commandJobScheduled = true;
+
  const getGuildCommands = async () => {
   console.log('Getting commands');
+
   const globalCommands = await client.api.applicationCommands.getGlobalCommands(
    new Buffer(gateway.token.split('.')[0], 'base64').toString(),
   );
