@@ -57,7 +57,7 @@ export default async (data: GatewayReadyDispatchData, shardId: number | string) 
  };
 
  getGuildCommands();
- scheduleJob('0 * * * *', async () => {
+ scheduleJob('0 0 0 * * *', async () => {
   getGuildCommands();
  });
 };
