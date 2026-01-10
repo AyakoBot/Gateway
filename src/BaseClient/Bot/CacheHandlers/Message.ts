@@ -172,7 +172,7 @@ export default {
    ...Object.keys(reactions).filter((r) => r.includes(data.message_id)),
   );
   pipeline.del(...Object.keys(reactions).filter((r) => r.includes(data.message_id)));
-  pipeline.exec();
+  await pipeline.exec();
  },
 
  [GatewayDispatchEvents.MessageReactionRemoveEmoji]: async (
@@ -191,6 +191,6 @@ export default {
 
   pipeline.hdel(redis.reactions.keystore(data.guild_id), ...filteredReactions);
   pipeline.del(...filteredReactions);
-  pipeline.exec();
+  await pipeline.exec();
  },
 } as const;

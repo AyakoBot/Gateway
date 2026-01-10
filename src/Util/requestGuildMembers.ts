@@ -65,7 +65,7 @@ const runWorkerThread = async (guildId: string, shardId: number) => {
  }, 60000);
 
  await new Promise((resolve, reject) => {
-  worker.on('message', (result: Message) => {
+  worker.on('message', async (result: Message) => {
    if (result.type === 'ready') {
     console.log(`[CHUNK] Worker ready for guild ${guildId}`);
     isReady = true;
@@ -86,7 +86,7 @@ const runWorkerThread = async (guildId: string, shardId: number) => {
    const pipeline = RedisCache.pipeline();
    pipeline.hset('guild-members-requested', result.guildId, '1');
    pipeline.call('hexpire', 'guild-members-requested', 604800, 'NX', 'FIELDS', 1, result.guildId);
-   pipeline.exec();
+   await pipeline.exec();
 
    resolve(void 0);
   });

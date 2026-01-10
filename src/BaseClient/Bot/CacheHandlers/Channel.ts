@@ -27,7 +27,7 @@ export default {
    ...Object.keys(messages).filter((m) => m.includes(data.id)),
   );
   pipeline.del(...Object.keys(messages).filter((m) => m.includes(data.id)));
-  pipeline.exec();
+  await pipeline.exec();
  },
 
  [GatewayDispatchEvents.ChannelPinsUpdate]: async (data: GatewayChannelPinsUpdateDispatchData) => {
