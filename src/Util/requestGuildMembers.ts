@@ -44,7 +44,7 @@ const runWorkerThread = async (guildId: string, shardId: number) => {
  let isReady: boolean = false;
 
  setTimeout(() => {
-  if (worker.exitCode !== null) return;
+  if (worker.exitCode === null) return;
 
   worker.kill();
 
@@ -82,8 +82,11 @@ const runWorkerThread = async (guildId: string, shardId: number) => {
    process.off('uncaughtException', boundHandler);
 
    cache.requestingGuild = null;
-   RedisCache.hset('guild-members-requested', result.guildId, '1');
-   RedisCache.call('hexpire', 'guild-members-requested', 604800, 'NX', 'FIELDS', 1, result.guildId);
+
+   const pipeline = RedisCache.pipeline();
+   pipeline.hset('guild-members-requested', result.guildId, '1');
+   pipeline.call('hexpire', 'guild-members-requested', 604800, 'NX', 'FIELDS', 1, result.guildId);
+   pipeline.exec();
 
    resolve(void 0);
   });
