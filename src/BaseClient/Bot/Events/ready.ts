@@ -53,7 +53,7 @@ export default async (data: GatewayReadyDispatchData, shardId: number | string) 
  commandJobScheduled = true;
 
  const getGuildCommands = async () => {
-  console.log('Getting commands');
+  console.log('[Commands] Getting commands');
 
   const globalCommands = await client.api.applicationCommands.getGlobalCommands(
    new Buffer(gateway.token.split('.')[0], 'base64').toString(),
