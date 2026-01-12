@@ -43,14 +43,20 @@ export class PipelineBatcher {
  private pending: QueuedOperation[] = [];
  private isProcessing = false;
  private flushTimer: ReturnType<typeof setTimeout> | null = null;
- private readonly batchSize: number;
  private readonly flushIntervalMs: number;
  private readonly redis: Redis;
 
- constructor(redis: Redis, batchSize = 500, flushIntervalMs = 10) {
+ constructor(redis: Redis, flushIntervalMs = 10) {
   this.redis = redis;
-  this.batchSize = batchSize;
   this.flushIntervalMs = flushIntervalMs;
+ }
+
+ private getBatchSize(): number {
+  const depth = this.pending.length;
+  if (depth > 50000) return 25000;
+  if (depth > 10000) return 10000;
+  if (depth > 1000) return 5000;
+  return 1000;
  }
 
  queue(addToPipeline: (pipeline: ChainableCommander) => void): Promise<unknown> {
@@ -61,13 +67,11 @@ export class PipelineBatcher {
  }
 
  private scheduleFlush(): void {
-  if (this.isProcessing) {
-   console.log('[Redis] Schedule skipped - processing in progress | Pending:', this.pending.length);
-   return;
-  }
+  if (this.isProcessing) return;
 
-  if (this.pending.length >= this.batchSize) {
-   console.log('[Redis] Batch size reached, flushing immediately | Pending:', this.pending.length);
+  const batchSize = this.getBatchSize();
+
+  if (this.pending.length >= batchSize) {
    if (this.flushTimer) {
     clearTimeout(this.flushTimer);
     this.flushTimer = null;
@@ -75,7 +79,6 @@ export class PipelineBatcher {
    this.flush();
   } else if (!this.flushTimer) {
    this.flushTimer = setTimeout(() => {
-    console.log('[Redis] Timer triggered flush | Pending:', this.pending.length);
     this.flushTimer = null;
     this.flush();
    }, this.flushIntervalMs);
@@ -86,33 +89,34 @@ export class PipelineBatcher {
   if (this.isProcessing || this.pending.length === 0) return;
 
   this.isProcessing = true;
-  console.log('[Redis] Flush started | Total pending:', this.pending.length);
+  const startDepth = this.pending.length;
+  let totalProcessed = 0;
 
-  let batchCount = 0;
   while (this.pending.length > 0) {
-   const batch = this.pending.splice(0, this.batchSize);
+   const batchSize = this.getBatchSize();
+   const batch = this.pending.splice(0, batchSize);
    const pipeline = this.redis.pipeline();
-   batchCount++;
 
    try {
     batch.forEach(({ addToPipeline }) => addToPipeline(pipeline));
-    console.log(`[Redis] Executing batch ${batchCount} | Size: ${batch.length} | Remaining: ${this.pending.length}`);
     const results = await pipeline.exec();
     batch.forEach(({ resolve }, i) => resolve(results?.[i]?.[1] ?? null));
-    console.log(`[Redis] Batch ${batchCount} complete`);
+    totalProcessed += batch.length;
    } catch (err) {
-    console.error(`[Redis] Batch ${batchCount} failed:`, err);
+    console.error('[Redis] Batch failed:', err);
     batch.forEach(({ reject }) => reject(err as Error));
    }
   }
 
-  this.isProcessing = false;
-  console.log(`[Redis] Flush complete | Batches processed: ${batchCount}`);
-
-  if (this.pending.length > 0) {
-   console.log('[Redis] New items arrived during flush, rescheduling | Pending:', this.pending.length);
-   this.scheduleFlush();
+  if (startDepth > 1000) {
+   console.log(
+    `[Redis] Flushed ${totalProcessed} ops | Started: ${startDepth} | Remaining: ${this.pending.length}`,
+   );
   }
+
+  this.isProcessing = false;
+
+  if (this.pending.length > 0) this.scheduleFlush();
  }
 }
 
@@ -126,7 +130,7 @@ export const cacheDB = new Redis({
 });
 await cacheDB.config('SET', 'notify-keyspace-events', 'Ex');
 
-const batcher = new PipelineBatcher(cacheDB, 500, 10);
+const batcher = new PipelineBatcher(cacheDB, 10);
 
 export default cacheDB;
 
