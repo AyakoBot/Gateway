@@ -45,6 +45,7 @@ export class PipelineBatcher {
  private flushTimer: ReturnType<typeof setTimeout> | null = null;
  private readonly flushIntervalMs: number;
  private readonly redis: Redis;
+ private readonly execTimeoutMs = 30000;
 
  constructor(redis: Redis, flushIntervalMs = 10) {
   this.redis = redis;
@@ -85,21 +86,37 @@ export class PipelineBatcher {
   }
  }
 
+ private execWithTimeout(pipeline: ChainableCommander): Promise<[error: Error | null, result: unknown][] | null> {
+  return Promise.race([
+   pipeline.exec(),
+   new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error('Pipeline exec timeout after 30s')), this.execTimeoutMs);
+   }),
+  ]);
+ }
+
  private async flush(): Promise<void> {
   if (this.isProcessing || this.pending.length === 0) return;
 
   this.isProcessing = true;
   const startDepth = this.pending.length;
   let totalProcessed = 0;
+  let batchNum = 0;
 
   while (this.pending.length > 0) {
    const batchSize = this.getBatchSize();
    const batch = this.pending.splice(0, batchSize);
    const pipeline = this.redis.pipeline();
+   batchNum++;
 
    try {
     batch.forEach(({ addToPipeline }) => addToPipeline(pipeline));
-    const results = await pipeline.exec();
+
+    if (batch.length > 100) {
+     console.log(`[Redis] Executing batch ${batchNum} | Size: ${batch.length} | Pending: ${this.pending.length}`);
+    }
+
+    const results = await this.execWithTimeout(pipeline);
     batch.forEach(({ resolve }, i) => resolve(results?.[i]?.[1] ?? null));
     totalProcessed += batch.length;
    } catch (err) {
