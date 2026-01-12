@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import Redis, { type ChainableCommander } from 'ioredis';
 
 import AuditLogCache from './CacheClasses/auditlog.js';
 import AutomodCache from './CacheClasses/automod.js';
@@ -33,6 +33,65 @@ import WelcomeScreenCache from './CacheClasses/welcomeScreen.js';
 export const prefix = 'cache';
 const cacheDBnum = process.argv.includes('--dev') ? process.env.devCacheDB : process.env.cacheDB;
 
+type QueuedOperation = {
+ addToPipeline: (pipeline: ChainableCommander) => void;
+ resolve: (result: unknown) => void;
+ reject: (err: Error) => void;
+};
+
+export class PipelineBatcher {
+ private pending: QueuedOperation[] = [];
+ private isProcessing = false;
+ private flushTimer: ReturnType<typeof setTimeout> | null = null;
+ private readonly batchSize: number;
+ private readonly flushIntervalMs: number;
+ private readonly redis: Redis;
+
+ constructor(redis: Redis, batchSize = 500, flushIntervalMs = 10) {
+  this.redis = redis;
+  this.batchSize = batchSize;
+  this.flushIntervalMs = flushIntervalMs;
+ }
+
+ queue(addToPipeline: (pipeline: ChainableCommander) => void): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+   this.pending.push({ addToPipeline, resolve, reject });
+
+   if (this.pending.length >= this.batchSize) {
+    this.flush();
+   } else if (!this.flushTimer && !this.isProcessing) {
+    this.flushTimer = setTimeout(() => this.flush(), this.flushIntervalMs);
+   }
+  });
+ }
+
+ private async flush(): Promise<void> {
+  if (this.flushTimer) {
+   clearTimeout(this.flushTimer);
+   this.flushTimer = null;
+  }
+
+  if (this.isProcessing || this.pending.length === 0) return;
+
+  this.isProcessing = true;
+  const batch = this.pending.splice(0, this.batchSize);
+  const pipeline = this.redis.pipeline();
+
+  batch.forEach(({ addToPipeline }) => addToPipeline(pipeline));
+
+  try {
+   const results = await pipeline.exec();
+   batch.forEach(({ resolve }, i) => resolve(results?.[i]?.[1] ?? null));
+  } catch (err) {
+   batch.forEach(({ reject }) => reject(err as Error));
+  }
+
+  this.isProcessing = false;
+
+  if (this.pending.length > 0) this.flush();
+ }
+}
+
 if (!cacheDBnum || isNaN(Number(cacheDBnum))) {
  throw new Error('No cache DB number provided in env vars');
 }
@@ -42,6 +101,8 @@ export const cacheDB = new Redis({
  db: Number(cacheDBnum),
 });
 await cacheDB.config('SET', 'notify-keyspace-events', 'Ex');
+
+export const batcher = new PipelineBatcher(cacheDB, 500, 10);
 
 export default cacheDB;
 

@@ -29,6 +29,7 @@ import type {
 import type Redis from 'ioredis';
 import type { ChainableCommander } from 'ioredis';
 
+import { batcher } from '../../Redis.js';
 import type { RAuditLog } from '../auditlog';
 import type { RAutomod } from '../automod';
 import type { RBan } from '../ban';
@@ -303,28 +304,20 @@ export default abstract class Cache<
   const timestampKey = this.key(...ids, String(now));
   const historyKey = this.history(...ids);
 
-  const result = await (pipeline || this.redis).eval(
-   this.dedupeScript,
-   3,
-   currentKey,
-   timestampKey,
-   historyKey,
-   valueStr,
-   ttl,
-   now,
-  );
-
-  if (result === 1 || keystoreIds.length > 0) {
-   const p = pipeline || this.redis.pipeline();
-   this.setKeystore(p, ttl, keystoreIds, ids);
-   return pipeline ? null : p.exec();
+  if (pipeline) {
+   pipeline.eval(this.dedupeScript, 3, currentKey, timestampKey, historyKey, valueStr, ttl, now);
+   if (keystoreIds.length > 0) this.setKeystore(pipeline, ttl, keystoreIds, ids);
+   return null;
   }
 
-  return [];
+  return batcher.queue((p) => {
+   p.eval(this.dedupeScript, 3, currentKey, timestampKey, historyKey, valueStr, ttl, now);
+   if (keystoreIds.length > 0) this.setKeystore(p, ttl, keystoreIds, ids);
+  });
  }
 
  del(...ids: string[]) {
-  return this.redis.del(this.key(...ids, 'current'));
+  return batcher.queue((p) => p.del(this.key(...ids, 'current')));
  }
 
  abstract apiToR(data: T, ...additionalArgs: string[]): DeriveRFromAPI<T, K> | false;
