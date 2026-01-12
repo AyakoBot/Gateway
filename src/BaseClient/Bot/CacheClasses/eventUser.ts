@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type {
  APIGuildScheduledEventUser,
  GatewayGuildScheduledEventUserRemoveDispatchData,
 } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -15,8 +18,8 @@ export const REventUserKeys = ['guild_scheduled_event_id', 'user_id'] as const;
 export default class EventUserCache extends Cache<APIGuildScheduledEventUser> {
  public keys = REventUserKeys;
 
- constructor(redis: Redis) {
-  super(redis, 'event-users');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'event-users', batcher);
  }
 
  async set(

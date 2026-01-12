@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APIUser } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -28,8 +31,8 @@ const RUserKeys = [
 export default class UserCache extends Cache<APIUser> {
  public keys = RUserKeys;
 
- constructor(redis: Redis) {
-  super(redis, 'users');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'users', batcher);
  }
 
  public static assetUrl(asset: string) {
@@ -63,14 +66,12 @@ export default class UserCache extends Cache<APIUser> {
   );
 
   const rData = structuredClone(data) as unknown as RUser;
-  /* eslint-disable indent */
   rData.avatar_decoration_data = data.avatar_decoration_data
    ? {
       asset_url: UserCache.assetUrl(data.avatar_decoration_data.asset),
       sku_id: data.avatar_decoration_data.sku_id,
      }
    : undefined;
-  /* eslint-enable indent */
   rData.avatar_url = data.avatar ? UserCache.avatarUrl(data.avatar, data.id) : null;
   rData.banner_url = data.banner ? UserCache.bannerUrl(data.banner, data.id) : null;
 

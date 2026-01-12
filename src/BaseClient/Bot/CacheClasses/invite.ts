@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APIExtendedInvite, APIInvite } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -39,8 +42,8 @@ export default class InviteCache extends Cache<APIInvite | APIExtendedInvite> {
  public keys = RInviteKeys;
  private codestorePrefix: string;
 
- constructor(redis: Redis) {
-  super(redis, 'invites');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'invites', batcher);
   this.codestorePrefix = 'codestore:invites';
  }
 

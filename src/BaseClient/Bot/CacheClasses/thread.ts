@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APIThreadChannel } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -49,8 +52,8 @@ export default class ThreadCache extends Cache<
 > {
  public keys = RThreadKeys;
 
- constructor(redis: Redis) {
-  super(redis, 'threads');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'threads', batcher);
  }
 
  async set(data: Omit<APIThreadChannel, 'position'>) {

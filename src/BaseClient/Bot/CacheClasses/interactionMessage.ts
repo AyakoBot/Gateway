@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APIMessage } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 import MessageCache, { type RMessage, RMessageKeys } from './message.js';
@@ -18,8 +21,8 @@ export const RInteractionMessageKeys = [
 export default class InteractionMessageCache extends Cache<APIMessage> {
  public keys = RInteractionMessageKeys as unknown as typeof RMessageKeys;
 
- constructor(redis: Redis) {
-  super(redis, 'interactions');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'interactions', batcher);
  }
 
  async set() {
@@ -40,7 +43,11 @@ export default class InteractionMessageCache extends Cache<APIMessage> {
   applicationId: string,
   interactionToken: string,
  ) {
-  const rData = new MessageCache(this.redis).apiToR(data, guildId) as RInteractionMessage;
+  const rData = new MessageCache(this.redis, this.batcher).apiToR(
+   data,
+   guildId,
+  ) as RInteractionMessage;
+
   rData.is_message = false;
   rData.application_id = applicationId;
   rData.interaction_token = interactionToken;

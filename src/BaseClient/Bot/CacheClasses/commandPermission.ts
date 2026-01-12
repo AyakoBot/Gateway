@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APIApplicationCommandPermission } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -19,8 +22,8 @@ export const RCommandPermissionKeys = [
 export default class CommandPermissionCache extends Cache<APIApplicationCommandPermission> {
  public keys = RCommandPermissionKeys;
 
- constructor(redis: Redis) {
-  super(redis, 'commandPermissions');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'command-permissions', batcher);
  }
 
  async set(data: APIApplicationCommandPermission, guildId: string, commandId: string) {

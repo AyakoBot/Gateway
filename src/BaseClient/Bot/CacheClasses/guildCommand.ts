@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APIApplicationCommand } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
 
 import type { MakeRequired } from '../../../Typings/Typings';
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -35,8 +37,8 @@ export default class GuildCommandCache extends Cache<
 > {
  public keys = RGuildCommandKeys;
 
- constructor(redis: Redis) {
-  super(redis, 'guild-commands');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'guild-commands', batcher);
  }
 
  async set(data: APIApplicationCommand & { guild_id: string }) {

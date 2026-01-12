@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APIGuildWelcomeScreen } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -10,8 +13,8 @@ export const RWelcomeScreenKeys = ['description', 'welcome_channels'] as const;
 export default class WelcomeScreenCache extends Cache<APIGuildWelcomeScreen> {
  public keys = RWelcomeScreenKeys;
 
- constructor(redis: Redis) {
-  super(redis, 'welcome-screens');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'welcome-screens', batcher);
  }
 
  async set(data: APIGuildWelcomeScreen, guildId: string) {

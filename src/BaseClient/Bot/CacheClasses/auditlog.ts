@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APIAuditLogEntry } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -19,8 +22,8 @@ export const RAuditLogKeys = [
 export default class AuditLogCache extends Cache<APIAuditLogEntry> {
  public keys = RAuditLogKeys;
 
- constructor(redis: Redis) {
-  super(redis, 'auditlogs');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'auditlogs', batcher);
  }
 
  async set(data: APIAuditLogEntry, guildId: string) {

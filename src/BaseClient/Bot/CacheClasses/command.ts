@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APIApplicationCommand } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -29,8 +32,8 @@ export const RCommandKeys = [
 export default class CommandCache extends Cache<APIApplicationCommand> {
  public keys = RCommandKeys;
 
- constructor(redis: Redis) {
-  super(redis, 'global-commands');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'global-commands', batcher);
  }
 
  async set(data: APIApplicationCommand) {

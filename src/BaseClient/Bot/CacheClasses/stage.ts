@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APIStageInstance } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -18,8 +21,8 @@ export const RStageInstanceKeys = [
 export default class StageCache extends Cache<APIStageInstance> {
  public keys = RStageInstanceKeys;
 
- constructor(redis: Redis) {
-  super(redis, 'stages');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'stages', batcher);
  }
 
  async set(data: APIStageInstance) {

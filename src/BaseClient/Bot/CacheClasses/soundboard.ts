@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APISoundboardSound } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -22,8 +25,8 @@ export const RSoundboardSoundKeys = [
 export default class SoundboardCache extends Cache<APISoundboardSound> {
  public keys = RSoundboardSoundKeys;
 
- constructor(redis: Redis) {
-  super(redis, 'soundboards');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'soundboards', batcher);
  }
 
  async set(data: APISoundboardSound) {

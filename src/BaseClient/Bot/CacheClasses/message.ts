@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APIMessage, APIMessageSnapshotFields } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -60,8 +63,8 @@ export const RMessageKeys = [
 export default class MessageCache extends Cache<APIMessage> {
  public keys = RMessageKeys;
 
- constructor(redis: Redis) {
-  super(redis, 'messages');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'messages', batcher);
  }
 
  async set(data: APIMessage, guildId: string) {

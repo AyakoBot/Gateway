@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type {
  APIApplicationCommand,
  APIApplicationCommandPermission,
@@ -29,34 +30,34 @@ import type {
 import type Redis from 'ioredis';
 import type { ChainableCommander } from 'ioredis';
 
-import { batcher } from '../../Redis.js';
-import type { RAuditLog } from '../auditlog';
-import type { RAutomod } from '../automod';
-import type { RBan } from '../ban';
-import type { RChannel, RChannelTypes } from '../channel';
-import type { RCommand } from '../command';
-import type { RCommandPermission } from '../commandPermission';
-import type { REmoji } from '../emoji';
-import type { REvent } from '../event';
-import type { REventUser } from '../eventUser';
-import type { RGuild } from '../guild';
-import type { RGuildCommand } from '../guildCommand';
-import type { RIntegration } from '../integration';
-import type { RInvite } from '../invite';
-import type { RMember } from '../member';
-import type { RMessage } from '../message';
-import type { ROnboarding } from '../onboarding';
-import type { RReaction } from '../reaction';
-import type { RRole } from '../role';
-import type { RSoundboardSound } from '../soundboard';
-import type { RStageInstance } from '../stage';
-import type { RSticker } from '../sticker';
-import type { RThread } from '../thread';
-import type { RThreadMember } from '../threadMember';
-import type { RUser } from '../user';
-import type { RVoiceState } from '../voice';
-import type { RWebhook } from '../webhook';
-import type { RWelcomeScreen } from '../welcomeScreen';
+import type { PipelineBatcher } from '../../Redis.js';
+import type { RAuditLog } from '../auditlog.js';
+import type { RAutomod } from '../automod.js';
+import type { RBan } from '../ban.js';
+import type { RChannel, RChannelTypes } from '../channel.js';
+import type { RCommand } from '../command.js';
+import type { RCommandPermission } from '../commandPermission.js';
+import type { REmoji } from '../emoji.js';
+import type { REvent } from '../event.js';
+import type { REventUser } from '../eventUser.js';
+import type { RGuild } from '../guild.js';
+import type { RGuildCommand } from '../guildCommand.js';
+import type { RIntegration } from '../integration.js';
+import type { RInvite } from '../invite.js';
+import type { RMember } from '../member.js';
+import type { RMessage } from '../message.js';
+import type { ROnboarding } from '../onboarding.js';
+import type { RReaction } from '../reaction.js';
+import type { RRole } from '../role.js';
+import type { RSoundboardSound } from '../soundboard.js';
+import type { RStageInstance } from '../stage.js';
+import type { RSticker } from '../sticker.js';
+import type { RThread } from '../thread.js';
+import type { RThreadMember } from '../threadMember.js';
+import type { RUser } from '../user.js';
+import type { RVoiceState } from '../voice.js';
+import type { RWebhook } from '../webhook.js';
+import type { RWelcomeScreen } from '../welcomeScreen.js';
 
 type GuildBasedCommand<T extends boolean> = T extends true
  ? APIApplicationCommand & { guild_id: string }
@@ -163,6 +164,7 @@ export default abstract class Cache<
  K extends boolean = false,
 > {
  abstract keys: ReadonlyArray<keyof DeriveRFromAPI<T, K>>;
+ batcher: PipelineBatcher;
 
  private dedupeScript = `
  local currentKey = KEYS[1]
@@ -231,11 +233,12 @@ export default abstract class Cache<
  private historyPrefix: string;
  public redis: Redis;
 
- constructor(redis: Redis, type: string) {
+ constructor(redis: Redis, type: string, batcher: PipelineBatcher) {
   this.prefix = `cache:${type}`;
   this.historyPrefix = `history:${type}`;
   this.keystorePrefix = `keystore:${type}`;
   this.redis = redis;
+  this.batcher = batcher;
  }
 
  stringToData = (data: string | null) => (data ? (JSON.parse(data) as DeriveRFromAPI<T, K>) : null);
@@ -310,14 +313,14 @@ export default abstract class Cache<
    return null;
   }
 
-  return batcher.queue((p) => {
+  return this.batcher.queue((p) => {
    p.eval(this.dedupeScript, 3, currentKey, timestampKey, historyKey, valueStr, ttl, now);
    if (keystoreIds.length > 0) this.setKeystore(p, ttl, keystoreIds, ids);
   });
  }
 
  del(...ids: string[]) {
-  return batcher.queue((p) => p.del(this.key(...ids, 'current')));
+  return this.batcher.queue((p) => p.del(this.key(...ids, 'current')));
  }
 
  abstract apiToR(data: T, ...additionalArgs: string[]): DeriveRFromAPI<T, K> | false;

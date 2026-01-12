@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APIGuildIntegration } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -30,8 +33,8 @@ export default class IntegrationCache extends Cache<
 > {
  public keys: ReadonlyArray<keyof RIntegration> = RIntegrationKeys;
 
- constructor(redis: Redis) {
-  super(redis, 'integrations');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'integrations', batcher);
  }
 
  async set(data: APIGuildIntegration, guildId: string) {

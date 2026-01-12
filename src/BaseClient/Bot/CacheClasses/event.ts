@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APIGuildScheduledEvent } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -35,8 +38,8 @@ export default class EventCache extends Cache<APIGuildScheduledEvent> {
   return `https://cdn.discordapp.com/guild-events/${guildId}/${hash}.${hash.startsWith('a_') ? 'gif' : 'webp'}`;
  }
 
- constructor(redis: Redis) {
-  super(redis, 'events');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'events', batcher);
  }
 
  async set(data: APIGuildScheduledEvent) {

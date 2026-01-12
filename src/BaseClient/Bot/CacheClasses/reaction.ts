@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { APIReaction } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
+
+import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 
@@ -19,8 +22,8 @@ export const RReactionKeys = [
 export default class ReactionCache extends Cache<APIReaction> {
  public keys = RReactionKeys;
 
- constructor(redis: Redis) {
-  super(redis, 'reactions');
+ constructor(redis: Redis, batcher: PipelineBatcher) {
+  super(redis, 'reactions', batcher);
  }
 
  async set(data: APIReaction, guildId: string, channelId: string, messageId: string) {
