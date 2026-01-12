@@ -6,7 +6,8 @@ import {
  type GatewayChannelUpdateDispatchData,
 } from 'discord-api-types/v10';
 
-import firstChannelInteraction, { tasks } from '../../../Util/firstChannelInteraction.js';
+import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
+import requestChannelPins from '../../../Util/requestChannelPins.js';
 import RedisClient, { cache as redis } from '../Redis.js';
 
 export default {
@@ -36,7 +37,7 @@ export default {
   const success = await firstChannelInteraction(data.channel_id, data.guild_id);
   if (success) return;
 
-  tasks.pins(data.channel_id, data.guild_id);
+  await requestChannelPins(data.channel_id, data.guild_id);
  },
 
  [GatewayDispatchEvents.ChannelUpdate]: async (data: GatewayChannelUpdateDispatchData) => {

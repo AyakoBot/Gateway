@@ -69,6 +69,10 @@ export const cache: {
  user: APIUser | null;
  requestingGuild: string | null;
  requestGuildQueue: Set<string>;
+ requestingPins: string | null;
+ requestPinsQueue: Set<string>;
+ requestPinsGuildMap: Map<string, string>;
+ requestPinsPaused: boolean;
 } = {
  guilds: 0,
  members: new Map(),
@@ -79,4 +83,8 @@ export const cache: {
  user: null,
  requestingGuild: null,
  requestGuildQueue: new Set(),
+ requestingPins: null,
+ requestPinsQueue: new Set(),
+ requestPinsGuildMap: new Map(),
+ requestPinsPaused: false,
 };

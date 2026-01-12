@@ -1,7 +1,6 @@
-import { api } from '../BaseClient/Bot/Client.js';
-import RedisClient, { cache } from '../BaseClient/Bot/Redis.js';
+import RedisClient from '../BaseClient/Bot/Redis.js';
 
-import checkPermission from './checkPermission.js';
+import requestChannelPins from './requestChannelPins.js';
 
 export default async (channelId: string, guildId: string) => {
  if (!channelId) return false;
@@ -21,16 +20,6 @@ export default async (channelId: string, guildId: string) => {
 export const tasks = {
  pins: async (channelId: string, guildId: string) => {
   if (!guildId) return;
-
-  if (!(await checkPermission(guildId, ['ViewChannel', 'ReadMessageHistory']))) return;
-
-  await cache.pins.delAll(channelId);
-
-  const pins = await api.channels.getPins(channelId).catch(() => []);
-
-  pins.forEach((pin) => {
-   cache.pins.set(channelId, pin.id);
-   cache.messages.set(pin, guildId!);
-  });
+  await requestChannelPins(channelId, guildId);
  },
 };
