@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
-import Manager from './Manager.js';
+import manager from './Manager.js';
 
-Manager.setMaxListeners(2);
+manager.setMaxListeners(2);
 
-Manager.on('clusterCreate', (cluster) => {
+manager.on('clusterCreate', (cluster) => {
  console.log(`[Cluster Manager] Launched Cluster ${cluster.id + 1}`);
 
  cluster.setMaxListeners(4);
@@ -23,5 +23,5 @@ Manager.on('clusterCreate', (cluster) => {
 });
 
 if (process.argv.includes('--debug')) {
- Manager.on('debug', (debug) => console.log(`[Cluster Manager] Debug Message: ${debug}`));
+ manager.on('debug', (debug) => console.log(`[Cluster Manager] Debug Message: ${debug}`));
 }

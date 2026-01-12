@@ -105,13 +105,11 @@ export default {
     emoji: data.emoji,
     me: cache?.me || false,
     count_details: cache?.count_details
-     ? /* eslint-disable indent */
-       {
+     ? {
         burst: cache.count_details.burst + (data.burst ? 1 : 0),
         normal: cache.count_details.normal + (data.burst ? 0 : 1),
        }
      : { burst: data.burst ? 1 : 0, normal: data.burst ? 0 : 1 },
-    /* eslint-enable indent */
     count: cache?.count ? cache.count + 1 : 1,
     me_burst: cache?.me_burst || data.user_id === process.env.mainId ? data.burst : false,
    },
@@ -141,13 +139,12 @@ export default {
     emoji: data.emoji,
     me: cache?.me || false,
     count_details: cache?.count_details
-     ? /* eslint-disable indent */
-       {
+     ? {
         burst: cache.count_details.burst - (data.burst ? 1 : 0),
         normal: cache.count_details.normal - (data.burst ? 0 : 1),
        }
      : { burst: 0, normal: 0 },
-    /* eslint-enable indent */
+
     count: cache?.count ? cache.count - 1 : 0,
     me_burst: cache?.me_burst || data.user_id === process.env.mainId ? data.burst : false,
    },

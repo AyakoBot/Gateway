@@ -1,4 +1,4 @@
-import Manager from '../Manager.js';
+import manager from '../Manager.js';
 
 const APIInfinityBots = 'https://spider.infinitybots.gg/bots/stats';
 
@@ -12,8 +12,8 @@ export default (guilds: number, users: number) =>
   },
   body: JSON.stringify({
    servers: guilds,
-   shards: Manager.totalShards,
-   shard_list: Manager.shardList,
+   shards: manager.totalShards,
+   shard_list: manager.shardList,
    users,
   }),
   // eslint-disable-next-line no-console

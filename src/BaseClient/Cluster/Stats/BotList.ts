@@ -1,4 +1,4 @@
-import Manager from '../Manager.js';
+import manager from '../Manager.js';
 
 const api = 'https://api.botlist.me/api/v1/bots/650691698409734151/stats';
 
@@ -12,7 +12,7 @@ export default (guilds: number) =>
   },
   body: JSON.stringify({
    server_count: guilds,
-   shard_count: Manager.totalShards,
+   shard_count: manager.totalShards,
   }),
  })
   // eslint-disable-next-line no-console

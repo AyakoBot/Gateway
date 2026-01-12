@@ -3,7 +3,7 @@
 import { ClusterManager } from 'discord-hybrid-sharding';
 import 'dotenv/config';
 
-const Manager = new ClusterManager('./dist/bot.js', {
+const manager = new ClusterManager('./dist/bot.js', {
  totalShards: 'auto',
  totalClusters: 'auto',
  shardsPerClusters: 10,
@@ -12,16 +12,18 @@ const Manager = new ClusterManager('./dist/bot.js', {
  execArgv: [
   '--max-old-space-size=1024',
   '--experimental-json-modules',
+  '--inspect=0.0.0.0:9229',
   ...(process.argv.includes('--dev') ? [] : ['--no-deprecation', '--no-warnings']),
  ],
  respawn: true,
  mode: 'process',
 });
 
-await Manager.spawn()
+await manager
+ .spawn()
  .then(() => {
   setInterval(async () => {
-   await Manager.broadcastEval('this.status && this.isReady() ? this.reconnect() : 0');
+   await manager.broadcastEval('this.status && this.isReady() ? this.reconnect() : 0');
   }, 60000);
  })
  .catch((e: Response) => {
@@ -34,4 +36,4 @@ await Manager.spawn()
   process.exit(1);
  });
 
-export default Manager;
+export default manager;
