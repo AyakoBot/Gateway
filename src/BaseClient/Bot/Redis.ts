@@ -58,9 +58,13 @@ export class PipelineBatcher {
    this.pending.push({ addToPipeline, resolve, reject });
 
    if (this.pending.length >= this.batchSize) {
+    console.log('[Redis] Batch size reached, flushing immediately');
     this.flush();
    } else if (!this.flushTimer && !this.isProcessing) {
-    this.flushTimer = setTimeout(() => this.flush(), this.flushIntervalMs);
+    this.flushTimer = setTimeout(() => {
+     console.log('[Redis] Flush interval reached, flushing batch');
+     this.flush();
+    }, this.flushIntervalMs);
    }
   });
  }
@@ -71,11 +75,20 @@ export class PipelineBatcher {
    this.flushTimer = null;
   }
 
-  if (this.isProcessing || this.pending.length === 0) return;
+  if (this.isProcessing || this.pending.length === 0) {
+   console.log(
+    `[Redis] Flush cancelled due to${
+     this.isProcessing ? ' ongoing processing' : ' no pending operations'
+    }`,
+   );
+   return;
+  }
 
   this.isProcessing = true;
   const batch = this.pending.splice(0, this.batchSize);
   const pipeline = this.redis.pipeline();
+
+  console.log(`[Redis] Flushing ${batch.length} cache operations`);
 
   batch.forEach(({ addToPipeline }) => addToPipeline(pipeline));
 
@@ -89,6 +102,7 @@ export class PipelineBatcher {
   this.isProcessing = false;
 
   if (this.pending.length > 0) this.flush();
+  console.log('[Redis] Flush complete');
  }
 }
 
@@ -102,38 +116,38 @@ export const cacheDB = new Redis({
 });
 await cacheDB.config('SET', 'notify-keyspace-events', 'Ex');
 
-export const batcher = new PipelineBatcher(cacheDB, 500, 10);
+const batcher = new PipelineBatcher(cacheDB, 500, 10);
 
 export default cacheDB;
 
 export const cache = {
- auditlogs: new AuditLogCache(cacheDB),
- automods: new AutomodCache(cacheDB),
- bans: new BanCache(cacheDB),
- channels: new ChannelCache(cacheDB),
+ auditlogs: new AuditLogCache(cacheDB, batcher),
+ automods: new AutomodCache(cacheDB, batcher),
+ bans: new BanCache(cacheDB, batcher),
+ channels: new ChannelCache(cacheDB, batcher),
  channelStatuses: new ChannelStatusCache(cacheDB),
- commands: new CommandCache(cacheDB),
- commandPermissions: new CommandPermissionCache(cacheDB),
- emojis: new EmojiCache(cacheDB),
- events: new EventCache(cacheDB),
- guilds: new GuildCache(cacheDB),
- guildCommands: new GuildCommandCache(cacheDB),
- integrations: new IntegrationCache(cacheDB),
- invites: new InviteCache(cacheDB),
- members: new MemberCache(cacheDB),
- messages: new MessageCache(cacheDB),
+ commands: new CommandCache(cacheDB, batcher),
+ commandPermissions: new CommandPermissionCache(cacheDB, batcher),
+ emojis: new EmojiCache(cacheDB, batcher),
+ events: new EventCache(cacheDB, batcher),
+ guilds: new GuildCache(cacheDB, batcher),
+ guildCommands: new GuildCommandCache(cacheDB, batcher),
+ integrations: new IntegrationCache(cacheDB, batcher),
+ invites: new InviteCache(cacheDB, batcher),
+ members: new MemberCache(cacheDB, batcher),
+ messages: new MessageCache(cacheDB, batcher),
  pins: new PinCache(cacheDB),
- reactions: new ReactionCache(cacheDB),
- roles: new RoleCache(cacheDB),
- soundboards: new SoundboardCache(cacheDB),
- stages: new StageCache(cacheDB),
- stickers: new StickerCache(cacheDB),
- threads: new ThreadCache(cacheDB),
- threadMembers: new ThreadMemberCache(cacheDB),
- users: new UserCache(cacheDB),
- voices: new VoiceCache(cacheDB),
- webhooks: new WebhookCache(cacheDB),
- welcomeScreens: new WelcomeScreenCache(cacheDB),
- onboardings: new OnboardingCache(cacheDB),
- eventUsers: new EventUserCache(cacheDB),
+ reactions: new ReactionCache(cacheDB, batcher),
+ roles: new RoleCache(cacheDB, batcher),
+ soundboards: new SoundboardCache(cacheDB, batcher),
+ stages: new StageCache(cacheDB, batcher),
+ stickers: new StickerCache(cacheDB, batcher),
+ threads: new ThreadCache(cacheDB, batcher),
+ threadMembers: new ThreadMemberCache(cacheDB, batcher),
+ users: new UserCache(cacheDB, batcher),
+ voices: new VoiceCache(cacheDB, batcher),
+ webhooks: new WebhookCache(cacheDB, batcher),
+ welcomeScreens: new WelcomeScreenCache(cacheDB, batcher),
+ onboardings: new OnboardingCache(cacheDB, batcher),
+ eventUsers: new EventUserCache(cacheDB, batcher),
 };
