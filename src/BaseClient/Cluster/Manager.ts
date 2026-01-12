@@ -12,7 +12,7 @@ const manager = new ClusterManager('./dist/bot.js', {
  execArgv: [
   '--max-old-space-size=512',
   '--experimental-json-modules',
-  '--inspect-brk=0.0.0.0:9229',
+  '--inspect=0.0.0.0:9229',
   ...(process.argv.includes('--dev') ? [] : ['--no-deprecation', '--no-warnings']),
  ],
  respawn: true,

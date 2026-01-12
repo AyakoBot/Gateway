@@ -108,11 +108,9 @@ export class PipelineBatcher {
    }
   }
 
-  if (startDepth > 1000) {
-   console.log(
-    `[Redis] Flushed ${totalProcessed} ops | Started: ${startDepth} | Remaining: ${this.pending.length}`,
-   );
-  }
+  console.log(
+   `[Redis] Flushed ${totalProcessed} ops | Started: ${startDepth} | Remaining: ${this.pending.length}`,
+  );
 
   this.isProcessing = false;
 
