@@ -80,6 +80,7 @@ const getRateLimitRetryAfter = (error: unknown): number => {
 
  if (error && typeof error === 'object') {
   if ('rawError' in error) {
+   // eslint-disable-next-line @typescript-eslint/naming-convention
    const { rawError } = error as { rawError: { retry_after?: number } };
    if (rawError?.retry_after) {
     return Math.ceil(rawError.retry_after * 1000);
