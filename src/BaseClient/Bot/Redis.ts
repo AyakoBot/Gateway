@@ -61,9 +61,13 @@ export class PipelineBatcher {
  }
 
  private scheduleFlush(): void {
-  if (this.isProcessing) return;
+  if (this.isProcessing) {
+   console.log('[Redis] Schedule skipped - processing in progress | Pending:', this.pending.length);
+   return;
+  }
 
   if (this.pending.length >= this.batchSize) {
+   console.log('[Redis] Batch size reached, flushing immediately | Pending:', this.pending.length);
    if (this.flushTimer) {
     clearTimeout(this.flushTimer);
     this.flushTimer = null;
@@ -71,6 +75,7 @@ export class PipelineBatcher {
    this.flush();
   } else if (!this.flushTimer) {
    this.flushTimer = setTimeout(() => {
+    console.log('[Redis] Timer triggered flush | Pending:', this.pending.length);
     this.flushTimer = null;
     this.flush();
    }, this.flushIntervalMs);
@@ -81,23 +86,33 @@ export class PipelineBatcher {
   if (this.isProcessing || this.pending.length === 0) return;
 
   this.isProcessing = true;
+  console.log('[Redis] Flush started | Total pending:', this.pending.length);
 
+  let batchCount = 0;
   while (this.pending.length > 0) {
    const batch = this.pending.splice(0, this.batchSize);
    const pipeline = this.redis.pipeline();
+   batchCount++;
 
    try {
     batch.forEach(({ addToPipeline }) => addToPipeline(pipeline));
+    console.log(`[Redis] Executing batch ${batchCount} | Size: ${batch.length} | Remaining: ${this.pending.length}`);
     const results = await pipeline.exec();
     batch.forEach(({ resolve }, i) => resolve(results?.[i]?.[1] ?? null));
+    console.log(`[Redis] Batch ${batchCount} complete`);
    } catch (err) {
+    console.error(`[Redis] Batch ${batchCount} failed:`, err);
     batch.forEach(({ reject }) => reject(err as Error));
    }
   }
 
   this.isProcessing = false;
+  console.log(`[Redis] Flush complete | Batches processed: ${batchCount}`);
 
-  if (this.pending.length > 0) this.scheduleFlush();
+  if (this.pending.length > 0) {
+   console.log('[Redis] New items arrived during flush, rescheduling | Pending:', this.pending.length);
+   this.scheduleFlush();
+  }
  }
 }
 
