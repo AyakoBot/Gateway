@@ -56,53 +56,48 @@ export class PipelineBatcher {
  queue(addToPipeline: (pipeline: ChainableCommander) => void): Promise<unknown> {
   return new Promise((resolve, reject) => {
    this.pending.push({ addToPipeline, resolve, reject });
-
-   if (this.pending.length >= this.batchSize) {
-    console.log('[Redis] Batch size reached, flushing immediately');
-    this.flush();
-   } else if (!this.flushTimer && !this.isProcessing) {
-    this.flushTimer = setTimeout(() => {
-     console.log('[Redis] Flush interval reached, flushing batch');
-     this.flush();
-    }, this.flushIntervalMs);
-   }
+   this.scheduleFlush();
   });
  }
 
- private async flush(): Promise<void> {
-  if (this.flushTimer) {
-   clearTimeout(this.flushTimer);
-   this.flushTimer = null;
-  }
+ private scheduleFlush(): void {
+  if (this.isProcessing) return;
 
-  if (this.isProcessing || this.pending.length === 0) {
-   console.log(
-    `[Redis] Flush cancelled due to${
-     this.isProcessing ? ' ongoing processing' : ' no pending operations'
-    }`,
-   );
-   return;
+  if (this.pending.length >= this.batchSize) {
+   if (this.flushTimer) {
+    clearTimeout(this.flushTimer);
+    this.flushTimer = null;
+   }
+   this.flush();
+  } else if (!this.flushTimer) {
+   this.flushTimer = setTimeout(() => {
+    this.flushTimer = null;
+    this.flush();
+   }, this.flushIntervalMs);
   }
+ }
+
+ private async flush(): Promise<void> {
+  if (this.isProcessing || this.pending.length === 0) return;
 
   this.isProcessing = true;
-  const batch = this.pending.splice(0, this.batchSize);
-  const pipeline = this.redis.pipeline();
 
-  console.log(`[Redis] Flushing ${batch.length} cache operations`);
+  while (this.pending.length > 0) {
+   const batch = this.pending.splice(0, this.batchSize);
+   const pipeline = this.redis.pipeline();
 
-  batch.forEach(({ addToPipeline }) => addToPipeline(pipeline));
-
-  try {
-   const results = await pipeline.exec();
-   batch.forEach(({ resolve }, i) => resolve(results?.[i]?.[1] ?? null));
-  } catch (err) {
-   batch.forEach(({ reject }) => reject(err as Error));
+   try {
+    batch.forEach(({ addToPipeline }) => addToPipeline(pipeline));
+    const results = await pipeline.exec();
+    batch.forEach(({ resolve }, i) => resolve(results?.[i]?.[1] ?? null));
+   } catch (err) {
+    batch.forEach(({ reject }) => reject(err as Error));
+   }
   }
 
   this.isProcessing = false;
 
-  if (this.pending.length > 0) this.flush();
-  console.log('[Redis] Flush complete');
+  if (this.pending.length > 0) this.scheduleFlush();
  }
 }
 
