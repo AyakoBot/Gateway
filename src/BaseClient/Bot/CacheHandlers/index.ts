@@ -38,17 +38,53 @@ import Subscription from './Subscription.js';
 import Thread from './Thread.js';
 import Voice from './Voice.js';
 
+let activeGuildCreates = 0;
+const maxConcurrentGuildCreates = 1;
+const guildCreateQueue: Array<() => void> = [];
+
+const processGuildCreateQueue = () => {
+ while (guildCreateQueue.length > 0 && activeGuildCreates < maxConcurrentGuildCreates) {
+  const next = guildCreateQueue.shift();
+  if (next) next();
+ }
+};
+
 export default (data: GatewayDispatchPayload, shardId: number) => {
- const cache = caches[data.t];
- if (!cache) return;
+ const handler = caches[data.t];
+ if (!handler) return;
 
- const res = cache(data.d as Parameters<typeof cache>[0], shardId) as Promise<unknown> | unknown;
+ if (data.t === GatewayDispatchEvents.GuildCreate) {
+  const process = async () => {
+   activeGuildCreates++;
+   try {
+    const res = handler(data.d as Parameters<typeof handler>[0], shardId);
+    if (res instanceof Promise) await res;
+    emit(data.t, data.d);
+   } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(`[CacheHandler] Error processing ${data.t}:`, err);
+   } finally {
+    activeGuildCreates--;
+    processGuildCreateQueue();
+   }
+  };
 
- if (res instanceof Promise) {
-  res.then(() => emit(data.t, data.d));
+  if (activeGuildCreates < maxConcurrentGuildCreates) {
+   process();
+  } else {
+   guildCreateQueue.push(process);
+  }
   return;
  }
- emit(data.t, data.d);
+
+ const res = handler(data.d as Parameters<typeof handler>[0], shardId) as
+  | Promise<unknown>
+  | unknown;
+ if (res instanceof Promise) {
+  res.then(() => emit(data.t, data.d)).catch(() => emit(data.t, data.d));
+ } else {
+  emit(data.t, data.d);
+ }
 };
 
 const caches: Record<
