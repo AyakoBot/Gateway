@@ -1,0 +1,15 @@
+{
+ "typescript.preferences.importModuleSpecifier": "relative",
+ "typescript.preferences.importModuleSpecifierEnding": "js",
+ "highlight.regexes": {
+  "(.*logger\\.(debug|silly)\\(.*\\);?.*)": {
+   "filterLanguageRegex": "typescript|javascript",
+   "decorations": [
+    {
+     "opacity": "0.3",
+     "fontStyle": "italic"
+    }
+   ]
+  }
+ }
+}
