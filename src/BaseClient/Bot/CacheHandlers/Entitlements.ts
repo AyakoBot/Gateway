@@ -3,7 +3,7 @@ import {
  type GatewayEntitlementCreateDispatchData,
  type GatewayEntitlementDeleteDispatchData,
  type GatewayEntitlementUpdateDispatchData,
-} from 'discord-api-types/v10';
+} from 'discord-api-types/gateway/v10';
 
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
 

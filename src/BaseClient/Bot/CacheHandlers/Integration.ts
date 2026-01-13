@@ -3,10 +3,10 @@ import {
  type GatewayIntegrationCreateDispatchData,
  type GatewayIntegrationDeleteDispatchData,
  type GatewayIntegrationUpdateDispatchData,
-} from 'discord-api-types/v10';
+} from 'discord-api-types/gateway/v10';
 
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
-import redis from '../Redis.js';
+import redis from '../Cache.js';
 
 export default {
  [GatewayDispatchEvents.IntegrationCreate]: async (data: GatewayIntegrationCreateDispatchData) => {

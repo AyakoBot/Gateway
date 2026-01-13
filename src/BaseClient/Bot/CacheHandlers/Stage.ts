@@ -3,11 +3,11 @@ import {
  type GatewayStageInstanceCreateDispatchData,
  type GatewayStageInstanceDeleteDispatchData,
  type GatewayStageInstanceUpdateDispatchData,
-} from 'discord-api-types/v10';
+} from 'discord-api-types/gateway/v10';
 
 import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
-import redis from '../Redis.js';
+import redis from '../Cache.js';
 
 export default {
  [GatewayDispatchEvents.StageInstanceCreate]: async (

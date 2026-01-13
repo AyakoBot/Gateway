@@ -1,8 +1,8 @@
-import { GatewayOpcodes } from 'discord-api-types/v10';
+import { GatewayOpcodes } from 'discord-api-types/gateway/v10';
 import { scheduleJob } from 'node-schedule';
 import { Counter, Gauge, Registry } from 'prom-client';
 
-import redis from './Redis.js';
+import redis from './Cache.js';
 
 const registry = new Registry();
 

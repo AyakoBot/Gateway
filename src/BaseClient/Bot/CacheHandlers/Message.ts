@@ -9,13 +9,13 @@ import {
  type GatewayMessageReactionRemoveDispatchData,
  type GatewayMessageReactionRemoveEmojiDispatchData,
  type GatewayMessageUpdateDispatchData,
-} from 'discord-api-types/v10';
+} from 'discord-api-types/gateway/v10';
 
 import { AllThreadGuildChannelTypes } from '../../../Typings/Channel.js';
 import evalFn from '../../../Util/eval.js';
 import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
-import redis from '../Redis.js';
+import redis from '../Cache.js';
 
 export default {
  [GatewayDispatchEvents.MessageCreate]: async (data: GatewayMessageCreateDispatchData) => {

@@ -1,6 +1,6 @@
-import type { GatewayDispatchEvents, GatewayDispatchPayload } from 'discord-api-types/v10';
+import type { GatewayDispatchEvents, GatewayDispatchPayload } from 'discord-api-types/gateway/v10';
 
-import cache from '../BaseClient/Bot/Redis.js';
+import cache from '../BaseClient/Bot/Cache.js';
 
 const emit = (type: GatewayDispatchEvents, data: GatewayDispatchPayload['d']) => {
  // eslint-disable-next-line no-console

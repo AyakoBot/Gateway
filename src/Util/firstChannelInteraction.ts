@@ -1,4 +1,4 @@
-import cache from '../BaseClient/Bot/Redis.js';
+import cache from '../BaseClient/Bot/Cache.js';
 
 import requestChannelPins from './requestChannelPins.js';
 

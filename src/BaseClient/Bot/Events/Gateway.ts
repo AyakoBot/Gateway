@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { WebSocketShardEvents } from '@discordjs/ws';
-import { GatewayOpcodes } from 'discord-api-types/v10';
+import { GatewayOpcodes } from 'discord-api-types/gateway/v10';
 
 import cache from '../../../BaseClient/Bot/CacheHandlers/index.js';
 import { gateway } from '../Client.js';

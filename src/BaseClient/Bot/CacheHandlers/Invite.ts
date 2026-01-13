@@ -8,7 +8,7 @@ import {
 } from 'discord-api-types/v10';
 
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
-import redis from '../Redis.js';
+import redis from '../Cache.js';
 
 export default {
  [GatewayDispatchEvents.InviteCreate]: async (data: GatewayInviteCreateDispatchData) => {

@@ -28,8 +28,8 @@ import {
 } from 'discord-api-types/v10';
 
 import firstGuildInteraction, { tasks } from '../../../Util/firstGuildInteraction.js';
+import redis from '../Cache.js';
 import { cache } from '../Client.js';
-import redis from '../Redis.js';
 
 export default {
  [GatewayDispatchEvents.GuildAuditLogEntryCreate]: async (

@@ -7,7 +7,7 @@ import {
 
 import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
-import redis from '../Redis.js';
+import redis from '../Cache.js';
 
 export default {
  [GatewayDispatchEvents.VoiceChannelEffectSend]: async (

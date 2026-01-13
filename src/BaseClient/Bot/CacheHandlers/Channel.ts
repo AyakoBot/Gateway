@@ -4,11 +4,11 @@ import {
  type GatewayChannelDeleteDispatchData,
  type GatewayChannelPinsUpdateDispatchData,
  type GatewayChannelUpdateDispatchData,
-} from 'discord-api-types/v10';
+} from 'discord-api-types/gateway/v10';
 
 import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
 import requestChannelPins from '../../../Util/requestChannelPins.js';
-import redis from '../Redis.js';
+import redis from '../Cache.js';
 
 export default {
  [GatewayDispatchEvents.ChannelCreate]: (data: GatewayChannelCreateDispatchData) => {

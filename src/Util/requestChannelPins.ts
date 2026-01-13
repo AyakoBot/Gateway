@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
-import getChannelPerms from '@ayako/service/src/Util/getChannelPerms.js';
+import { getChannelPerms } from '@ayako/utility';
 import { PermissionFlagsBits } from 'discord-api-types/v10';
 
+import redis from '../BaseClient/Bot/Cache.js';
 import { api, cache } from '../BaseClient/Bot/Client.js';
-import redis from '../BaseClient/Bot/Redis.js';
 
 const requestChannelPins = async (channelId: string, guildId: string): Promise<void> => {
  if (!channelId || !guildId) return;

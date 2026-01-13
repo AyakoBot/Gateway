@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
-import { GatewayOpcodes } from 'discord-api-types/v10';
+import { GatewayOpcodes } from 'discord-api-types/gateway/v10';
 
+import RedisCache from '../BaseClient/Bot/Cache.js';
 import { cache, gateway } from '../BaseClient/Bot/Client.js';
-import RedisCache from '../BaseClient/Bot/Redis.js';
 
 import calculateShardId from './calculateShardId.js';
 

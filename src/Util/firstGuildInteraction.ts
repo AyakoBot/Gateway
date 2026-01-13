@@ -1,8 +1,8 @@
-import getGuildPerms from '@ayako/service/src/Util/getGuildPerms.js';
+import { getGuildPerms } from '@ayako/utility';
 import { GuildFeature, PermissionFlagsBits } from 'discord-api-types/v10';
 
+import cache from '../BaseClient/Bot/Cache.js';
 import { api, cache as clientCache } from '../BaseClient/Bot/Client.js';
-import cache from '../BaseClient/Bot/Redis.js';
 
 import requestEventSubscribers from './requestEventSubscribers.js';
 import requestGuildMembers from './requestGuildMembers.js';
