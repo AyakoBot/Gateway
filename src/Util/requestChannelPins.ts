@@ -1,8 +1,9 @@
 /* eslint-disable no-console */
-import { api, cache } from '../BaseClient/Bot/Client.js';
-import RedisClient, { cache as redis } from '../BaseClient/Bot/Redis.js';
+import getChannelPerms from '@ayako/service/src/Util/getChannelPerms.js';
+import { PermissionFlagsBits } from 'discord-api-types/v10.js';
 
-import checkPermission from './checkPermission.js';
+import { api, cache } from '../BaseClient/Bot/Client.js';
+import redis from '../BaseClient/Bot/Redis.js';
 
 const requestChannelPins = async (channelId: string, guildId: string): Promise<void> => {
  if (!channelId || !guildId) return;
@@ -10,7 +11,7 @@ const requestChannelPins = async (channelId: string, guildId: string): Promise<v
  if (cache.requestingPins === channelId) return;
  if (cache.requestPinsQueue.has(channelId)) return;
 
- const pipeline = RedisClient.pipeline();
+ const pipeline = redis.cacheDb.pipeline();
  pipeline.hget('channel-pins-requested', channelId);
  pipeline.hset('channel-pins-requested', channelId, '1');
  pipeline.call('hexpire', 'channel-pins-requested', 300, 'NX', 'FIELDS', 1, channelId);
@@ -31,7 +32,9 @@ const processPinsRequest = async (channelId: string): Promise<void> => {
   return;
  }
 
- if (!(await checkPermission(guildId, ['ViewChannel', 'ReadMessageHistory']))) {
+ const channelPerms = await getChannelPerms.call(redis, guildId, cache.user?.id || '0', channelId);
+ const readPerms = PermissionFlagsBits.ViewAuditLog | PermissionFlagsBits.ReadMessageHistory;
+ if ((channelPerms.allow & readPerms) !== readPerms) {
   console.log('[Pins] Missing permissions for channel:', channelId);
   return;
  }

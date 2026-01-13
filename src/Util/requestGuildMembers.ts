@@ -12,7 +12,7 @@ const requestGuildMembers = async (guildId: string) => {
   return Promise.resolve();
  }
 
- const pipeline = RedisCache.pipeline();
+ const pipeline = RedisCache.cacheDb.pipeline();
  pipeline.hget('guild-members-requested', guildId);
  pipeline.hset('guild-members-requested', guildId, '1');
  pipeline.call('hexpire', 'guild-members-requested', 604800, 'NX', 'FIELDS', 1, guildId);

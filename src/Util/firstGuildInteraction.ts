@@ -1,15 +1,15 @@
-import { GuildFeature } from 'discord-api-types/v10';
+import getGuildPerms from '@ayako/service/src/Util/getGuildPerms.js';
+import { GuildFeature, PermissionFlagsBits } from 'discord-api-types/v10';
 
 import { api, cache as clientCache } from '../BaseClient/Bot/Client.js';
-import RedisClient, { cache } from '../BaseClient/Bot/Redis.js';
+import cache from '../BaseClient/Bot/Redis.js';
 
-import checkPermission from './checkPermission.js';
 import requestEventSubscribers from './requestEventSubscribers.js';
 import requestGuildMembers from './requestGuildMembers.js';
 import requestVoiceChannelStatuses from './requestVoiceChannelStatuses.js';
 
 export default async (guildId: string) => {
- const pipeline = RedisClient.pipeline();
+ const pipeline = cache.cacheDb.pipeline();
  pipeline.hget('guild-interacts', guildId);
  pipeline.hset('guild-interacts', guildId, '1');
  pipeline.call('hexpire', 'guild-interacts', 604800, 'NX', 'FIELDS', 1, guildId);
@@ -24,12 +24,14 @@ export default async (guildId: string) => {
 export const tasks = {
  vcStatus: (guildId: string) => requestVoiceChannelStatuses(guildId),
  autoModRules: async (guildId: string) => {
-  if (!(await checkPermission(guildId, ['ManageGuild']))) return;
+  const perms = await getGuildPerms.call(cache, guildId, clientCache.user?.id || '0');
+  if ((perms.response & PermissionFlagsBits.ManageGuild) !== PermissionFlagsBits.ManageGuild) {
+   return;
+  }
 
   const keystoreKey = cache.automods.keystore(guildId);
-  const keys = await RedisClient.hkeys(keystoreKey);
-  if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
-
+  const keys = await cache.cacheDb.hkeys(keystoreKey);
+  if (keys.length > 0) await cache.cacheDb.del(...keys, keystoreKey);
   const rules = await api.guilds.getAutoModerationRules(guildId).catch(() => []);
   rules.forEach((r) => cache.automods.set(r));
  },
@@ -37,8 +39,8 @@ export const tasks = {
   if (!clientCache.user) return;
 
   const keystoreKey = cache.commands.keystore(guildId);
-  const keys = await RedisClient.hkeys(keystoreKey);
-  if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
+  const keys = await cache.cacheDb.hkeys(keystoreKey);
+  if (keys.length > 0) await cache.cacheDb.del(...keys, keystoreKey);
 
   const commands = await api.applicationCommands
    .getGuildCommands(clientCache.user.id, guildId)
@@ -50,8 +52,8 @@ export const tasks = {
   if (!clientCache.user) return;
 
   const keystoreKey = cache.commandPermissions.keystore(guildId);
-  const keys = await RedisClient.hkeys(keystoreKey);
-  if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
+  const keys = await cache.cacheDb.hkeys(keystoreKey);
+  if (keys.length > 0) await cache.cacheDb.del(...keys, keystoreKey);
 
   const commandPerms = await api.applicationCommands
    .getGuildCommandsPermissions(clientCache.user.id, guildId)
@@ -66,16 +68,16 @@ export const tasks = {
   const guild = await cache.guilds.get(guildId);
   if (!guild) return;
 
-  if (
-   !guild.features.includes(GuildFeature.WelcomeScreenEnabled) &&
-   !(await checkPermission(guildId, ['ManageGuild']))
-  ) {
-   return;
+  if (!guild.features.includes(GuildFeature.WelcomeScreenEnabled)) {
+   const perms = await getGuildPerms.call(cache, guildId, clientCache.user?.id || '0');
+   if ((perms.response & PermissionFlagsBits.ManageGuild) !== PermissionFlagsBits.ManageGuild) {
+    return;
+   }
   }
 
   const keystoreKey = cache.welcomeScreens.keystore(guildId);
-  const keys = await RedisClient.hkeys(keystoreKey);
-  if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
+  const keys = await cache.cacheDb.hkeys(keystoreKey);
+  if (keys.length > 0) await cache.cacheDb.del(...keys, keystoreKey);
 
   const welcomeScreen = await api.guilds.getWelcomeScreen(guildId).catch(() => null);
   if (!welcomeScreen) return;
@@ -86,15 +88,18 @@ export const tasks = {
   const guild = await cache.guilds.get(guildId);
   if (!guild) return;
 
-  if (!(await checkPermission(guildId, ['ManageGuild']))) return;
+  const perms = await getGuildPerms.call(cache, guildId, clientCache.user?.id || '0');
+  if ((perms.response & PermissionFlagsBits.ManageGuild) !== PermissionFlagsBits.ManageGuild) {
+   return;
+  }
 
   const onboarding = await api.guilds.getOnboarding(guildId);
   cache.onboardings.set(onboarding);
  },
  scheduledEvents: async (guildId: string) => {
   const keystoreKey = cache.events.keystore(guildId);
-  const keys = await RedisClient.hkeys(keystoreKey);
-  if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
+  const keys = await cache.cacheDb.hkeys(keystoreKey);
+  if (keys.length > 0) await cache.cacheDb.del(...keys, keystoreKey);
 
   const scheduledEvents = await api.guilds
    .getScheduledEvents(guildId, { with_user_count: true })
@@ -122,39 +127,51 @@ export const tasks = {
   });
  },
  webhooks: async (guildId: string) => {
-  if (!(await checkPermission(guildId, ['ManageWebhooks']))) return;
+  const perms = await getGuildPerms.call(cache, guildId, clientCache.user?.id || '0');
+  if (
+   (perms.response & PermissionFlagsBits.ManageWebhooks) !==
+   PermissionFlagsBits.ManageWebhooks
+  ) {
+   return;
+  }
 
   const keystoreKey = cache.webhooks.keystore(guildId);
-  const keys = await RedisClient.hkeys(keystoreKey);
-  if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
+  const keys = await cache.cacheDb.hkeys(keystoreKey);
+  if (keys.length > 0) await cache.cacheDb.del(...keys, keystoreKey);
 
   const webhooks = await api.guilds.getWebhooks(guildId).catch(() => []);
   webhooks.forEach((w) => cache.webhooks.set(w));
  },
  integrations: async (guildId: string) => {
-  if (!(await checkPermission(guildId, ['ManageGuild']))) return;
+  const perms = await getGuildPerms.call(cache, guildId, clientCache.user?.id || '0');
+  if ((perms.response & PermissionFlagsBits.ManageGuild) !== PermissionFlagsBits.ManageGuild) {
+   return;
+  }
 
   const keystoreKey = cache.integrations.keystore(guildId);
-  const keys = await RedisClient.hkeys(keystoreKey);
-  if (keys.length > 0) await RedisClient.del(...keys, keystoreKey);
+  const keys = await cache.cacheDb.hkeys(keystoreKey);
+  if (keys.length > 0) await cache.cacheDb.del(...keys, keystoreKey);
 
   const integrations = await api.guilds.getIntegrations(guildId).catch(() => []);
   integrations.forEach((i) => cache.integrations.set(i, guildId));
  },
  invites: async (guildId: string) => {
-  let hasPerms = await checkPermission(guildId, ['ManageGuild']);
-  if (!hasPerms) hasPerms = await checkPermission(guildId, ['ViewAuditLog']);
-  if (!hasPerms) return;
+  const perms = await getGuildPerms.call(cache, guildId, clientCache.user?.id || '0');
+  if ((perms.response & PermissionFlagsBits.ManageGuild) !== PermissionFlagsBits.ManageGuild) {
+   if ((perms.response & PermissionFlagsBits.ViewAuditLog) !== PermissionFlagsBits.ViewAuditLog) {
+    return;
+   }
+  }
 
   const keystoreKey = cache.invites.keystore(guildId);
-  const keys = await RedisClient.hkeys(keystoreKey);
+  const keys = await cache.cacheDb.hkeys(keystoreKey);
   const guildCodestoreKey = cache.invites.codestore(guildId);
   const globalCodestoreKey = cache.invites.codestore();
 
-  const codes = await RedisClient.hkeys(guildCodestoreKey);
+  const codes = await cache.cacheDb.hkeys(guildCodestoreKey);
 
-  if (keys.length > 0) await RedisClient.del(...keys, keystoreKey, guildCodestoreKey);
-  if (codes.length > 0) await RedisClient.hdel(globalCodestoreKey, ...codes);
+  if (keys.length > 0) await cache.cacheDb.del(...keys, keystoreKey, guildCodestoreKey);
+  if (codes.length > 0) await cache.cacheDb.hdel(globalCodestoreKey, ...codes);
 
   const invites = await api.guilds.getInvites(guildId).catch(() => []);
   invites.forEach((i) => cache.invites.set(i));

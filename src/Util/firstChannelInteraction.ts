@@ -1,11 +1,11 @@
-import RedisClient from '../BaseClient/Bot/Redis.js';
+import cache from '../BaseClient/Bot/Redis.js';
 
 import requestChannelPins from './requestChannelPins.js';
 
 export default async (channelId: string, guildId: string) => {
  if (!channelId) return false;
 
- const pipeline = RedisClient.pipeline();
+ const pipeline = cache.cacheDb.pipeline();
  pipeline.hget('channel-interacts', channelId);
  pipeline.hset('channel-interacts', channelId, '1');
  pipeline.call('hexpire', 'channel-interacts', 604800, 'NX', 'FIELDS', 1, channelId);
