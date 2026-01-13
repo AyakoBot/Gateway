@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { ChannelType, PermissionFlagsBits } from 'discord-api-types/v10';
 
 export const GuildTextChannelTypes = [

@@ -49,13 +49,13 @@ scheduleJob('0 */10 * * * *', async () => {
     '/app/Ayako/packages/Gateway/dist/Util/splitByThousand.js'
    );
 
-   const { default: BotMetrics }: { default: typeof BotMetricsType } = await import(
+   const { default: metrics }: { default: typeof BotMetricsType } = await import(
     // @ts-expect-error custom path cuz broadcastEval
     '/app/Ayako/packages/Gateway/dist/BaseClient/Bot/Metrics.js'
    );
 
-   BotMetrics.userInstallCount(app?.approximate_user_install_count ?? 0);
-   BotMetrics.userAuthCount(app?.approximate_user_authorization_count ?? 0);
+   metrics.userInstallCount(app?.approximate_user_install_count ?? 0);
+   metrics.userAuthCount(app?.approximate_user_authorization_count ?? 0);
 
    cl.api.applications?.editCurrent({
     description: `**Your go-to, free-to-access, management, and automation Discord Bot!**

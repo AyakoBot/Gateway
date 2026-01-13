@@ -25,7 +25,9 @@ export default (array: string[] | string, source?: string, name = String(Date.no
     content += `${element}${split}`;
    });
   }
- } else content = array;
+ } else {
+  content = array;
+ }
 
  const buffer = Buffer.from(content, 'utf-8');
  const attachment: RawFile = {
