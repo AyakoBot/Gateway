@@ -1,5 +1,6 @@
 {
  "compilerOptions": {
+  "composite": true,
   "moduleDetection": "force",
   "types": ["node"],
   "target": "ESNext",
@@ -37,7 +38,11 @@
   "allowSyntheticDefaultImports": true,
   "noErrorTruncation": true,
   "isolatedModules": true,
-  "verbatimModuleSyntax": true
+  "verbatimModuleSyntax": true,
+  "paths": {
+   "@ayako/service/*": ["../Service/src/*"]
+  }
  },
+ "references": [{ "path": "../Service" }],
  "exclude": ["node_modules/**/**", "dist/**/**"]
 }
