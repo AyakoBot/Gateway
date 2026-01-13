@@ -24,7 +24,7 @@ import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
 import firstGuildInteraction, { tasks } from '../../../Util/firstGuildInteraction.js';
 import type { RChannelTypes } from '../CacheClasses/channel.js';
 import ready from '../Events/ready.js';
-import { cache as redis } from '../Redis.js';
+import redis from '../Redis.js';
 
 import AutoModeration from './AutoModeration.js';
 import Channel from './Channel.js';

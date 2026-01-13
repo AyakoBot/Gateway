@@ -2,7 +2,7 @@ import { GatewayOpcodes } from 'discord-api-types/v10';
 import { scheduleJob } from 'node-schedule';
 import { Counter, Gauge, Registry } from 'prom-client';
 
-import cacheDB from './Redis.js';
+import redis from './Redis.js';
 
 const registry = new Registry();
 
@@ -61,5 +61,5 @@ export default {
 };
 
 scheduleJob('metrics', '*/5 * * * * *', async () => {
- cacheDB.set('metrics:bot', await registry.metrics());
+ redis.cacheDb.set('metrics:bot', await registry.metrics());
 });

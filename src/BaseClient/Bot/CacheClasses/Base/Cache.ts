@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import type { PipelineBatcher } from '@ayako/service/src/Classes/PipelineBatcher.js';
 import type {
  APIApplicationCommand,
  APIApplicationCommandPermission,
@@ -30,7 +31,6 @@ import type {
 import type Redis from 'ioredis';
 import type { ChainableCommander } from 'ioredis';
 
-import type { PipelineBatcher } from '../../Redis.js';
 import type { RAuditLog } from '../auditlog.js';
 import type { RAutomod } from '../automod.js';
 import type { RBan } from '../ban.js';

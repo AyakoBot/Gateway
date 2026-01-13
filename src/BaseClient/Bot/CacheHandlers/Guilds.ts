@@ -29,14 +29,14 @@ import {
 
 import firstGuildInteraction, { tasks } from '../../../Util/firstGuildInteraction.js';
 import { cache } from '../Client.js';
-import RedisClient, { cache as redis } from '../Redis.js';
+import redis from '../Redis.js';
 
 export default {
  [GatewayDispatchEvents.GuildAuditLogEntryCreate]: async (
   data: GatewayGuildAuditLogEntryCreateDispatchData,
  ) => {
   firstGuildInteraction(data.guild_id);
-  redis.auditlogs.set(data, data.guild_id);
+  redis.audits.set(data, data.guild_id);
  },
 
  [GatewayDispatchEvents.GuildBanAdd]: async (data: GatewayGuildBanAddDispatchData) => {
@@ -83,13 +83,13 @@ export default {
   cache.sounds.delete(data.id);
 
   redis.guilds.del(data.id);
-  redis.channelStatuses.delAll(data.id);
+  redis.channelStatus.delAll(data.id);
   redis.pins.delAll(data.id);
 
-  const getPipeline = RedisClient.pipeline();
+  const getPipeline = redis.cacheDb.pipeline();
 
   // Add all hgetall commands to the pipeline
-  getPipeline.hgetall(redis.auditlogs.keystore(data.id));
+  getPipeline.hgetall(redis.audits.keystore(data.id));
   getPipeline.hgetall(redis.automods.keystore(data.id));
   getPipeline.hgetall(redis.bans.keystore(data.id));
   getPipeline.hgetall(redis.channels.keystore(data.id));
@@ -144,9 +144,9 @@ export default {
    eventUsers,
   ] = results.map((result) => result[1] || {});
 
-  const deletePipeline = RedisClient.pipeline();
+  const deletePipeline = redis.cacheDb.pipeline();
   deletePipeline.del(redis.guilds.keystore(data.id));
-  deletePipeline.del(redis.auditlogs.keystore(data.id));
+  deletePipeline.del(redis.audits.keystore(data.id));
   deletePipeline.del(redis.automods.keystore(data.id));
   deletePipeline.del(redis.bans.keystore(data.id));
   deletePipeline.del(redis.channels.keystore(data.id));
@@ -208,8 +208,8 @@ export default {
   firstGuildInteraction(data.guild_id);
   cache.emojis.set(data.guild_id, data.emojis.length);
 
-  const emojis = await RedisClient.hgetall(redis.emojis.keystore(data.guild_id));
-  const pipeline = RedisClient.pipeline();
+  const emojis = await redis.cacheDb.hgetall(redis.emojis.keystore(data.guild_id));
+  const pipeline = redis.cacheDb.pipeline();
   pipeline.del(...Object.keys(emojis));
   pipeline.del(redis.emojis.keystore(data.guild_id));
   await pipeline.exec();
@@ -255,9 +255,9 @@ export default {
    console.log('[Chunk] Receiving', data.chunk_count, 'member chunks for', data.guild_id);
 
    const keystoreKey = redis.members.keystore(data.guild_id);
-   const keys = await RedisClient.hkeys(keystoreKey);
+   const keys = await redis.cacheDb.hkeys(keystoreKey);
    if (keys.length > 0) {
-    const pipeline = RedisClient.pipeline();
+    const pipeline = redis.cacheDb.pipeline();
     keys.forEach((key) => pipeline.del(key));
     pipeline.del(keystoreKey);
     await pipeline.exec();
@@ -396,8 +396,8 @@ export default {
   firstGuildInteraction(data.guild_id);
   cache.sounds.set(data.guild_id, data.soundboard_sounds.length);
 
-  const sounds = await RedisClient.hgetall(redis.soundboards.keystore(data.guild_id));
-  const pipeline = RedisClient.pipeline();
+  const sounds = await redis.cacheDb.hgetall(redis.soundboards.keystore(data.guild_id));
+  const pipeline = redis.cacheDb.pipeline();
   pipeline.del(...Object.keys(sounds));
   pipeline.del(redis.soundboards.keystore(data.guild_id));
   await pipeline.exec();
@@ -413,8 +413,8 @@ export default {
   firstGuildInteraction(data.guild_id);
   cache.stickers.set(data.guild_id, data.stickers.length);
 
-  const stickers = await RedisClient.hgetall(redis.stickers.keystore(data.guild_id));
-  const pipeline = RedisClient.pipeline();
+  const stickers = await redis.cacheDb.hgetall(redis.stickers.keystore(data.guild_id));
+  const pipeline = redis.cacheDb.pipeline();
   pipeline.del(...Object.keys(stickers));
   pipeline.del(redis.stickers.keystore(data.guild_id));
   await pipeline.exec();

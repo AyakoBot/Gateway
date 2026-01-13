@@ -10,7 +10,7 @@ import {
 
 import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
-import RedisClient, { cache as redis } from '../Redis.js';
+import redis from '../Redis.js';
 
 export default {
  [GatewayDispatchEvents.ThreadCreate]: async (data: GatewayThreadCreateDispatchData) => {
@@ -26,14 +26,14 @@ export default {
 
   firstGuildInteraction(data.guild_id);
 
-  const selectPipeline = RedisClient.pipeline();
+  const selectPipeline = redis.cacheDb.pipeline();
   selectPipeline.hgetall(redis.threadMembers.keystore(data.guild_id));
   selectPipeline.hgetall(redis.messages.keystore(data.guild_id));
   const result = await selectPipeline.exec();
   if (!result) return;
 
   const [threadMembers, messages] = result;
-  const deletePipeline = RedisClient.pipeline();
+  const deletePipeline = redis.cacheDb.pipeline();
 
   deletePipeline.hdel(
    redis.threadMembers.keystore(data.guild_id),

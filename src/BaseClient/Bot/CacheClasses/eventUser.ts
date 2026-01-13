@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import type { PipelineBatcher } from '@ayako/service/src/Classes/PipelineBatcher.js';
 import type {
  APIGuildScheduledEventUser,
  GatewayGuildScheduledEventUserRemoveDispatchData,
 } from 'discord-api-types/v10';
 import type Redis from 'ioredis';
-
-import type { PipelineBatcher } from '../Redis.js';
 
 import Cache from './Base/Cache.js';
 

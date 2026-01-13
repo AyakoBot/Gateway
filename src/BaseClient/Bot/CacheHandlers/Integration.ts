@@ -6,7 +6,7 @@ import {
 } from 'discord-api-types/v10';
 
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
-import { cache as redis } from '../Redis.js';
+import redis from '../Redis.js';
 
 export default {
  [GatewayDispatchEvents.IntegrationCreate]: async (data: GatewayIntegrationCreateDispatchData) => {

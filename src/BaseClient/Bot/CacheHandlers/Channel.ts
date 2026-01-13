@@ -8,7 +8,7 @@ import {
 
 import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
 import requestChannelPins from '../../../Util/requestChannelPins.js';
-import RedisClient, { cache as redis } from '../Redis.js';
+import redis from '../Redis.js';
 
 export default {
  [GatewayDispatchEvents.ChannelCreate]: (data: GatewayChannelCreateDispatchData) => {
@@ -18,10 +18,10 @@ export default {
  [GatewayDispatchEvents.ChannelDelete]: async (data: GatewayChannelDeleteDispatchData) => {
   redis.channels.del(data.id);
   redis.pins.delAll(data.id);
-  redis.channelStatuses.del(data.guild_id, data.id);
+  redis.channelStatus.del(data.guild_id, data.id);
 
-  const pipeline = RedisClient.pipeline();
-  const messages = await RedisClient.hgetall(redis.messages.keystore(data.guild_id));
+  const pipeline = redis.cacheDb.pipeline();
+  const messages = await redis.cacheDb.hgetall(redis.messages.keystore(data.guild_id));
 
   pipeline.hdel(
    redis.messages.keystore(data.guild_id),
@@ -50,25 +50,26 @@ export default {
   firstChannelInteraction(data.id, data.guild_id);
 
   if (!data.status?.length) {
-   redis.channelStatuses.del(data.guild_id, data.id);
+   redis.channelStatus.del(data.guild_id, data.id);
    return;
   }
 
-  redis.channelStatuses.set(data.guild_id, data.id, data.status);
+  redis.channelStatus.set(data.guild_id, data.id, data.status);
  },
 
  // eslint-disable-next-line @typescript-eslint/naming-convention
  CHANNEL_STATUSES: async (data: {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   guild_id: string;
   channels: { status: string; id: string }[];
  }) => {
   await Promise.all(data.channels.map(async (c) => firstChannelInteraction(c.id, data.guild_id)));
 
-  await redis.channelStatuses.delAll(data.guild_id);
+  await redis.channelStatus.delAll(data.guild_id);
 
   data.channels.forEach((c) => {
    if (!c.status.length) return;
-   redis.channelStatuses.set(data.guild_id, c.id, c.status);
+   redis.channelStatus.set(data.guild_id, c.id, c.status);
   });
  },
 } as const;

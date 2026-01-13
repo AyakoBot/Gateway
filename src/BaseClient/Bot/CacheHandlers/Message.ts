@@ -15,7 +15,7 @@ import { AllThreadGuildChannelTypes } from '../../../Typings/Channel.js';
 import evalFn from '../../../Util/eval.js';
 import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
-import RedisClient, { cache as redis } from '../Redis.js';
+import redis from '../Redis.js';
 
 export default {
  [GatewayDispatchEvents.MessageCreate]: async (data: GatewayMessageCreateDispatchData) => {
@@ -162,8 +162,8 @@ export default {
    firstChannelInteraction(data.channel_id, data.guild_id);
   }
 
-  const pipeline = RedisClient.pipeline();
-  const reactions = await RedisClient.hgetall(redis.reactions.keystore(data.message_id));
+  const pipeline = redis.cacheDb.pipeline();
+  const reactions = await redis.cacheDb.hgetall(redis.reactions.keystore(data.message_id));
   pipeline.hdel(
    redis.reactions.keystore(data.message_id),
    ...Object.keys(reactions).filter((r) => r.includes(data.message_id)),
@@ -179,9 +179,9 @@ export default {
   firstGuildInteraction(data.guild_id);
   firstChannelInteraction(data.channel_id, data.guild_id);
 
-  const reactions = await RedisClient.hgetall(redis.reactions.keystore(data.guild_id));
+  const reactions = await redis.cacheDb.hgetall(redis.reactions.keystore(data.guild_id));
 
-  const pipeline = RedisClient.pipeline();
+  const pipeline = redis.cacheDb.pipeline();
   const filteredReactions = Object.keys(reactions).filter(
    (r) => r.includes(data.message_id) && r.includes((data.emoji.id || data.emoji.name)!),
   );

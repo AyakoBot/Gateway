@@ -9,7 +9,7 @@ import { getInfo } from 'discord-hybrid-sharding';
 import { scheduleJob } from 'node-schedule';
 
 import { cache, client, cluster, gateway } from '../Client.js';
-import { cache as redis } from '../Redis.js';
+import redis from '../Redis.js';
 
 let ready: boolean = false;
 let commandJobScheduled: boolean = false;
