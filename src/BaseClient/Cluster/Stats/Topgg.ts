@@ -1,9 +1,9 @@
 import manager from '../Manager.js';
 
-const APITopGG = 'https://top.gg/api/bots/650691698409734151/stats';
+const topgg = 'https://top.gg/api/bots/650691698409734151/stats';
 
 export default (guilds: number) =>
- fetch(APITopGG, {
+ fetch(topgg, {
   method: 'post',
   headers: {
    // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -14,7 +14,7 @@ export default (guilds: number) =>
    server_count: guilds,
    shard_count: manager.totalShards,
   }),
-  // eslint-disable-next-line no-console
+
  })
   // eslint-disable-next-line no-console
   .then(async (r) => (r.ok ? undefined : console.log(await r.text())))

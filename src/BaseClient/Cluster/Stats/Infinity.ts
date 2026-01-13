@@ -1,9 +1,9 @@
 import manager from '../Manager.js';
 
-const APIInfinityBots = 'https://spider.infinitybots.gg/bots/stats';
+const infinityBots = 'https://spider.infinitybots.gg/bots/stats';
 
 export default (guilds: number, users: number) =>
- fetch(APIInfinityBots, {
+ fetch(infinityBots, {
   method: 'post',
   headers: {
    // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -16,7 +16,7 @@ export default (guilds: number, users: number) =>
    shard_list: manager.shardList,
    users,
   }),
-  // eslint-disable-next-line no-console
+
  })
   // eslint-disable-next-line no-console
   .then(async (r) => (r.ok ? undefined : console.log(await r.text())))
