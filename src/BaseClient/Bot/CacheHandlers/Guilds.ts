@@ -50,7 +50,7 @@ export default {
   redis.users.set(data.user);
  },
 
- [GatewayDispatchEvents.GuildCreate]: async (data: GatewayGuildCreateDispatchData) => {
+ [GatewayDispatchEvents.GuildCreate]: (data: GatewayGuildCreateDispatchData) => {
   if (data.unavailable) return;
   if ('geo_restricted' in data && data.geo_restricted) return;
 
@@ -63,150 +63,156 @@ export default {
   cache.stickers.set(guildId, data.stickers?.length || 0);
   cache.sounds.set(guildId, data.soundboard_sounds?.length || 0);
 
-  const CHUNK_SIZE = 500;
-
   const rGuild = redis.guilds.apiToR(data);
   if (rGuild) {
-   const p1 = redis.cacheDb.pipeline();
-   p1.set(`cache:guilds:${guildId}:current`, JSON.stringify(rGuild), 'EX', 604800);
-   p1.hset('keystore:guilds', `cache:guilds:${guildId}`, 0);
-   await p1.exec();
+   const guildJson = JSON.stringify(rGuild);
+   redis.batcher.queueSync((p) => {
+    p.set(`cache:guilds:${guildId}:current`, guildJson, 'EX', 604800);
+    p.hset('keystore:guilds', `cache:guilds:${guildId}`, 0);
+   });
   }
 
-  const { members } = data;
+  for (let i = 0; i < data.members.length; i++) {
+   const member = data.members[i];
+   if (!member?.user) continue;
+
+   const userId = member.user.id;
+   const rMember = redis.members.apiToR(member, guildId);
+   const rUser = redis.users.apiToR(member.user);
+
+   (data.members as unknown[])[i] = undefined;
+
+   if (rMember) {
+    const memberJson = JSON.stringify(rMember);
+    redis.batcher.queueSync((p) => {
+     p.set(`cache:members:${guildId}:${userId}:current`, memberJson, 'EX', 604800);
+     p.hset(`keystore:members:${guildId}`, `cache:members:${guildId}:${userId}`, 0);
+    });
+   }
+   if (rUser) {
+    const userJson = JSON.stringify(rUser);
+    redis.batcher.queueSync((p) => {
+     p.set(`cache:users:${userId}:current`, userJson, 'EX', 604800);
+    });
+   }
+  }
   (data as { members?: unknown }).members = undefined;
-  for (let i = 0; i < members.length; i += CHUNK_SIZE) {
-   const chunk = members.slice(i, i + CHUNK_SIZE);
-   const pipeline = redis.cacheDb.pipeline();
-   chunk.forEach((member) => {
-    if (!member.user) return;
-    const rMember = redis.members.apiToR(member, guildId);
-    if (rMember) {
-     pipeline.set(
-      `cache:members:${guildId}:${member.user.id}:current`,
-      JSON.stringify(rMember),
-      'EX',
-      604800,
-     );
-     pipeline.hset(`keystore:members:${guildId}`, `cache:members:${guildId}:${member.user.id}`, 0);
-    }
-    const rUser = redis.users.apiToR(member.user);
-    if (rUser) {
-     pipeline.set(`cache:users:${member.user.id}:current`, JSON.stringify(rUser), 'EX', 604800);
-    }
-   });
-   await pipeline.exec();
-  }
 
-  const { channels } = data;
+  for (let i = 0; i < data.channels.length; i++) {
+   const channel = data.channels[i];
+   const rChannel = redis.channels.apiToR({ ...channel, guild_id: guildId });
+   (data.channels as unknown[])[i] = undefined;
+   if (rChannel) {
+    const channelJson = JSON.stringify(rChannel);
+    redis.batcher.queueSync((p) => {
+     p.set(`cache:channels:${channel.id}:current`, channelJson, 'EX', 604800);
+     p.hset(`keystore:channels:${guildId}`, `cache:channels:${channel.id}`, 0);
+    });
+   }
+  }
   (data as { channels?: unknown }).channels = undefined;
-  for (let i = 0; i < channels.length; i += CHUNK_SIZE) {
-   const chunk = channels.slice(i, i + CHUNK_SIZE);
-   const pipeline = redis.cacheDb.pipeline();
-   chunk.forEach((channel) => {
-    const rChannel = redis.channels.apiToR({ ...channel, guild_id: guildId });
-    if (rChannel) {
-     pipeline.set(`cache:channels:${channel.id}:current`, JSON.stringify(rChannel), 'EX', 604800);
-     pipeline.hset(`keystore:channels:${guildId}`, `cache:channels:${channel.id}`, 0);
-    }
-   });
-   await pipeline.exec();
-  }
 
-  const { roles } = data;
-  (data as { roles?: unknown }).roles = undefined;
-  const rolesPipeline = redis.cacheDb.pipeline();
-  roles.forEach((role) => {
+  for (let i = 0; i < data.roles.length; i++) {
+   const role = data.roles[i];
    const rRole = redis.roles.apiToR(role, guildId);
+   (data.roles as unknown[])[i] = undefined;
    if (rRole) {
-    rolesPipeline.set(`cache:roles:${role.id}:current`, JSON.stringify(rRole), 'EX', 604800);
-    rolesPipeline.hset(`keystore:roles:${guildId}`, `cache:roles:${role.id}`, 0);
+    const roleJson = JSON.stringify(rRole);
+    redis.batcher.queueSync((p) => {
+     p.set(`cache:roles:${role.id}:current`, roleJson, 'EX', 604800);
+     p.hset(`keystore:roles:${guildId}`, `cache:roles:${role.id}`, 0);
+    });
    }
-  });
-  await rolesPipeline.exec();
+  }
+  (data as { roles?: unknown }).roles = undefined;
 
-  const miscPipeline = redis.cacheDb.pipeline();
-
-  const { emojis } = data;
-  (data as { emojis?: unknown }).emojis = undefined;
-  emojis.forEach((emoji) => {
-   if (!emoji.id) return;
+  for (let i = 0; i < data.emojis.length; i++) {
+   const emoji = data.emojis[i];
+   if (!emoji.id) continue;
    const rEmoji = redis.emojis.apiToR(emoji, guildId);
+   (data.emojis as unknown[])[i] = undefined;
    if (rEmoji) {
-    miscPipeline.set(`cache:emojis:${emoji.id}:current`, JSON.stringify(rEmoji), 'EX', 604800);
-    miscPipeline.hset(`keystore:emojis:${guildId}`, `cache:emojis:${emoji.id}`, 0);
+    const emojiJson = JSON.stringify(rEmoji);
+    redis.batcher.queueSync((p) => {
+     p.set(`cache:emojis:${emoji.id}:current`, emojiJson, 'EX', 604800);
+     p.hset(`keystore:emojis:${guildId}`, `cache:emojis:${emoji.id}`, 0);
+    });
    }
-  });
+  }
+  (data as { emojis?: unknown }).emojis = undefined;
 
-  const { stickers } = data;
-  (data as { stickers?: unknown }).stickers = undefined;
-  stickers.forEach((sticker) => {
+  for (let i = 0; i < data.stickers.length; i++) {
+   const sticker = data.stickers[i];
    const rSticker = redis.stickers.apiToR({ ...sticker, guild_id: guildId });
+   (data.stickers as unknown[])[i] = undefined;
    if (rSticker) {
-    miscPipeline.set(
-     `cache:stickers:${sticker.id}:current`,
-     JSON.stringify(rSticker),
-     'EX',
-     604800,
-    );
-    miscPipeline.hset(`keystore:stickers:${guildId}`, `cache:stickers:${sticker.id}`, 0);
+    const stickerJson = JSON.stringify(rSticker);
+    redis.batcher.queueSync((p) => {
+     p.set(`cache:stickers:${sticker.id}:current`, stickerJson, 'EX', 604800);
+     p.hset(`keystore:stickers:${guildId}`, `cache:stickers:${sticker.id}`, 0);
+    });
    }
-  });
+  }
+  (data as { stickers?: unknown }).stickers = undefined;
 
-  const { soundboard_sounds: sounds } = data;
+  for (let i = 0; i < data.soundboard_sounds.length; i++) {
+   const sound = data.soundboard_sounds[i];
+   const rSound = redis.soundboards.apiToR({ ...sound, guild_id: guildId });
+   (data.soundboard_sounds as unknown[])[i] = undefined;
+   if (rSound) {
+    const soundJson = JSON.stringify(rSound);
+    redis.batcher.queueSync((p) => {
+     p.set(`cache:soundboards:${sound.sound_id}:current`, soundJson, 'EX', 604800);
+    });
+   }
+  }
   // eslint-disable-next-line @typescript-eslint/naming-convention
   (data as { soundboard_sounds?: unknown }).soundboard_sounds = undefined;
-  sounds.forEach((sound) => {
-   const rSound = redis.soundboards.apiToR({ ...sound, guild_id: guildId });
-   if (rSound) {
-    miscPipeline.set(
-     `cache:soundboards:${sound.sound_id}:current`,
-     JSON.stringify(rSound),
-     'EX',
-     604800,
-    );
-   }
-  });
 
-  const { voice_states: voiceStates } = data;
+  for (let i = 0; i < data.voice_states.length; i++) {
+   const voice = data.voice_states[i];
+   if (!voice.user_id) continue;
+   const rVoice = redis.voices.apiToR({ ...voice, guild_id: guildId });
+   (data.voice_states as unknown[])[i] = undefined;
+   if (rVoice) {
+    const voiceJson = JSON.stringify(rVoice);
+    redis.batcher.queueSync((p) => {
+     p.set(`cache:voices:${guildId}:${voice.user_id}:current`, voiceJson, 'EX', 604800);
+     p.hset(`keystore:voices:${guildId}`, `cache:voices:${guildId}:${voice.user_id}`, 0);
+    });
+   }
+  }
   // eslint-disable-next-line @typescript-eslint/naming-convention
   (data as { voice_states?: unknown }).voice_states = undefined;
-  voiceStates.forEach((voice) => {
-   if (!voice.user_id) return;
-   const rVoice = redis.voices.apiToR({ ...voice, guild_id: guildId });
-   if (rVoice) {
-    miscPipeline.set(
-     `cache:voices:${guildId}:${voice.user_id}:current`,
-     JSON.stringify(rVoice),
-     'EX',
-     604800,
-    );
-    miscPipeline.hset(`keystore:voices:${guildId}`, `cache:voices:${guildId}:${voice.user_id}`, 0);
-   }
-  });
 
-  const { threads } = data;
-  (data as { threads?: unknown }).threads = undefined;
-  threads.forEach((thread) => {
+  for (let i = 0; i < data.threads.length; i++) {
+   const thread = data.threads[i];
    const rThread = redis.threads.apiToR({ ...thread, guild_id: guildId });
+   (data.threads as unknown[])[i] = undefined;
    if (rThread) {
-    miscPipeline.set(`cache:threads:${thread.id}:current`, JSON.stringify(rThread), 'EX', 604800);
-    miscPipeline.hset(`keystore:threads:${guildId}`, `cache:threads:${thread.id}`, 0);
+    const threadJson = JSON.stringify(rThread);
+    redis.batcher.queueSync((p) => {
+     p.set(`cache:threads:${thread.id}:current`, threadJson, 'EX', 604800);
+     p.hset(`keystore:threads:${guildId}`, `cache:threads:${thread.id}`, 0);
+    });
    }
-  });
+  }
+  (data as { threads?: unknown }).threads = undefined;
 
-  const { guild_scheduled_events: events } = data;
+  for (let i = 0; i < data.guild_scheduled_events.length; i++) {
+   const event = data.guild_scheduled_events[i];
+   const rEvent = redis.events.apiToR(event);
+   (data.guild_scheduled_events as unknown[])[i] = undefined;
+   if (rEvent) {
+    const eventJson = JSON.stringify(rEvent);
+    redis.batcher.queueSync((p) => {
+     p.set(`cache:events:${event.id}:current`, eventJson, 'EX', 604800);
+     p.hset(`keystore:events:${event.guild_id}`, `cache:events:${event.id}`, 0);
+    });
+   }
+  }
   // eslint-disable-next-line @typescript-eslint/naming-convention
   (data as { guild_scheduled_events?: unknown }).guild_scheduled_events = undefined;
-  events.forEach((event) => {
-   const rEvent = redis.events.apiToR(event);
-   if (rEvent) {
-    miscPipeline.set(`cache:events:${event.id}:current`, JSON.stringify(rEvent), 'EX', 604800);
-    miscPipeline.hset(`keystore:events:${event.guild_id}`, `cache:events:${event.id}`, 0);
-   }
-  });
-
-  await miscPipeline.exec();
  },
 
  [GatewayDispatchEvents.GuildDelete]: async (data: GatewayGuildDeleteDispatchData) => {
