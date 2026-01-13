@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "swc src -d dist --strip-leading-paths --copy-files",
+    "build": "pnpm tsc --emitDeclarationOnly && swc src -d dist --strip-leading-paths",
     "dev": "pnpm build && node --enable-source-maps --experimental-wasm-modules --experimental-json-modules ./dist/index.js --debug --warn --dev --debug-db --local",
     "lint": "pnpx eslint 'src/**/*.ts' --fix",
     "run": "node --max-old-space-size=64 --no-deprecation --no-warnings --experimental-json-modules ./dist/index.js",
@@ -32,7 +32,7 @@
     "@swc/core": "1.15.8",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/glob": "^9.0.0",
-    "@types/node": "^25.0.6",
+    "@types/node": "^25.0.7",
     "@types/node-schedule": "^2.1.8",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
     "@typescript-eslint/parser": "^8.53.0",
