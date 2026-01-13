@@ -1,4 +1,4 @@
-import type { GatewayDispatchEvents, GatewayDispatchPayload } from 'discord-api-types/v10.js';
+import type { GatewayDispatchEvents, GatewayDispatchPayload } from 'discord-api-types/v10';
 
 import cache from '../BaseClient/Bot/Redis.js';
 

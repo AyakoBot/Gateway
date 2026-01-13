@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import getChannelPerms from '@ayako/service/src/Util/getChannelPerms.js';
-import { PermissionFlagsBits } from 'discord-api-types/v10.js';
+import { PermissionFlagsBits } from 'discord-api-types/v10';
 
 import { api, cache } from '../BaseClient/Bot/Client.js';
 import redis from '../BaseClient/Bot/Redis.js';

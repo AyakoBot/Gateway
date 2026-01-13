@@ -1,6 +1,6 @@
 import util from 'util';
 
-import type { APIMessage } from 'discord-api-types/v10.js';
+import type { APIMessage } from 'discord-api-types/v10';
 
 import { api } from '../BaseClient/Bot/Client.js';
 
