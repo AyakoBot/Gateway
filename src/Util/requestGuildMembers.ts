@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { GatewayOpcodes } from 'discord-api-types/gateway/v10';
 
 import RedisCache from '../BaseClient/Bot/Cache.js';
@@ -25,8 +24,6 @@ const requestGuildMembers = async (guildId: string) => {
   return;
  }
 
- console.log('[Chunk] Requesting guild members for', guildId);
-
  gateway.send(calculateShardId(guildId), {
   op: GatewayOpcodes.RequestGuildMembers,
   d: { guild_id: guildId, presences: false, limit: 0, query: '' },
@@ -35,7 +32,7 @@ const requestGuildMembers = async (guildId: string) => {
 
 let isProcessingGuildQueue = false;
 
-setInterval(async () => {
+const processGuildQueue = async (): Promise<void> => {
  if (isProcessingGuildQueue) return;
  if (cache.requestingGuild) return;
  if (cache.requestGuildQueue.size === 0) return;
@@ -49,11 +46,14 @@ setInterval(async () => {
   if (!nextGuild) return;
 
   cache.requestGuildQueue.delete(nextGuild.id);
-  console.log('[Chunk] Left in queue:', cache.requestGuildQueue.size);
   await requestGuildMembers(nextGuild.id);
  } finally {
   isProcessingGuildQueue = false;
  }
+};
+
+setInterval(() => {
+ processGuildQueue().catch(() => {});
 }, 100);
 
 export default requestGuildMembers;

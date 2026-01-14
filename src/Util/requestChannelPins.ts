@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { getChannelPerms } from '@ayako/utility';
 import { PermissionFlagsBits } from 'discord-api-types/v10';
 
@@ -20,39 +19,31 @@ const requestChannelPins = async (channelId: string, guildId: string): Promise<v
 
  cache.requestPinsQueue.add(channelId);
  cache.requestPinsGuildMap.set(channelId, guildId);
-
- console.log('[Pins] Added to queue:', channelId, '| Queue size:', cache.requestPinsQueue.size);
 };
 
 const processPinsRequest = async (channelId: string): Promise<void> => {
  const guildId = cache.requestPinsGuildMap.get(channelId);
- if (!guildId) {
-  console.log('[Pins] No guild context for channel:', channelId);
-  return;
- }
+ if (!guildId) return;
 
  const channelPerms = await getChannelPerms.call(redis, guildId, cache.user?.id || '0', channelId);
  const readPerms = PermissionFlagsBits.ViewAuditLog | PermissionFlagsBits.ReadMessageHistory;
- if ((channelPerms.allow & readPerms) !== readPerms) {
-  console.log('[Pins] Missing permissions for channel:', channelId);
-  return;
- }
+ if ((channelPerms.allow & readPerms) !== readPerms) return;
 
  await redis.pins.delAll(channelId);
 
  try {
   const pins = await api.channels.getPins(channelId);
 
-  pins.forEach((pin) => {
+  for (let i = 0; i < pins.length; i++) {
+   const pin = pins[i];
    redis.pins.set(channelId, pin.id);
    redis.messages.set(pin, guildId);
-  });
-
-  console.log('[Pins] Fetched', pins.length, 'pins for channel:', channelId);
+   (pins as unknown[])[i] = undefined;
+  }
+  pins.length = 0;
  } catch (error: unknown) {
   if (isRateLimitError(error)) {
    const retryAfter = getRateLimitRetryAfter(error);
-   console.log('[Pins] Rate limited, pausing for', retryAfter, 'ms');
 
    cache.requestPinsQueue.add(channelId);
    cache.requestPinsGuildMap.set(channelId, guildId);
@@ -60,13 +51,8 @@ const processPinsRequest = async (channelId: string): Promise<void> => {
    cache.requestPinsPaused = true;
    setTimeout(() => {
     cache.requestPinsPaused = false;
-    console.log('[Pins] Resuming queue processing');
    }, retryAfter);
-
-   return;
   }
-
-  console.log('[Pins] Error fetching pins for channel:', channelId, error);
  }
 };
 
@@ -95,7 +81,7 @@ const getRateLimitRetryAfter = (error: unknown): number => {
 
 let isProcessingPinsQueue = false;
 
-setInterval(async () => {
+const processPinsQueue = async (): Promise<void> => {
  if (isProcessingPinsQueue) return;
  if (cache.requestingPins) return;
  if (cache.requestPinsPaused) return;
@@ -108,13 +94,6 @@ setInterval(async () => {
  cache.requestPinsQueue.delete(nextChannelId);
  cache.requestingPins = nextChannelId;
 
- console.log(
-  '[Pins] Processing channel:',
-  nextChannelId,
-  '| Left in queue:',
-  cache.requestPinsQueue.size,
- );
-
  try {
   await processPinsRequest(nextChannelId);
  } finally {
@@ -122,6 +101,10 @@ setInterval(async () => {
   cache.requestingPins = null;
   cache.requestPinsGuildMap.delete(nextChannelId);
  }
+};
+
+setInterval(() => {
+ processPinsQueue().catch(() => {});
 }, 500);
 
 export default requestChannelPins;
