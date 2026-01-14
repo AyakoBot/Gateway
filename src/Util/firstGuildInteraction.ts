@@ -9,12 +9,11 @@ import requestGuildMembers from './requestGuildMembers.js';
 import requestVoiceChannelStatuses from './requestVoiceChannelStatuses.js';
 
 export default async (guildId: string) => {
- const pipeline = cache.cacheDb.pipeline();
- pipeline.hget('guild-interacts', guildId);
- pipeline.hset('guild-interacts', guildId, '1');
- pipeline.call('hexpire', 'guild-interacts', 604800, 'NX', 'FIELDS', 1, guildId);
-
- const [isMember] = await pipeline.exec().then((res) => (res || [])?.map((r) => r[1]));
+ const [isMember] = await cache.execPipeline<[string | null]>((pipeline) => {
+  pipeline.hget('guild-interacts', guildId);
+  pipeline.hset('guild-interacts', guildId, '1');
+  pipeline.call('hexpire', 'guild-interacts', 604800, 'NX', 'FIELDS', 1, guildId);
+ });
  if (isMember === '1') return false;
 
  await Promise.allSettled(Object.values(tasks).map((t) => t(guildId)));

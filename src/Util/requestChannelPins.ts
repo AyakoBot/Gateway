@@ -11,12 +11,11 @@ const requestChannelPins = async (channelId: string, guildId: string): Promise<v
  if (cache.requestingPins === channelId) return;
  if (cache.requestPinsQueue.has(channelId)) return;
 
- const pipeline = redis.cacheDb.pipeline();
- pipeline.hget('channel-pins-requested', channelId);
- pipeline.hset('channel-pins-requested', channelId, '1');
- pipeline.call('hexpire', 'channel-pins-requested', 300, 'NX', 'FIELDS', 1, channelId);
-
- const [alreadyRequested] = await pipeline.exec().then((res) => (res || [])?.map((r) => r[1]));
+ const [alreadyRequested] = await redis.execPipeline<[string | null]>((pipeline) => {
+  pipeline.hget('channel-pins-requested', channelId);
+  pipeline.hset('channel-pins-requested', channelId, '1');
+  pipeline.call('hexpire', 'channel-pins-requested', 300, 'NX', 'FIELDS', 1, channelId);
+ });
  if (alreadyRequested === '1') return;
 
  cache.requestPinsQueue.add(channelId);

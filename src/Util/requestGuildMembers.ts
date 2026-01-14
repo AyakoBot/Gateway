@@ -12,12 +12,11 @@ const requestGuildMembers = async (guildId: string) => {
   return Promise.resolve();
  }
 
- const pipeline = RedisCache.cacheDb.pipeline();
- pipeline.hget('guild-members-requested', guildId);
- pipeline.hset('guild-members-requested', guildId, '1');
- pipeline.call('hexpire', 'guild-members-requested', 604800, 'NX', 'FIELDS', 1, guildId);
-
- const [isMember] = await pipeline.exec().then((res) => (res || [])?.map((r) => r[1]));
+ const [isMember] = await RedisCache.execPipeline<[string | null]>((pipeline) => {
+  pipeline.hget('guild-members-requested', guildId);
+  pipeline.hset('guild-members-requested', guildId, '1');
+  pipeline.call('hexpire', 'guild-members-requested', 604800, 'NX', 'FIELDS', 1, guildId);
+ });
  if (isMember === '1') return Promise.resolve();
 
  cache.requestingGuild = guildId;
