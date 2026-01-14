@@ -66,7 +66,7 @@ export default {
   const rGuild = redis.guilds.apiToR(data);
   if (rGuild) {
    const guildJson = JSON.stringify(rGuild);
-   redis.batcher.queueSync((p) => {
+   redis.queueSync((p) => {
     p.set(`cache:guilds:${guildId}:current`, guildJson, 'EX', 604800);
     p.hset('keystore:guilds', `cache:guilds:${guildId}`, 0);
    });
@@ -84,14 +84,14 @@ export default {
 
    if (rMember) {
     const memberJson = JSON.stringify(rMember);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p) => {
      p.set(`cache:members:${guildId}:${userId}:current`, memberJson, 'EX', 604800);
      p.hset(`keystore:members:${guildId}`, `cache:members:${guildId}:${userId}`, 0);
     });
    }
    if (rUser) {
     const userJson = JSON.stringify(rUser);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p) => {
      p.set(`cache:users:${userId}:current`, userJson, 'EX', 604800);
     });
    }
@@ -104,7 +104,7 @@ export default {
    (data.channels as unknown[])[i] = undefined;
    if (rChannel) {
     const channelJson = JSON.stringify(rChannel);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p) => {
      p.set(`cache:channels:${channel.id}:current`, channelJson, 'EX', 604800);
      p.hset(`keystore:channels:${guildId}`, `cache:channels:${channel.id}`, 0);
     });
@@ -118,7 +118,7 @@ export default {
    (data.roles as unknown[])[i] = undefined;
    if (rRole) {
     const roleJson = JSON.stringify(rRole);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p) => {
      p.set(`cache:roles:${role.id}:current`, roleJson, 'EX', 604800);
      p.hset(`keystore:roles:${guildId}`, `cache:roles:${role.id}`, 0);
     });
@@ -133,7 +133,7 @@ export default {
    (data.emojis as unknown[])[i] = undefined;
    if (rEmoji) {
     const emojiJson = JSON.stringify(rEmoji);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p) => {
      p.set(`cache:emojis:${emoji.id}:current`, emojiJson, 'EX', 604800);
      p.hset(`keystore:emojis:${guildId}`, `cache:emojis:${emoji.id}`, 0);
     });
@@ -147,7 +147,7 @@ export default {
    (data.stickers as unknown[])[i] = undefined;
    if (rSticker) {
     const stickerJson = JSON.stringify(rSticker);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p) => {
      p.set(`cache:stickers:${sticker.id}:current`, stickerJson, 'EX', 604800);
      p.hset(`keystore:stickers:${guildId}`, `cache:stickers:${sticker.id}`, 0);
     });
@@ -161,7 +161,7 @@ export default {
    (data.soundboard_sounds as unknown[])[i] = undefined;
    if (rSound) {
     const soundJson = JSON.stringify(rSound);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p) => {
      p.set(`cache:soundboards:${sound.sound_id}:current`, soundJson, 'EX', 604800);
     });
    }
@@ -176,7 +176,7 @@ export default {
    (data.voice_states as unknown[])[i] = undefined;
    if (rVoice) {
     const voiceJson = JSON.stringify(rVoice);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p) => {
      p.set(`cache:voices:${guildId}:${voice.user_id}:current`, voiceJson, 'EX', 604800);
      p.hset(`keystore:voices:${guildId}`, `cache:voices:${guildId}:${voice.user_id}`, 0);
     });
@@ -191,7 +191,7 @@ export default {
    (data.threads as unknown[])[i] = undefined;
    if (rThread) {
     const threadJson = JSON.stringify(rThread);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p) => {
      p.set(`cache:threads:${thread.id}:current`, threadJson, 'EX', 604800);
      p.hset(`keystore:threads:${guildId}`, `cache:threads:${thread.id}`, 0);
     });
@@ -205,7 +205,7 @@ export default {
    (data.guild_scheduled_events as unknown[])[i] = undefined;
    if (rEvent) {
     const eventJson = JSON.stringify(rEvent);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p) => {
      p.set(`cache:events:${event.id}:current`, eventJson, 'EX', 604800);
      p.hset(`keystore:events:${event.guild_id}`, `cache:events:${event.id}`, 0);
     });
