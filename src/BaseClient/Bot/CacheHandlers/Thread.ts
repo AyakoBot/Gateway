@@ -47,7 +47,7 @@ export default {
   );
   deletePipeline.del(...Object.keys(messages).filter((m) => m.includes(data.id)));
 
-  deletePipeline.exec();
+  await deletePipeline.exec();
  },
 
  [GatewayDispatchEvents.ThreadUpdate]: async (data: GatewayThreadUpdateDispatchData) => {
