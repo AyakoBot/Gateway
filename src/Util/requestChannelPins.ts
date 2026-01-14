@@ -93,7 +93,10 @@ const getRateLimitRetryAfter = (error: unknown): number => {
  return DEFAULT_RETRY;
 };
 
+let isProcessingPinsQueue = false;
+
 setInterval(async () => {
+ if (isProcessingPinsQueue) return;
  if (cache.requestingPins) return;
  if (cache.requestPinsPaused) return;
  if (cache.requestPinsQueue.size === 0) return;
@@ -101,6 +104,7 @@ setInterval(async () => {
  const [nextChannelId] = cache.requestPinsQueue.values();
  if (!nextChannelId) return;
 
+ isProcessingPinsQueue = true;
  cache.requestPinsQueue.delete(nextChannelId);
  cache.requestingPins = nextChannelId;
 
@@ -114,6 +118,7 @@ setInterval(async () => {
  try {
   await processPinsRequest(nextChannelId);
  } finally {
+  isProcessingPinsQueue = false;
   cache.requestingPins = null;
   cache.requestPinsGuildMap.delete(nextChannelId);
  }

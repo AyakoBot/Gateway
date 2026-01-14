@@ -9,17 +9,21 @@ import calculateShardId from './calculateShardId.js';
 const requestGuildMembers = async (guildId: string) => {
  if (cache.requestingGuild !== guildId && cache.requestingGuild) {
   cache.requestGuildQueue.add(guildId);
-  return Promise.resolve();
+  return;
  }
+
+ cache.requestingGuild = guildId;
 
  const [isMember] = await RedisCache.execPipeline<[string | null]>((pipeline) => {
   pipeline.hget('guild-members-requested', guildId);
   pipeline.hset('guild-members-requested', guildId, '1');
   pipeline.call('hexpire', 'guild-members-requested', 604800, 'NX', 'FIELDS', 1, guildId);
  });
- if (isMember === '1') return Promise.resolve();
 
- cache.requestingGuild = guildId;
+ if (isMember === '1') {
+  cache.requestingGuild = null;
+  return;
+ }
 
  console.log('[Chunk] Requesting guild members for', guildId);
 
@@ -29,19 +33,27 @@ const requestGuildMembers = async (guildId: string) => {
  });
 };
 
-setInterval(() => {
+let isProcessingGuildQueue = false;
+
+setInterval(async () => {
+ if (isProcessingGuildQueue) return;
  if (cache.requestingGuild) return;
  if (cache.requestGuildQueue.size === 0) return;
 
- const [nextGuild] = [...cache.requestGuildQueue.values()]
-  .map((id) => ({ id, members: cache.members.get(id) || 0 }))
-  .sort((a, b) => b.members - a.members);
+ isProcessingGuildQueue = true;
+ try {
+  const [nextGuild] = [...cache.requestGuildQueue.values()]
+   .map((id) => ({ id, members: cache.members.get(id) || 0 }))
+   .sort((a, b) => b.members - a.members);
 
- if (!nextGuild) return;
+  if (!nextGuild) return;
 
- cache.requestGuildQueue.delete(nextGuild.id);
- console.log('[Chunk] Left in queue:', cache.requestGuildQueue.size);
- requestGuildMembers(nextGuild.id);
+  cache.requestGuildQueue.delete(nextGuild.id);
+  console.log('[Chunk] Left in queue:', cache.requestGuildQueue.size);
+  await requestGuildMembers(nextGuild.id);
+ } finally {
+  isProcessingGuildQueue = false;
+ }
 }, 100);
 
 export default requestGuildMembers;
