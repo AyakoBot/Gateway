@@ -8,11 +8,9 @@ console.log('+         --debug --warn --dev --local          +');
 console.log('+++++++++++++++++++++++++++++++++++++++++++++++++');
 
 (async () => {
- [
-  './BaseClient/Cluster/Manager.js',
-  './BaseClient/Cluster/Events.js',
-  './BaseClient/Cluster/Stats.js',
- ].forEach((fileName) => import(fileName));
+ await import('./BaseClient/Cluster/Manager.js');
+ await import('./BaseClient/Cluster/Events.js');
+ await import('./BaseClient/Cluster/Stats.js');
 })();
 
 scheduleJob('*/10 * * * *', async () => {
