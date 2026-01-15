@@ -6,7 +6,7 @@ const emit = (type: GatewayDispatchEvents, data: GatewayDispatchPayload['d']) =>
  // eslint-disable-next-line no-console
  if (process.argv.includes('--debug')) console.log(`[EventBus] Emitting event: ${type}`);
 
- cache.cacheDb.publish(type, JSON.stringify(data));
+ cache.cachePub.publish(type, JSON.stringify(data));
 };
 
 export default emit;
