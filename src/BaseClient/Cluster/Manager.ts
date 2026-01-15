@@ -14,21 +14,14 @@ const manager = new ClusterManager('./dist/bot.js', {
  mode: 'process',
 });
 
-await manager
- .spawn()
- .then(() => {
-  setInterval(async () => {
-   await manager.broadcastEval('this.status && this.isReady() ? this.reconnect() : 0');
-  }, 60000);
- })
- .catch((e: Response) => {
-  console.log(
-   `[Cluster Manager] Startup Failed. Retry after: ${
-    Number(e.headers?.get('retry-after') ?? 0) / 60
-   } Minutes`,
-  );
-  console.error(e);
-  process.exit(1);
- });
+await manager.spawn().catch((e: Response) => {
+ console.log(
+  `[Cluster Manager] Startup Failed. Retry after: ${
+   Number(e.headers?.get('retry-after') ?? 0) / 60
+  } Minutes`,
+ );
+ console.error(e);
+ process.exit(1);
+});
 
 export default manager;
