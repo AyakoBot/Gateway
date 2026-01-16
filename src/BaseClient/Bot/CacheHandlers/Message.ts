@@ -162,13 +162,16 @@ export default {
    firstChannelInteraction(data.channel_id, data.guild_id);
   }
 
-  const pipeline = redis.cacheDb.pipeline();
-  const reactions = await redis.cacheDb.hgetall(redis.reactions.keystore(data.message_id));
-  pipeline.hdel(
+  const reactionKeys = await redis.cacheDb.hscanKeys(
    redis.reactions.keystore(data.message_id),
-   ...Object.keys(reactions).filter((r) => r.includes(data.message_id)),
+   `*${data.message_id}*`,
   );
-  pipeline.del(...Object.keys(reactions).filter((r) => r.includes(data.message_id)));
+
+  if (reactionKeys.length === 0) return;
+
+  const pipeline = redis.cacheDb.pipeline();
+  pipeline.hdel(redis.reactions.keystore(data.message_id), ...reactionKeys);
+  pipeline.del(...reactionKeys);
   await pipeline.exec();
  },
 
@@ -179,13 +182,17 @@ export default {
   firstGuildInteraction(data.guild_id);
   firstChannelInteraction(data.channel_id, data.guild_id);
 
-  const reactions = await redis.cacheDb.hgetall(redis.reactions.keystore(data.guild_id));
-
-  const pipeline = redis.cacheDb.pipeline();
-  const filteredReactions = Object.keys(reactions).filter(
-   (r) => r.includes(data.message_id) && r.includes((data.emoji.id || data.emoji.name)!),
+  const emojiId = data.emoji.id || data.emoji.name;
+  const reactionKeys = await redis.cacheDb.hscanKeys(
+   redis.reactions.keystore(data.guild_id),
+   `*${data.message_id}*`,
   );
 
+  const filteredReactions = reactionKeys.filter((r) => r.includes(emojiId!));
+
+  if (filteredReactions.length === 0) return;
+
+  const pipeline = redis.cacheDb.pipeline();
   pipeline.hdel(redis.reactions.keystore(data.guild_id), ...filteredReactions);
   pipeline.del(...filteredReactions);
   await pipeline.exec();

@@ -26,26 +26,24 @@ export default {
 
   firstGuildInteraction(data.guild_id);
 
-  const selectPipeline = redis.cacheDb.pipeline();
-  selectPipeline.hgetall(redis.threadMembers.keystore(data.guild_id));
-  selectPipeline.hgetall(redis.messages.keystore(data.guild_id));
-  const result = await selectPipeline.exec();
-  if (!result) return;
+  const [threadMemberKeys, messageKeys] = await Promise.all([
+   redis.cacheDb.hscanKeys(redis.threadMembers.keystore(data.guild_id), `*${data.id}*`),
+   redis.cacheDb.hscanKeys(redis.messages.keystore(data.guild_id), `*${data.id}*`),
+  ]);
 
-  const [threadMembers, messages] = result;
+  if (threadMemberKeys.length === 0 && messageKeys.length === 0) return;
+
   const deletePipeline = redis.cacheDb.pipeline();
 
-  deletePipeline.hdel(
-   redis.threadMembers.keystore(data.guild_id),
-   ...Object.keys(threadMembers).filter((m) => m.includes(data.id)),
-  );
-  deletePipeline.del(...Object.keys(threadMembers).filter((m) => m.includes(data.id)));
+  if (threadMemberKeys.length > 0) {
+   deletePipeline.hdel(redis.threadMembers.keystore(data.guild_id), ...threadMemberKeys);
+   deletePipeline.del(...threadMemberKeys);
+  }
 
-  deletePipeline.hdel(
-   redis.messages.keystore(data.guild_id),
-   ...Object.keys(messages).filter((m) => m.includes(data.id)),
-  );
-  deletePipeline.del(...Object.keys(messages).filter((m) => m.includes(data.id)));
+  if (messageKeys.length > 0) {
+   deletePipeline.hdel(redis.messages.keystore(data.guild_id), ...messageKeys);
+   deletePipeline.del(...messageKeys);
+  }
 
   await deletePipeline.exec();
  },

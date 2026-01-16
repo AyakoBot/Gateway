@@ -227,36 +227,6 @@ export default {
   redis.channelStatus.delAll(data.id);
   redis.pins.delAll(data.id);
 
-  const getPipeline = redis.cacheDb.pipeline();
-
-  getPipeline.hgetall(redis.audits.keystore(data.id));
-  getPipeline.hgetall(redis.automods.keystore(data.id));
-  getPipeline.hgetall(redis.bans.keystore(data.id));
-  getPipeline.hgetall(redis.channels.keystore(data.id));
-  getPipeline.hgetall(redis.commandPermissions.keystore(data.id));
-  getPipeline.hgetall(redis.emojis.keystore(data.id));
-  getPipeline.hgetall(redis.events.keystore(data.id));
-  getPipeline.hgetall(redis.guildCommands.keystore(data.id));
-  getPipeline.hgetall(redis.integrations.keystore(data.id));
-  getPipeline.hgetall(redis.invites.keystore(data.id));
-  getPipeline.hgetall(redis.members.keystore(data.id));
-  getPipeline.hgetall(redis.messages.keystore(data.id));
-  getPipeline.hgetall(redis.reactions.keystore(data.id));
-  getPipeline.hgetall(redis.roles.keystore(data.id));
-  getPipeline.hgetall(redis.soundboards.keystore(data.id));
-  getPipeline.hgetall(redis.stages.keystore(data.id));
-  getPipeline.hgetall(redis.stickers.keystore(data.id));
-  getPipeline.hgetall(redis.threads.keystore(data.id));
-  getPipeline.hgetall(redis.threadMembers.keystore(data.id));
-  getPipeline.hgetall(redis.voices.keystore(data.id));
-  getPipeline.hgetall(redis.webhooks.keystore(data.id));
-  getPipeline.hgetall(redis.welcomeScreens.keystore(data.id));
-  getPipeline.hgetall(redis.onboardings.keystore(data.id));
-  getPipeline.hgetall(redis.eventUsers.keystore(data.id));
-
-  const results = await getPipeline.exec();
-  if (!results) return;
-
   const [
    auditlogs,
    automods,
@@ -282,9 +252,35 @@ export default {
    welcomeScreens,
    onboarding,
    eventUsers,
-  ] = results.map((result) => result[1] || {});
+  ] = await Promise.all([
+   redis.cacheDb.hscanKeys(redis.audits.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.automods.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.bans.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.channels.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.commandPermissions.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.emojis.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.events.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.guildCommands.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.integrations.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.invites.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.members.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.messages.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.reactions.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.roles.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.soundboards.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.stages.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.stickers.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.threads.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.threadMembers.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.voices.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.webhooks.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.welcomeScreens.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.onboardings.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.eventUsers.keystore(data.id)),
+  ]);
 
   const deletePipeline = redis.cacheDb.pipeline();
+
   deletePipeline.del(redis.guilds.keystore(data.id));
   deletePipeline.del(redis.audits.keystore(data.id));
   deletePipeline.del(redis.automods.keystore(data.id));
@@ -311,30 +307,30 @@ export default {
   deletePipeline.del(redis.onboardings.keystore(data.id));
   deletePipeline.del(redis.eventUsers.keystore(data.id));
 
-  deletePipeline.del(...Object.keys(auditlogs));
-  deletePipeline.del(...Object.keys(automods));
-  deletePipeline.del(...Object.keys(bans));
-  deletePipeline.del(...Object.keys(channels));
-  deletePipeline.del(...Object.keys(commandPermissions));
-  deletePipeline.del(...Object.keys(emojis));
-  deletePipeline.del(...Object.keys(events));
-  deletePipeline.del(...Object.keys(guildCommands));
-  deletePipeline.del(...Object.keys(integrations));
-  deletePipeline.del(...Object.keys(invites));
-  deletePipeline.del(...Object.keys(members));
-  deletePipeline.del(...Object.keys(messages));
-  deletePipeline.del(...Object.keys(reactions));
-  deletePipeline.del(...Object.keys(roles));
-  deletePipeline.del(...Object.keys(soundboards));
-  deletePipeline.del(...Object.keys(stages));
-  deletePipeline.del(...Object.keys(stickers));
-  deletePipeline.del(...Object.keys(threads));
-  deletePipeline.del(...Object.keys(threadMembers));
-  deletePipeline.del(...Object.keys(voices));
-  deletePipeline.del(...Object.keys(webhooks));
-  deletePipeline.del(...Object.keys(welcomeScreens));
-  deletePipeline.del(...Object.keys(onboarding));
-  deletePipeline.del(...Object.keys(eventUsers));
+  deletePipeline.del(...auditlogs);
+  deletePipeline.del(...automods);
+  deletePipeline.del(...bans);
+  deletePipeline.del(...channels);
+  deletePipeline.del(...commandPermissions);
+  deletePipeline.del(...emojis);
+  deletePipeline.del(...events);
+  deletePipeline.del(...guildCommands);
+  deletePipeline.del(...integrations);
+  deletePipeline.del(...invites);
+  deletePipeline.del(...members);
+  deletePipeline.del(...messages);
+  deletePipeline.del(...reactions);
+  deletePipeline.del(...roles);
+  deletePipeline.del(...soundboards);
+  deletePipeline.del(...stages);
+  deletePipeline.del(...stickers);
+  deletePipeline.del(...threads);
+  deletePipeline.del(...threadMembers);
+  deletePipeline.del(...voices);
+  deletePipeline.del(...webhooks);
+  deletePipeline.del(...welcomeScreens);
+  deletePipeline.del(...onboarding);
+  deletePipeline.del(...eventUsers);
 
   await deletePipeline.exec();
  },
@@ -348,9 +344,9 @@ export default {
   firstGuildInteraction(data.guild_id);
   cache.emojis.set(data.guild_id, data.emojis.length);
 
-  const emojis = await redis.cacheDb.hgetall(redis.emojis.keystore(data.guild_id));
+  const emojiKeys = await redis.cacheDb.hscanKeys(redis.emojis.keystore(data.guild_id));
   const pipeline = redis.cacheDb.pipeline();
-  pipeline.del(...Object.keys(emojis));
+  pipeline.del(...emojiKeys);
   pipeline.del(redis.emojis.keystore(data.guild_id));
   await pipeline.exec();
 
@@ -536,9 +532,9 @@ export default {
   firstGuildInteraction(data.guild_id);
   cache.sounds.set(data.guild_id, data.soundboard_sounds.length);
 
-  const sounds = await redis.cacheDb.hgetall(redis.soundboards.keystore(data.guild_id));
+  const soundKeys = await redis.cacheDb.hscanKeys(redis.soundboards.keystore(data.guild_id));
   const pipeline = redis.cacheDb.pipeline();
-  pipeline.del(...Object.keys(sounds));
+  pipeline.del(...soundKeys);
   pipeline.del(redis.soundboards.keystore(data.guild_id));
   await pipeline.exec();
 
@@ -553,9 +549,9 @@ export default {
   firstGuildInteraction(data.guild_id);
   cache.stickers.set(data.guild_id, data.stickers.length);
 
-  const stickers = await redis.cacheDb.hgetall(redis.stickers.keystore(data.guild_id));
+  const stickerKeys = await redis.cacheDb.hscanKeys(redis.stickers.keystore(data.guild_id));
   const pipeline = redis.cacheDb.pipeline();
-  pipeline.del(...Object.keys(stickers));
+  pipeline.del(...stickerKeys);
   pipeline.del(redis.stickers.keystore(data.guild_id));
   await pipeline.exec();
 
