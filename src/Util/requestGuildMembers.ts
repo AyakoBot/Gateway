@@ -1,3 +1,4 @@
+import { getRandom } from '@ayako/utility';
 import { GatewayOpcodes } from 'discord-api-types/gateway/v10';
 
 import RedisCache from '../BaseClient/Bot/Cache.js';
@@ -16,7 +17,15 @@ const requestGuildMembers = async (guildId: string) => {
  const [isMember] = await RedisCache.execPipeline<[string | null]>((pipeline) => {
   pipeline.hget('guild-members-requested', guildId);
   pipeline.hset('guild-members-requested', guildId, '1');
-  pipeline.call('hexpire', 'guild-members-requested', 604800, 'NX', 'FIELDS', 1, guildId);
+  pipeline.call(
+   'hexpire',
+   'guild-members-requested',
+   getRandom(604800 / 2, 604800),
+   'NX',
+   'FIELDS',
+   1,
+   guildId,
+  );
  });
 
  if (isMember === '1') {
