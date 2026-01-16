@@ -47,14 +47,14 @@ export default (data: GatewayDispatchPayload, shardId: number) => {
    | Promise<unknown>
    | unknown;
   if (res instanceof Promise) {
-   res.then(() => emit(data.t, data.d)).catch(() => emit(data.t, data.d));
+   res.then(() => emit.call(redis, data.t, data.d)).catch(() => emit.call(redis, data.t, data.d));
   } else {
-   emit(data.t, data.d);
+   emit.call(redis, data.t, data.d);
   }
  } catch (err) {
   // eslint-disable-next-line no-console
   console.error(`[CacheHandler] Error processing ${data.t}:`, err);
-  emit(data.t, data.d);
+  emit.call(redis, data.t, data.d);
  }
 };
 

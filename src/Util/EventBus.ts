@@ -1,12 +1,12 @@
+import type { Cache } from '@ayako/utility';
 import type { GatewayDispatchEvents, GatewayDispatchPayload } from 'discord-api-types/gateway/v10';
 
-import cache from '../BaseClient/Bot/Cache.js';
+export default function (
+ this: Cache,
+ type: GatewayDispatchEvents,
+ data: GatewayDispatchPayload['d'],
+) {
+ this.logger.debug(`[EventBus] Emitting event: ${type}`);
 
-const emit = (type: GatewayDispatchEvents, data: GatewayDispatchPayload['d']) => {
- // eslint-disable-next-line no-console
- if (process.argv.includes('--debug')) console.log(`[EventBus] Emitting event: ${type}`);
-
- cache.cachePub.publish(type, JSON.stringify(data));
-};
-
-export default emit;
+ this.cachePub.publish(type, JSON.stringify(data));
+}
