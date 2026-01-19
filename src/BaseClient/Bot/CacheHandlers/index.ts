@@ -22,8 +22,10 @@ import {
 } from '../../../Typings/Channel.js';
 import emit from '../../../Util/EventBus.js';
 import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
-import firstGuildInteraction, { tasks } from '../../../Util/firstGuildInteraction.js';
+import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
+import { priorityQueue } from '../../../Util/PriorityQueue/index.js';
 import redis from '../Cache.js';
+import { cache } from '../Client.js';
 import ready from '../Events/ready.js';
 
 import AutoModeration from './AutoModeration.js';
@@ -124,7 +126,8 @@ const caches: Record<
  },
 
  [GatewayDispatchEvents.WebhooksUpdate]: (data: GatewayWebhooksUpdateDispatchData) => {
-  tasks.webhooks(data.guild_id);
+  const memberCount = cache.members.get(data.guild_id) || 0;
+  priorityQueue.enqueueGuildTask(data.guild_id, memberCount, 'webhooks');
  },
 
  [GatewayDispatchEvents.TypingStart]: async (data: GatewayTypingStartDispatchData) => {

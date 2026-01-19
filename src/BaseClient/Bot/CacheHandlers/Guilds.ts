@@ -28,7 +28,8 @@ import {
  type GuildMemberFlags,
 } from 'discord-api-types/v10';
 
-import firstGuildInteraction, { tasks } from '../../../Util/firstGuildInteraction.js';
+import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
+import { priorityQueue } from '../../../Util/PriorityQueue/index.js';
 import redis from '../Cache.js';
 import { cache } from '../Client.js';
 
@@ -360,7 +361,8 @@ export default {
   const success = await firstGuildInteraction(data.guild_id);
   if (success) return;
 
-  tasks.integrations(data.guild_id);
+  const memberCount = cache.members.get(data.guild_id) || 0;
+  priorityQueue.enqueueGuildTask(data.guild_id, memberCount, 'integrations');
  },
 
  [GatewayDispatchEvents.GuildMemberAdd]: async (data: GatewayGuildMemberAddDispatchData) => {
@@ -384,7 +386,7 @@ export default {
    // eslint-disable-next-line no-console
    console.log('[Chunk] Finished receiving member chunks for', data.guild_id);
 
-   cache.requestingGuild = null;
+   priorityQueue.onMemberChunkComplete(data.guild_id);
   }
 
   if (data.chunk_index === 0) {

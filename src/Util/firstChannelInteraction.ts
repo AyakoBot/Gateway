@@ -1,8 +1,9 @@
 import { getRandom } from '@ayako/utility';
 
 import cache from '../BaseClient/Bot/Cache.js';
+import { cache as clientCache } from '../BaseClient/Bot/Client.js';
 
-import requestChannelPins from './requestChannelPins.js';
+import { priorityQueue } from './PriorityQueue/index.js';
 
 export default async (channelId: string, guildId: string) => {
  if (!channelId) return false;
@@ -22,13 +23,10 @@ export default async (channelId: string, guildId: string) => {
  });
  if (isMember === '1') return false;
 
- await Promise.allSettled(Object.values(tasks).map((t) => t(channelId, guildId)));
- return true;
-};
+ if (!guildId) return false;
 
-export const tasks = {
- pins: async (channelId: string, guildId: string) => {
-  if (!guildId) return;
-  await requestChannelPins(channelId, guildId);
- },
+ const memberCount = clientCache.members.get(guildId) || 0;
+ priorityQueue.enqueueChannelPins(channelId, guildId, memberCount);
+
+ return true;
 };
