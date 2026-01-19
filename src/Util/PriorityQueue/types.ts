@@ -62,9 +62,11 @@ export const CONFIG = {
  /** Milliseconds between gateway queue processing */
  GATEWAY_INTERVAL: 100,
  /** Milliseconds between REST queue processing */
- REST_INTERVAL: 50,
- /** Maximum concurrent REST requests */
+ REST_INTERVAL: 100,
+ /** Maximum concurrent REST requests*/
  REST_MAX_CONCURRENT: 5,
  /** Default retry after time in ms if not provided in 429 response */
  DEFAULT_RETRY_AFTER: 5000,
+ /** Redis queue size threshold for backpressure - don't start new tasks if above this */
+ REDIS_QUEUE_THRESHOLD: 10000,
 } as const;

@@ -173,12 +173,28 @@ class RestQueue {
   if (this.activeRequests >= CONFIG.REST_MAX_CONCURRENT) return;
   if (this.queue.isEmpty) return;
 
+  const redisQueueSize = redis.cacheDb.getQueueSize();
+  if (redisQueueSize > CONFIG.REDIS_QUEUE_THRESHOLD) {
+   // eslint-disable-next-line no-console
+   console.log(
+    `[RestQueue] Backpressure: Redis queue ${redisQueueSize} > threshold ${CONFIG.REDIS_QUEUE_THRESHOLD}, pausing`,
+   );
+   return;
+  }
+
   this.isProcessing = true;
 
   try {
    this.cleanupRateLimits();
 
    while (this.activeRequests < CONFIG.REST_MAX_CONCURRENT && !this.queue.isEmpty) {
+    const currentQueueSize = redis.cacheDb.getQueueSize();
+    if (currentQueueSize > CONFIG.REDIS_QUEUE_THRESHOLD) {
+     // eslint-disable-next-line no-console
+     console.log(`[RestQueue] Backpressure mid-loop: Redis queue ${currentQueueSize}, stopping`);
+     break;
+    }
+
     const item = this.findNextUnblockedItem();
     if (!item) break;
 
