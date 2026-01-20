@@ -30,6 +30,8 @@ class GatewayQueue {
  private currentGuildId: string | null = null;
  private processingInterval: ReturnType<typeof setInterval> | null = null;
  private isProcessing = false;
+ private chunkTimeout: ReturnType<typeof setTimeout> | null = null;
+ private static readonly chunkTimeoutMS = 30000;
 
  /**
   * Get the currently processing guild ID
@@ -67,9 +69,15 @@ class GatewayQueue {
   if (this.processingInterval) {
    clearInterval(this.processingInterval);
    this.processingInterval = null;
-   // eslint-disable-next-line no-console
-   console.log('[GatewayQueue] Stopped');
   }
+
+  if (this.chunkTimeout) {
+   clearTimeout(this.chunkTimeout);
+   this.chunkTimeout = null;
+  }
+
+  // eslint-disable-next-line no-console
+  console.log('[GatewayQueue] Stopped');
  }
 
  /**
@@ -78,6 +86,8 @@ class GatewayQueue {
   * @param memberCount Approximate member count for priority
   */
  async enqueue(guildId: string, memberCount: number): Promise<void> {
+  if (memberCount === 0) return;
+
   if (this.currentGuildId === guildId) return;
   if (this.queue.has((item) => item.guildId === guildId)) return;
 
@@ -111,6 +121,11 @@ class GatewayQueue {
  onChunkComplete(guildId: string): void {
   if (this.currentGuildId === guildId) {
    this.currentGuildId = null;
+
+   if (this.chunkTimeout) {
+    clearTimeout(this.chunkTimeout);
+    this.chunkTimeout = null;
+   }
   }
  }
 
@@ -134,6 +149,15 @@ class GatewayQueue {
     op: GatewayOpcodes.RequestGuildMembers,
     d: { guild_id: item.guildId, presences: false, limit: 0, query: '' },
    });
+
+   this.chunkTimeout = setTimeout(() => {
+    if (this.currentGuildId === item.guildId) {
+     // eslint-disable-next-line no-console
+     console.log(`[GatewayQueue] Timeout waiting for chunks from ${item.guildId}, skipping`);
+     this.currentGuildId = null;
+     this.chunkTimeout = null;
+    }
+   }, GatewayQueue.chunkTimeoutMS);
 
    // eslint-disable-next-line no-console
    console.log(
