@@ -41,6 +41,7 @@ class RestQueue {
  private activeRequests = 0;
  private processingInterval: ReturnType<typeof setInterval> | null = null;
  private isProcessing = false;
+ private completedCount = 0;
 
  /**
   * Get the number of items in the queue
@@ -87,6 +88,8 @@ class RestQueue {
   * Enqueue all guild tasks for first guild interaction
   */
  enqueueGuildTasks(guildId: string, memberCount: number): void {
+  if (this.queue.has((item) => item.type === 'guild' && item.guildId === guildId)) return;
+
   const now = Date.now();
   const guildTasks: GuildTaskName[] = [
    'vcStatus',
@@ -268,6 +271,14 @@ class RestQueue {
     await this.executeGuildTask(item);
    } else {
     await this.executeChannelTask(item);
+   }
+
+   this.completedCount++;
+   if (this.completedCount % 10 === 0) {
+    // eslint-disable-next-line no-console
+    console.log(
+     `[RestQueue] Completed ${this.completedCount} requests | Queue: ${this.queue.size} | Active: ${this.activeRequests}`,
+    );
    }
   } catch (error: unknown) {
    if (this.isRateLimitError(error)) {
