@@ -21,12 +21,14 @@
  * ```
  */
 
+import { coldStartDetector } from './ColdStartDetector.js';
 import { gatewayQueue } from './GatewayQueue.js';
 import { restQueue } from './RestQueue.js';
 import type { GuildTaskName } from './types.js';
 
 export * from './types.js';
 export { BinaryHeap } from './BinaryHeap.js';
+export { coldStartDetector } from './ColdStartDetector.js';
 export { gatewayQueue } from './GatewayQueue.js';
 export { restQueue } from './RestQueue.js';
 
@@ -112,5 +114,20 @@ export const priorityQueue = {
   */
  get currentMemberRequestGuild(): string | null {
   return gatewayQueue.currentGuild;
+ },
+
+ /**
+  * Whether the bot is in cold start mode (events should not be emitted)
+  */
+ get isColdStart(): boolean {
+  return coldStartDetector.isColdStart;
+ },
+
+ /**
+  * Initialize cold start detection
+  * Call after guild count is known
+  */
+ async initializeColdStartDetection(): Promise<void> {
+  await coldStartDetector.initialize();
  },
 };
