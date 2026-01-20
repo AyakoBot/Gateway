@@ -42,6 +42,7 @@ class RestQueue {
  private processingInterval: ReturnType<typeof setInterval> | null = null;
  private isProcessing = false;
  private completedCount = 0;
+ private inFlight = new Set<string>();
 
  /**
   * Get the number of items in the queue
@@ -85,10 +86,43 @@ class RestQueue {
  }
 
  /**
+  * Generate a unique key for a task (used for in-flight tracking)
+  */
+ private getTaskKey(type: 'guild' | 'channel', id: string, taskName: string): string {
+  return `${type}:${id}:${taskName}`;
+ }
+
+ /**
+  * Check if a guild task is already queued or in-flight
+  */
+ private hasGuildTask(guildId: string, taskName?: string): boolean {
+  if (taskName) {
+   if (this.inFlight.has(this.getTaskKey('guild', guildId, taskName))) return true;
+  } else {
+   for (const key of this.inFlight) {
+    if (key.startsWith(`guild:${guildId}:`)) return true;
+   }
+  }
+  return this.queue.has((item) =>
+   item.type === 'guild' && item.guildId === guildId && (taskName ? item.taskName === taskName : true),
+  );
+ }
+
+ /**
+  * Check if a channel task is already queued or in-flight
+  */
+ private hasChannelTask(channelId: string, taskName: string): boolean {
+  if (this.inFlight.has(this.getTaskKey('channel', channelId, taskName))) return true;
+  return this.queue.has(
+   (item) => item.type === 'channel' && item.id === channelId && item.taskName === taskName,
+  );
+ }
+
+ /**
   * Enqueue all guild tasks for first guild interaction
   */
  enqueueGuildTasks(guildId: string, memberCount: number): void {
-  if (this.queue.has((item) => item.type === 'guild' && item.guildId === guildId)) return;
+  if (this.hasGuildTask(guildId)) return;
 
   const now = Date.now();
   const guildTasks: GuildTaskName[] = [
@@ -121,13 +155,7 @@ class RestQueue {
   * Enqueue a single guild task (for subsequent updates, not first interaction)
   */
  enqueueGuildTask(guildId: string, memberCount: number, taskName: GuildTaskName): void {
-  if (
-   this.queue.has(
-    (item) => item.type === 'guild' && item.guildId === guildId && item.taskName === taskName,
-   )
-  ) {
-   return;
-  }
+  if (this.hasGuildTask(guildId, taskName)) return;
 
   this.queue.push({
    type: 'guild',
@@ -149,13 +177,7 @@ class RestQueue {
   memberCount: number,
   taskName: ChannelTaskName,
  ): void {
-  if (
-   this.queue.has(
-    (item) => item.type === 'channel' && item.id === channelId && item.taskName === taskName,
-   )
-  ) {
-   return;
-  }
+  if (this.hasChannelTask(channelId, taskName)) return;
 
   this.queue.push({
    type: 'channel',
@@ -264,6 +286,8 @@ class RestQueue {
   * Execute a task
   */
  private async executeTask(item: RestQueueItem): Promise<void> {
+  const taskKey = this.getTaskKey(item.type, item.id, item.taskName);
+  this.inFlight.add(taskKey);
   this.activeRequests++;
 
   try {
@@ -286,6 +310,7 @@ class RestQueue {
     this.onRateLimit(item, retryAfter);
    }
   } finally {
+   this.inFlight.delete(taskKey);
    this.activeRequests--;
   }
  }
