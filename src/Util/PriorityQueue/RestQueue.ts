@@ -149,6 +149,9 @@ class RestQueue {
     addedAt: now,
    });
   }
+
+  // eslint-disable-next-line no-console
+  console.log(`[RestQueue] Enqueued ${guildTasks.length} guild tasks for guilds/${guildId}/* | Queue: ${this.queue.size}`);
  }
 
  /**
@@ -157,15 +160,19 @@ class RestQueue {
  enqueueGuildTask(guildId: string, memberCount: number, taskName: GuildTaskName): void {
   if (this.hasGuildTask(guildId, taskName)) return;
 
+  const endpoint = `guilds/${guildId}/${taskName}`;
   this.queue.push({
    type: 'guild',
    id: guildId,
    guildId,
    memberCount,
    taskName,
-   endpoint: `guilds/${guildId}/${taskName}`,
+   endpoint,
    addedAt: Date.now(),
   });
+
+  // eslint-disable-next-line no-console
+  console.log(`[RestQueue] Enqueued ${endpoint} | Queue: ${this.queue.size}`);
  }
 
  /**
@@ -179,15 +186,19 @@ class RestQueue {
  ): void {
   if (this.hasChannelTask(channelId, taskName)) return;
 
+  const endpoint = `channels/${channelId}/${taskName}`;
   this.queue.push({
    type: 'channel',
    id: channelId,
    guildId,
    memberCount,
    taskName,
-   endpoint: `channels/${channelId}/${taskName}`,
+   endpoint,
    addedAt: Date.now(),
   });
+
+  // eslint-disable-next-line no-console
+  console.log(`[RestQueue] Enqueued ${endpoint} | Queue: ${this.queue.size}`);
  }
 
  /**
