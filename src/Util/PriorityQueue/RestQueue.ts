@@ -7,7 +7,7 @@
  * - Priority by member count (larger guilds first), then guild > channel
  */
 import { getChannelPerms, getGuildPerms } from '@ayako/utility';
-import { RESTEvents, type RateLimitData } from '@discordjs/rest';
+import { RESTEvents } from '@discordjs/rest';
 import { GuildFeature, PermissionFlagsBits } from 'discord-api-types/v10';
 
 import redis from '../../BaseClient/Bot/Cache.js';
@@ -109,8 +109,11 @@ class RestQueue {
     if (key.startsWith(`guild:${guildId}:`)) return true;
    }
   }
-  return this.queue.has((item) =>
-   item.type === 'guild' && item.guildId === guildId && (taskName ? item.taskName === taskName : true),
+  return this.queue.has(
+   (item) =>
+    item.type === 'guild' &&
+    item.guildId === guildId &&
+    (taskName ? item.taskName === taskName : true),
   );
  }
 
@@ -169,59 +172,39 @@ class RestQueue {
  }
 
  /**
-  * Update bucket state from RateLimitData event
-  */
- private updateBucketFromEvent(data: RateLimitData): void {
-  const bucketKey = this.generateBucketKey(data.method, data.route);
-  this.routeToBucket.set(bucketKey, data.hash);
-
-  this.buckets.set(data.hash, {
-   bucketHash: data.hash,
-   route: data.route,
-   method: data.method,
-   remaining: 0,
-   limit: data.limit,
-   resetAt: Date.now() + data.timeToReset,
-   blocked: true,
-   scope: data.scope as 'user' | 'global' | 'shared',
-  });
-
-  // eslint-disable-next-line no-console
-  console.log(
-   `[RestQueue] Bucket learned: ${data.route} -> ${data.hash} (resets in ${data.timeToReset}ms)`,
-  );
- }
-
- /**
-  * Update bucket state when we hit a 429 (fallback if event doesn't fire)
-  */
- private updateBucketFromError(endpoint: string, retryAfter: number): void {
-  const route = this.normalizeRoute(endpoint);
-  const bucketKey = this.generateBucketKey('GET', endpoint);
-
-  const existingHash = this.routeToBucket.get(bucketKey);
-  const bucketHash = existingHash ?? `unknown:${route}`;
-
-  this.routeToBucket.set(bucketKey, bucketHash);
-
-  this.buckets.set(bucketHash, {
-   bucketHash,
-   route,
-   method: 'GET',
-   remaining: 0,
-   limit: 1,
-   resetAt: Date.now() + retryAfter,
-   blocked: true,
-   scope: 'user',
-  });
- }
-
- /**
-  * Setup listener for REST rate limit events
+  * Setup listener for REST rate limit events via Response event
   */
  private setupRateLimitListener(): void {
-  api.rest.on(RESTEvents.RateLimited, (data: RateLimitData) => {
-   this.updateBucketFromEvent(data);
+  api.rest.on(RESTEvents.Response, (request, response) => {
+   if (response.status !== 429) return;
+
+   const retryAfter = response.headers.get('retry-after');
+   const bucket = response.headers.get('x-ratelimit-bucket');
+   const scope = response.headers.get('x-ratelimit-scope') as 'user' | 'global' | 'shared' | null;
+
+   if (!retryAfter) return;
+
+   const retryAfterMs = parseFloat(retryAfter) * 1000;
+   const route = this.normalizeRoute(request.path);
+   const bucketKey = this.generateBucketKey(request.method, request.path);
+   const bucketHash = bucket ?? `unknown:${route}`;
+
+   this.routeToBucket.set(bucketKey, bucketHash);
+   this.buckets.set(bucketHash, {
+    bucketHash,
+    route,
+    method: request.method,
+    remaining: 0,
+    limit: 1,
+    resetAt: Date.now() + retryAfterMs,
+    blocked: true,
+    scope: scope ?? 'user',
+   });
+
+   // eslint-disable-next-line no-console
+   console.log(
+    `[RestQueue] Bucket learned from 429: ${route} -> ${bucketHash} (retry in ${retryAfterMs}ms)`,
+   );
   });
  }
 
@@ -260,7 +243,9 @@ class RestQueue {
   }
 
   // eslint-disable-next-line no-console
-  console.log(`[RestQueue] Enqueued ${guildTasks.length} guild tasks for guilds/${guildId}/* | Queue: ${this.queue.size}`);
+  console.log(
+   `[RestQueue] Enqueued ${guildTasks.length} guild tasks for guilds/${guildId}/* | Queue: ${this.queue.size}`,
+  );
  }
 
  /**
@@ -368,11 +353,9 @@ class RestQueue {
  }
 
  /**
-  * Handle rate limit (429) response
+  * Handle rate limit (429) response - re-queue the item
   */
  private onRateLimit(item: RestQueueItem, retryAfter: number): void {
-  this.updateBucketFromError(item.endpoint, retryAfter);
-
   this.queue.push(item);
 
   // eslint-disable-next-line no-console
@@ -382,7 +365,7 @@ class RestQueue {
  }
 
  /**
-  * Execute a task
+  * Execute a task with timeout
   */
  private async executeTask(item: RestQueueItem): Promise<void> {
   const taskKey = this.getTaskKey(item.type, item.id, item.taskName);
@@ -390,11 +373,15 @@ class RestQueue {
   this.activeRequests++;
 
   try {
-   if (item.type === 'guild') {
-    await this.executeGuildTask(item);
-   } else {
-    await this.executeChannelTask(item);
-   }
+   const taskPromise =
+    item.type === 'guild' ? this.executeGuildTask(item) : this.executeChannelTask(item);
+
+   await Promise.race([
+    taskPromise,
+    new Promise<never>((_, reject) =>
+     setTimeout(() => reject(new Error('Task timeout')), CONFIG.TASK_TIMEOUT),
+    ),
+   ]);
 
    this.completedCount++;
    if (this.completedCount % 10 === 0) {
@@ -407,6 +394,10 @@ class RestQueue {
    if (this.isRateLimitError(error)) {
     const retryAfter = this.getRateLimitRetryAfter(error);
     this.onRateLimit(item, retryAfter);
+   } else if (error instanceof Error && error.message === 'Task timeout') {
+    // eslint-disable-next-line no-console
+    console.log(`[RestQueue] Task timeout: ${item.endpoint} - re-queuing`);
+    this.queue.push(item);
    }
   } finally {
    this.inFlight.delete(taskKey);

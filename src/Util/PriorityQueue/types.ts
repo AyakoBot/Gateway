@@ -83,4 +83,6 @@ export const CONFIG = {
  DEFAULT_RETRY_AFTER: 5000,
  /** Redis queue size threshold for backpressure - don't start new tasks if above this */
  REDIS_QUEUE_THRESHOLD: 10000,
+ /** Task execution timeout in ms - prevents hanging tasks from blocking the queue */
+ TASK_TIMEOUT: 30000,
 } as const;
