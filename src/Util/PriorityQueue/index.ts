@@ -14,7 +14,6 @@
  * // Enqueue requests
  * priorityQueue.enqueueGuildTasks(guildId, memberCount);
  * priorityQueue.enqueueMembers(guildId, memberCount);
- * priorityQueue.enqueueChannelPins(channelId, guildId, memberCount);
  *
  * // Notify when member chunks complete
  * priorityQueue.onMemberChunkComplete(guildId);
@@ -78,16 +77,6 @@ export const priorityQueue = {
   */
  async enqueueMembers(guildId: string, memberCount: number): Promise<void> {
   await gatewayQueue.enqueue(guildId, memberCount);
- },
-
- /**
-  * Enqueue channel pins request
-  * @param channelId Channel ID
-  * @param guildId Guild ID
-  * @param memberCount Guild member count for priority
-  */
- enqueueChannelPins(channelId: string, guildId: string, memberCount: number): void {
-  restQueue.enqueueChannelTask(channelId, guildId, memberCount, 'pins');
  },
 
  /**

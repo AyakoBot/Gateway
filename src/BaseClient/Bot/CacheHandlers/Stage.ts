@@ -5,7 +5,6 @@ import {
  type GatewayStageInstanceUpdateDispatchData,
 } from 'discord-api-types/gateway/v10';
 
-import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
 import redis from '../Cache.js';
 
@@ -14,7 +13,6 @@ export default {
   data: GatewayStageInstanceCreateDispatchData,
  ) => {
   firstGuildInteraction(data.guild_id);
-  firstChannelInteraction(data.channel_id, data.guild_id);
 
   redis.stages.set(data);
  },
@@ -23,7 +21,6 @@ export default {
   data: GatewayStageInstanceDeleteDispatchData,
  ) => {
   firstGuildInteraction(data.guild_id);
-  firstChannelInteraction(data.channel_id, data.guild_id);
 
   redis.stages.del(data.id);
  },
@@ -32,7 +29,6 @@ export default {
   data: GatewayStageInstanceUpdateDispatchData,
  ) => {
   firstGuildInteraction(data.guild_id);
-  firstChannelInteraction(data.channel_id, data.guild_id);
 
   redis.stages.set(data);
  },

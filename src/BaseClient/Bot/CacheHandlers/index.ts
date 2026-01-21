@@ -21,7 +21,6 @@ import {
  AllThreadGuildChannelTypes,
 } from '../../../Typings/Channel.js';
 import emit from '../../../Util/EventBus.js';
-import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
 import { priorityQueue } from '../../../Util/PriorityQueue/index.js';
 import redis from '../Cache.js';
@@ -94,9 +93,6 @@ const caches: Record<
 
  [GatewayDispatchEvents.InteractionCreate]: async (data: GatewayInteractionCreateDispatchData) => {
   if (data.guild_id) firstGuildInteraction(data.guild_id);
-  if (data.channel?.id && data.guild_id) {
-   firstChannelInteraction(data.channel.id, data.guild_id);
-  }
   if (data.user) redis.users.set(data.user);
 
   if (data.message && data.guild_id) {
@@ -133,7 +129,6 @@ const caches: Record<
  [GatewayDispatchEvents.TypingStart]: async (data: GatewayTypingStartDispatchData) => {
   if (!data.member || !data.guild_id) return;
   firstGuildInteraction(data.guild_id);
-  firstChannelInteraction(data.channel_id, data.guild_id);
 
   redis.members.set(data.member, data.guild_id);
  },

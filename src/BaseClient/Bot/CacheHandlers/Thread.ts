@@ -8,7 +8,6 @@ import {
  type GatewayThreadUpdateDispatchData,
 } from 'discord-api-types/gateway/v10';
 
-import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
 import redis from '../Cache.js';
 
@@ -49,13 +48,7 @@ export default {
  },
 
  [GatewayDispatchEvents.ThreadUpdate]: async (data: GatewayThreadUpdateDispatchData) => {
-  if (!data.guild_id) {
-   redis.threads.set(data);
-   return;
-  }
-
-  firstGuildInteraction(data.guild_id);
-  firstChannelInteraction(data.id, data.guild_id);
+  if (data.guild_id) firstGuildInteraction(data.guild_id);
 
   redis.threads.set(data);
  },
@@ -79,7 +72,6 @@ export default {
   data: GatewayThreadMembersUpdateDispatchData,
  ) => {
   firstGuildInteraction(data.guild_id);
-  firstChannelInteraction(data.id, data.guild_id);
 
   data.added_members?.forEach((threadMember) => {
    redis.threadMembers.set(threadMember, data.guild_id);
@@ -95,7 +87,6 @@ export default {
   data: GatewayThreadMemberUpdateDispatchData,
  ) => {
   firstGuildInteraction(data.guild_id);
-  if (data.id) firstChannelInteraction(data.id, data.guild_id);
 
   redis.threadMembers.set(data, data.guild_id);
 

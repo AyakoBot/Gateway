@@ -4,9 +4,9 @@
  * - Max 5 concurrent requests (configurable)
  * - Per-endpoint rate limit tracking
  * - Re-queues on 429 with retry_after delay
- * - Priority by member count (larger guilds first), then guild > channel
+ * - Priority by member count (larger guilds first)
  */
-import { getChannelPerms, getGuildPerms } from '@ayako/utility';
+import { getGuildPerms } from '@ayako/utility';
 import { RESTEvents } from '@discordjs/rest';
 import { GuildFeature, PermissionFlagsBits } from 'discord-api-types/v10';
 
@@ -16,23 +16,15 @@ import requestEventSubscribers from '../requestEventSubscribers.js';
 import requestVoiceChannelStatuses from '../requestVoiceChannelStatuses.js';
 
 import { BinaryHeap } from './BinaryHeap.js';
-import {
- CONFIG,
- type BucketState,
- type ChannelTaskName,
- type GuildTaskName,
- type RestQueueItem,
-} from './types.js';
+import { CONFIG, type BucketState, type GuildTaskName, type RestQueueItem } from './types.js';
 
 /**
  * Priority comparator for REST queue items
  * Higher member count = higher priority
- * Equal member count: guild > channel
- * Equal type: FIFO by addedAt
+ * Equal member count: FIFO by addedAt
  */
 const restComparator = (a: RestQueueItem, b: RestQueueItem): number => {
  if (a.memberCount !== b.memberCount) return b.memberCount - a.memberCount;
- if (a.type !== b.type) return a.type === 'guild' ? -1 : 1;
  return a.addedAt - b.addedAt;
 };
 
@@ -94,8 +86,8 @@ class RestQueue {
  /**
   * Generate a unique key for a task (used for in-flight tracking)
   */
- private getTaskKey(type: 'guild' | 'channel', id: string, taskName: string): string {
-  return `${type}:${id}:${taskName}`;
+ private getTaskKey(id: string, taskName: string): string {
+  return `guild:${id}:${taskName}`;
  }
 
  /**
@@ -103,27 +95,14 @@ class RestQueue {
   */
  private hasGuildTask(guildId: string, taskName?: string): boolean {
   if (taskName) {
-   if (this.inFlight.has(this.getTaskKey('guild', guildId, taskName))) return true;
+   if (this.inFlight.has(this.getTaskKey(guildId, taskName))) return true;
   } else {
    for (const key of this.inFlight) {
     if (key.startsWith(`guild:${guildId}:`)) return true;
    }
   }
   return this.queue.has(
-   (item) =>
-    item.type === 'guild' &&
-    item.guildId === guildId &&
-    (taskName ? item.taskName === taskName : true),
-  );
- }
-
- /**
-  * Check if a channel task is already queued or in-flight
-  */
- private hasChannelTask(channelId: string, taskName: string): boolean {
-  if (this.inFlight.has(this.getTaskKey('channel', channelId, taskName))) return true;
-  return this.queue.has(
-   (item) => item.type === 'channel' && item.id === channelId && item.taskName === taskName,
+   (item) => item.guildId === guildId && (taskName ? item.taskName === taskName : true),
   );
  }
 
@@ -270,32 +249,6 @@ class RestQueue {
  }
 
  /**
-  * Enqueue a channel task (e.g., pins) for first channel interaction
-  */
- enqueueChannelTask(
-  channelId: string,
-  guildId: string,
-  memberCount: number,
-  taskName: ChannelTaskName,
- ): void {
-  if (this.hasChannelTask(channelId, taskName)) return;
-
-  const endpoint = `channels/${channelId}/${taskName}`;
-  this.queue.push({
-   type: 'channel',
-   id: channelId,
-   guildId,
-   memberCount,
-   taskName,
-   endpoint,
-   addedAt: Date.now(),
-  });
-
-  // eslint-disable-next-line no-console
-  console.log(`[RestQueue] Enqueued ${endpoint} | Queue: ${this.queue.size}`);
- }
-
- /**
   * Process items from the queue
   */
  private async process(): Promise<void> {
@@ -368,16 +321,13 @@ class RestQueue {
   * Execute a task with timeout
   */
  private async executeTask(item: RestQueueItem): Promise<void> {
-  const taskKey = this.getTaskKey(item.type, item.id, item.taskName);
+  const taskKey = this.getTaskKey(item.id, item.taskName);
   this.inFlight.add(taskKey);
   this.activeRequests++;
 
   try {
-   const taskPromise =
-    item.type === 'guild' ? this.executeGuildTask(item) : this.executeChannelTask(item);
-
    await Promise.race([
-    taskPromise,
+    this.executeGuildTask(item),
     new Promise<never>((_, reject) =>
      setTimeout(() => reject(new Error('Task timeout')), CONFIG.TASK_TIMEOUT),
     ),
@@ -454,15 +404,6 @@ class RestQueue {
 
    default:
     break;
-  }
- }
-
- /**
-  * Execute a channel task
-  */
- private async executeChannelTask(item: RestQueueItem): Promise<void> {
-  if (item.taskName === 'pins') {
-   await this.taskPins(item.id, item.guildId);
   }
  }
 
@@ -626,31 +567,6 @@ class RestQueue {
 
   const invites = await api.guilds.getInvites(guildId).catch(() => []);
   invites.forEach((i) => redis.invites.set(i));
- }
-
- //#region Channel Tasks
-
- private async taskPins(channelId: string, guildId: string): Promise<void> {
-  const channelPerms = await getChannelPerms.call(
-   redis,
-   guildId,
-   clientCache.user?.id || '0',
-   channelId,
-  );
-  const readPerms = PermissionFlagsBits.ViewAuditLog | PermissionFlagsBits.ReadMessageHistory;
-  if ((channelPerms.allow & readPerms) !== readPerms) return;
-
-  await redis.pins.delAll(channelId);
-
-  const pins = await api.channels.getPins(channelId);
-
-  for (let i = 0; i < pins.length; i++) {
-   const pin = pins[i];
-   redis.pins.set(channelId, pin.id);
-   redis.messages.set(pin, guildId);
-   (pins as unknown[])[i] = undefined;
-  }
-  pins.length = 0;
  }
 
  //#region Utilities

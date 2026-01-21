@@ -6,8 +6,6 @@ import {
  type GatewayChannelUpdateDispatchData,
 } from 'discord-api-types/gateway/v10';
 
-import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
-import requestChannelPins from '../../../Util/requestChannelPins.js';
 import redis from '../Cache.js';
 
 export default {
@@ -33,24 +31,14 @@ export default {
   await pipeline.exec();
  },
 
- [GatewayDispatchEvents.ChannelPinsUpdate]: async (data: GatewayChannelPinsUpdateDispatchData) => {
-  if (!data.guild_id) return;
-
-  const success = await firstChannelInteraction(data.channel_id, data.guild_id);
-  if (success) return;
-
-  await requestChannelPins(data.channel_id, data.guild_id);
- },
+ [GatewayDispatchEvents.ChannelPinsUpdate]: async (_: GatewayChannelPinsUpdateDispatchData) => {},
 
  [GatewayDispatchEvents.ChannelUpdate]: async (data: GatewayChannelUpdateDispatchData) => {
-  firstChannelInteraction(data.id, data.guild_id);
   redis.channels.set(data);
  },
 
  // eslint-disable-next-line @typescript-eslint/naming-convention
  VOICE_CHANNEL_STATUS_UPDATE: async (data: { status: string; id: string; guild_id: string }) => {
-  firstChannelInteraction(data.id, data.guild_id);
-
   if (!data.status?.length) {
    redis.channelStatus.del(data.guild_id, data.id);
    return;
@@ -65,8 +53,6 @@ export default {
   guild_id: string;
   channels: { status: string; id: string }[];
  }) => {
-  await Promise.all(data.channels.map(async (c) => firstChannelInteraction(c.id, data.guild_id)));
-
   await redis.channelStatus.delAll(data.guild_id);
 
   data.channels.forEach((c) => {

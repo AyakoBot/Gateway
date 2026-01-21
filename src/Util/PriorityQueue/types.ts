@@ -29,19 +29,14 @@ export type GuildTaskName =
  | 'vcStatus';
 
 /**
- * Task names for REST API calls on first channel interaction
- */
-export type ChannelTaskName = 'pins';
-
-/**
  * Item in the REST queue
  */
 export type RestQueueItem = {
- type: 'guild' | 'channel';
+ type: 'guild';
  id: string;
  guildId: string;
  memberCount: number;
- taskName: GuildTaskName | ChannelTaskName;
+ taskName: GuildTaskName;
  endpoint: string;
  addedAt: number;
 };
