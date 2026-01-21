@@ -346,8 +346,7 @@ class RestQueue {
     this.onRateLimit(item, retryAfter);
    } else if (error instanceof Error && error.message === 'Task timeout') {
     // eslint-disable-next-line no-console
-    console.log(`[RestQueue] Task timeout: ${item.endpoint} - re-queuing`);
-    this.queue.push(item);
+    console.log(`[RestQueue] Task timeout: ${item.endpoint} - letting djs handle it`);
    }
   } finally {
    this.inFlight.delete(taskKey);
