@@ -7,6 +7,7 @@
  * - Priority by member count (larger guilds first), then guild > channel
  */
 import { getChannelPerms, getGuildPerms } from '@ayako/utility';
+import { RESTEvents, type RateLimitData } from '@discordjs/rest';
 import { GuildFeature, PermissionFlagsBits } from 'discord-api-types/v10';
 
 import redis from '../../BaseClient/Bot/Cache.js';
@@ -17,9 +18,9 @@ import requestVoiceChannelStatuses from '../requestVoiceChannelStatuses.js';
 import { BinaryHeap } from './BinaryHeap.js';
 import {
  CONFIG,
+ type BucketState,
  type ChannelTaskName,
  type GuildTaskName,
- type RateLimitState,
  type RestQueueItem,
 } from './types.js';
 
@@ -37,12 +38,14 @@ const restComparator = (a: RestQueueItem, b: RestQueueItem): number => {
 
 class RestQueue {
  private queue = new BinaryHeap<RestQueueItem>(restComparator);
- private rateLimits = new Map<string, RateLimitState>();
  private activeRequests = 0;
  private processingInterval: ReturnType<typeof setInterval> | null = null;
  private isProcessing = false;
  private completedCount = 0;
  private inFlight = new Set<string>();
+
+ private buckets = new Map<string, BucketState>();
+ private routeToBucket = new Map<string, string>();
 
  /**
   * Get the number of items in the queue
@@ -63,6 +66,9 @@ class RestQueue {
   */
  start(): void {
   if (this.processingInterval) return;
+
+  this.setupRateLimitListener();
+
   this.processingInterval = setInterval(() => {
    this.process().catch((err) => {
     // eslint-disable-next-line no-console
@@ -117,6 +123,109 @@ class RestQueue {
    (item) => item.type === 'channel' && item.id === channelId && item.taskName === taskName,
   );
  }
+
+ //#region Bucket-Based Rate Limiting
+
+ /**
+  * Normalize an endpoint to a route pattern for bucket grouping
+  * Converts: "channels/123456789012345678/pins" -> "channels/:id/pins"
+  */
+ private normalizeRoute(endpoint: string): string {
+  return endpoint
+   .replace(/\d{17,19}/g, ':id')
+   .replace(/\/reactions\/(.*)/, '/reactions/:reaction')
+   .replace(/\/webhooks\/:id\/[^/?]+/, '/webhooks/:id/:token');
+ }
+
+ /**
+  * Generate a bucket key combining method and normalized route
+  */
+ private generateBucketKey(method: string, endpoint: string): string {
+  return `${method}:${this.normalizeRoute(endpoint)}`;
+ }
+
+ /**
+  * Check if an endpoint is currently rate limited based on bucket
+  */
+ private isEndpointBlocked(method: string, endpoint: string): boolean {
+  const bucketKey = this.generateBucketKey(method, endpoint);
+  const bucketHash = this.routeToBucket.get(bucketKey);
+
+  if (!bucketHash) return false; // Unknown bucket - allow request
+
+  const bucket = this.buckets.get(bucketHash);
+  if (!bucket) return false;
+
+  const now = Date.now();
+
+  // Check if bucket has reset
+  if (now >= bucket.resetAt) {
+   bucket.blocked = false;
+   bucket.remaining = bucket.limit;
+   return false;
+  }
+
+  return bucket.blocked;
+ }
+
+ /**
+  * Update bucket state from RateLimitData event
+  */
+ private updateBucketFromEvent(data: RateLimitData): void {
+  const bucketKey = this.generateBucketKey(data.method, data.route);
+  this.routeToBucket.set(bucketKey, data.hash);
+
+  this.buckets.set(data.hash, {
+   bucketHash: data.hash,
+   route: data.route,
+   method: data.method,
+   remaining: 0,
+   limit: data.limit,
+   resetAt: Date.now() + data.timeToReset,
+   blocked: true,
+   scope: data.scope as 'user' | 'global' | 'shared',
+  });
+
+  // eslint-disable-next-line no-console
+  console.log(
+   `[RestQueue] Bucket learned: ${data.route} -> ${data.hash} (resets in ${data.timeToReset}ms)`,
+  );
+ }
+
+ /**
+  * Update bucket state when we hit a 429 (fallback if event doesn't fire)
+  */
+ private updateBucketFromError(endpoint: string, retryAfter: number): void {
+  const route = this.normalizeRoute(endpoint);
+  const bucketKey = this.generateBucketKey('GET', endpoint);
+
+  const existingHash = this.routeToBucket.get(bucketKey);
+  const bucketHash = existingHash ?? `unknown:${route}`;
+
+  this.routeToBucket.set(bucketKey, bucketHash);
+
+  this.buckets.set(bucketHash, {
+   bucketHash,
+   route,
+   method: 'GET',
+   remaining: 0,
+   limit: 1,
+   resetAt: Date.now() + retryAfter,
+   blocked: true,
+   scope: 'user',
+  });
+ }
+
+ /**
+  * Setup listener for REST rate limit events
+  */
+ private setupRateLimitListener(): void {
+  api.rest.on(RESTEvents.RateLimited, (data: RateLimitData) => {
+   this.updateBucketFromEvent(data);
+  });
+ }
+
+ //#endregion
 
  /**
   * Enqueue all guild tasks for first guild interaction
@@ -221,8 +330,6 @@ class RestQueue {
   this.isProcessing = true;
 
   try {
-   this.cleanupRateLimits();
-
    while (this.activeRequests < CONFIG.REST_MAX_CONCURRENT && !this.queue.isEmpty) {
     const currentQueueSize = redis.cacheDb.getQueueSize();
     if (currentQueueSize > CONFIG.REDIS_QUEUE_THRESHOLD) {
@@ -245,16 +352,13 @@ class RestQueue {
  }
 
  /**
-  * Find the next item that isn't rate limited
+  * Find the next item that isn't rate limited (using bucket-based checking)
   */
  private findNextUnblockedItem(): RestQueueItem | undefined {
   const items = this.queue.toArray();
 
-  for (let i = 0; i < items.length; i++) {
-   const item = items[i];
-   const rateLimit = this.rateLimits.get(item.endpoint);
-
-   if (!rateLimit || !rateLimit.paused || Date.now() >= rateLimit.resetAt) {
+  for (const item of items) {
+   if (!this.isEndpointBlocked('GET', item.endpoint)) {
     this.queue.remove((it) => it === item);
     return item;
    }
@@ -264,26 +368,10 @@ class RestQueue {
  }
 
  /**
-  * Clean up expired rate limits
-  */
- private cleanupRateLimits(): void {
-  const now = Date.now();
-  for (const [endpoint, state] of this.rateLimits) {
-   if (now >= state.resetAt) {
-    this.rateLimits.delete(endpoint);
-   }
-  }
- }
-
- /**
   * Handle rate limit (429) response
   */
  private onRateLimit(item: RestQueueItem, retryAfter: number): void {
-  this.rateLimits.set(item.endpoint, {
-   endpoint: item.endpoint,
-   resetAt: Date.now() + retryAfter,
-   paused: true,
-  });
+  this.updateBucketFromError(item.endpoint, retryAfter);
 
   this.queue.push(item);
 

@@ -47,12 +47,26 @@ export type RestQueueItem = {
 };
 
 /**
- * Rate limit state for an endpoint
+ * Rate limit bucket from Discord
+ * Multiple routes can share the same bucket (identified by bucketHash)
  */
-export type RateLimitState = {
- endpoint: string;
+export type BucketState = {
+ /** The bucket hash from X-RateLimit-Bucket header, or pseudo-hash for unknown buckets */
+ bucketHash: string;
+ /** Normalized route pattern (e.g., "channels/:id/pins") */
+ route: string;
+ /** HTTP method */
+ method: string;
+ /** Number of requests remaining before rate limit */
+ remaining: number;
+ /** Total requests allowed per window */
+ limit: number;
+ /** Timestamp when the bucket resets (ms since epoch) */
  resetAt: number;
- paused: boolean;
+ /** Whether this bucket is currently blocked */
+ blocked: boolean;
+ /** Rate limit scope: 'user', 'global', or 'shared' */
+ scope: 'user' | 'global' | 'shared';
 };
 
 /**
