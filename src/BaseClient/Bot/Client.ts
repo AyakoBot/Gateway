@@ -60,6 +60,7 @@ export const client = new Client({ rest, gateway });
 export const { api } = client;
 export const cluster = new ClusterClient(client);
 export const cache: {
+ approxGuilds: number;
  guilds: number;
  members: Map<string, number>;
  emojis: Map<string, number>;
@@ -67,13 +68,8 @@ export const cache: {
  stickers: Map<string, number>;
  sounds: Map<string, number>;
  user: APIUser | null;
- requestingGuild: string | null;
- requestGuildQueue: Set<string>;
- requestingPins: string | null;
- requestPinsQueue: Set<string>;
- requestPinsGuildMap: Map<string, string>;
- requestPinsPaused: boolean;
 } = {
+ approxGuilds: await api.applications.getCurrent().then((app) => app.approximate_guild_count ?? 0),
  guilds: 0,
  members: new Map(),
  emojis: new Map(),
@@ -81,10 +77,4 @@ export const cache: {
  stickers: new Map(),
  sounds: new Map(),
  user: null,
- requestingGuild: null,
- requestGuildQueue: new Set(),
- requestingPins: null,
- requestPinsQueue: new Set(),
- requestPinsGuildMap: new Map(),
- requestPinsPaused: false,
 };

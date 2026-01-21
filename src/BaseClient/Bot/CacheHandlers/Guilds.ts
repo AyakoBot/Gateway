@@ -1,3 +1,4 @@
+import type { ChainableCommanderInterface } from '@ayako/utility';
 import {
  GatewayDispatchEvents,
  type GatewayGuildAuditLogEntryCreateDispatchData,
@@ -27,7 +28,8 @@ import {
  type GuildMemberFlags,
 } from 'discord-api-types/v10';
 
-import firstGuildInteraction, { tasks } from '../../../Util/firstGuildInteraction.js';
+import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
+import { priorityQueue } from '../../../Util/PriorityQueue/index.js';
 import redis from '../Cache.js';
 import { cache } from '../Client.js';
 
@@ -66,7 +68,7 @@ export default {
   const rGuild = redis.guilds.apiToR(data);
   if (rGuild) {
    const guildJson = JSON.stringify(rGuild);
-   redis.batcher.queueSync((p) => {
+   redis.queueSync((p: ChainableCommanderInterface) => {
     p.set(`cache:guilds:${guildId}:current`, guildJson, 'EX', 604800);
     p.hset('keystore:guilds', `cache:guilds:${guildId}`, 0);
    });
@@ -84,14 +86,14 @@ export default {
 
    if (rMember) {
     const memberJson = JSON.stringify(rMember);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p: ChainableCommanderInterface) => {
      p.set(`cache:members:${guildId}:${userId}:current`, memberJson, 'EX', 604800);
      p.hset(`keystore:members:${guildId}`, `cache:members:${guildId}:${userId}`, 0);
     });
    }
    if (rUser) {
     const userJson = JSON.stringify(rUser);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p: ChainableCommanderInterface) => {
      p.set(`cache:users:${userId}:current`, userJson, 'EX', 604800);
     });
    }
@@ -104,7 +106,7 @@ export default {
    (data.channels as unknown[])[i] = undefined;
    if (rChannel) {
     const channelJson = JSON.stringify(rChannel);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p: ChainableCommanderInterface) => {
      p.set(`cache:channels:${channel.id}:current`, channelJson, 'EX', 604800);
      p.hset(`keystore:channels:${guildId}`, `cache:channels:${channel.id}`, 0);
     });
@@ -118,7 +120,7 @@ export default {
    (data.roles as unknown[])[i] = undefined;
    if (rRole) {
     const roleJson = JSON.stringify(rRole);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p: ChainableCommanderInterface) => {
      p.set(`cache:roles:${role.id}:current`, roleJson, 'EX', 604800);
      p.hset(`keystore:roles:${guildId}`, `cache:roles:${role.id}`, 0);
     });
@@ -133,7 +135,7 @@ export default {
    (data.emojis as unknown[])[i] = undefined;
    if (rEmoji) {
     const emojiJson = JSON.stringify(rEmoji);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p: ChainableCommanderInterface) => {
      p.set(`cache:emojis:${emoji.id}:current`, emojiJson, 'EX', 604800);
      p.hset(`keystore:emojis:${guildId}`, `cache:emojis:${emoji.id}`, 0);
     });
@@ -147,7 +149,7 @@ export default {
    (data.stickers as unknown[])[i] = undefined;
    if (rSticker) {
     const stickerJson = JSON.stringify(rSticker);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p: ChainableCommanderInterface) => {
      p.set(`cache:stickers:${sticker.id}:current`, stickerJson, 'EX', 604800);
      p.hset(`keystore:stickers:${guildId}`, `cache:stickers:${sticker.id}`, 0);
     });
@@ -161,7 +163,7 @@ export default {
    (data.soundboard_sounds as unknown[])[i] = undefined;
    if (rSound) {
     const soundJson = JSON.stringify(rSound);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p: ChainableCommanderInterface) => {
      p.set(`cache:soundboards:${sound.sound_id}:current`, soundJson, 'EX', 604800);
     });
    }
@@ -176,7 +178,7 @@ export default {
    (data.voice_states as unknown[])[i] = undefined;
    if (rVoice) {
     const voiceJson = JSON.stringify(rVoice);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p: ChainableCommanderInterface) => {
      p.set(`cache:voices:${guildId}:${voice.user_id}:current`, voiceJson, 'EX', 604800);
      p.hset(`keystore:voices:${guildId}`, `cache:voices:${guildId}:${voice.user_id}`, 0);
     });
@@ -191,7 +193,7 @@ export default {
    (data.threads as unknown[])[i] = undefined;
    if (rThread) {
     const threadJson = JSON.stringify(rThread);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p: ChainableCommanderInterface) => {
      p.set(`cache:threads:${thread.id}:current`, threadJson, 'EX', 604800);
      p.hset(`keystore:threads:${guildId}`, `cache:threads:${thread.id}`, 0);
     });
@@ -205,7 +207,7 @@ export default {
    (data.guild_scheduled_events as unknown[])[i] = undefined;
    if (rEvent) {
     const eventJson = JSON.stringify(rEvent);
-    redis.batcher.queueSync((p) => {
+    redis.queueSync((p: ChainableCommanderInterface) => {
      p.set(`cache:events:${event.id}:current`, eventJson, 'EX', 604800);
      p.hset(`keystore:events:${event.guild_id}`, `cache:events:${event.id}`, 0);
     });
@@ -226,36 +228,6 @@ export default {
   redis.guilds.del(data.id);
   redis.channelStatus.delAll(data.id);
   redis.pins.delAll(data.id);
-
-  const getPipeline = redis.cacheDb.pipeline();
-
-  getPipeline.hgetall(redis.audits.keystore(data.id));
-  getPipeline.hgetall(redis.automods.keystore(data.id));
-  getPipeline.hgetall(redis.bans.keystore(data.id));
-  getPipeline.hgetall(redis.channels.keystore(data.id));
-  getPipeline.hgetall(redis.commandPermissions.keystore(data.id));
-  getPipeline.hgetall(redis.emojis.keystore(data.id));
-  getPipeline.hgetall(redis.events.keystore(data.id));
-  getPipeline.hgetall(redis.guildCommands.keystore(data.id));
-  getPipeline.hgetall(redis.integrations.keystore(data.id));
-  getPipeline.hgetall(redis.invites.keystore(data.id));
-  getPipeline.hgetall(redis.members.keystore(data.id));
-  getPipeline.hgetall(redis.messages.keystore(data.id));
-  getPipeline.hgetall(redis.reactions.keystore(data.id));
-  getPipeline.hgetall(redis.roles.keystore(data.id));
-  getPipeline.hgetall(redis.soundboards.keystore(data.id));
-  getPipeline.hgetall(redis.stages.keystore(data.id));
-  getPipeline.hgetall(redis.stickers.keystore(data.id));
-  getPipeline.hgetall(redis.threads.keystore(data.id));
-  getPipeline.hgetall(redis.threadMembers.keystore(data.id));
-  getPipeline.hgetall(redis.voices.keystore(data.id));
-  getPipeline.hgetall(redis.webhooks.keystore(data.id));
-  getPipeline.hgetall(redis.welcomeScreens.keystore(data.id));
-  getPipeline.hgetall(redis.onboardings.keystore(data.id));
-  getPipeline.hgetall(redis.eventUsers.keystore(data.id));
-
-  const results = await getPipeline.exec();
-  if (!results) return;
 
   const [
    auditlogs,
@@ -282,9 +254,35 @@ export default {
    welcomeScreens,
    onboarding,
    eventUsers,
-  ] = results.map((result) => result[1] || {});
+  ] = await Promise.all([
+   redis.cacheDb.hscanKeys(redis.audits.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.automods.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.bans.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.channels.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.commandPermissions.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.emojis.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.events.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.guildCommands.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.integrations.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.invites.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.members.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.messages.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.reactions.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.roles.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.soundboards.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.stages.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.stickers.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.threads.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.threadMembers.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.voices.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.webhooks.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.welcomeScreens.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.onboardings.keystore(data.id)),
+   redis.cacheDb.hscanKeys(redis.eventUsers.keystore(data.id)),
+  ]);
 
   const deletePipeline = redis.cacheDb.pipeline();
+
   deletePipeline.del(redis.guilds.keystore(data.id));
   deletePipeline.del(redis.audits.keystore(data.id));
   deletePipeline.del(redis.automods.keystore(data.id));
@@ -311,30 +309,30 @@ export default {
   deletePipeline.del(redis.onboardings.keystore(data.id));
   deletePipeline.del(redis.eventUsers.keystore(data.id));
 
-  deletePipeline.del(...Object.keys(auditlogs));
-  deletePipeline.del(...Object.keys(automods));
-  deletePipeline.del(...Object.keys(bans));
-  deletePipeline.del(...Object.keys(channels));
-  deletePipeline.del(...Object.keys(commandPermissions));
-  deletePipeline.del(...Object.keys(emojis));
-  deletePipeline.del(...Object.keys(events));
-  deletePipeline.del(...Object.keys(guildCommands));
-  deletePipeline.del(...Object.keys(integrations));
-  deletePipeline.del(...Object.keys(invites));
-  deletePipeline.del(...Object.keys(members));
-  deletePipeline.del(...Object.keys(messages));
-  deletePipeline.del(...Object.keys(reactions));
-  deletePipeline.del(...Object.keys(roles));
-  deletePipeline.del(...Object.keys(soundboards));
-  deletePipeline.del(...Object.keys(stages));
-  deletePipeline.del(...Object.keys(stickers));
-  deletePipeline.del(...Object.keys(threads));
-  deletePipeline.del(...Object.keys(threadMembers));
-  deletePipeline.del(...Object.keys(voices));
-  deletePipeline.del(...Object.keys(webhooks));
-  deletePipeline.del(...Object.keys(welcomeScreens));
-  deletePipeline.del(...Object.keys(onboarding));
-  deletePipeline.del(...Object.keys(eventUsers));
+  deletePipeline.del(...auditlogs);
+  deletePipeline.del(...automods);
+  deletePipeline.del(...bans);
+  deletePipeline.del(...channels);
+  deletePipeline.del(...commandPermissions);
+  deletePipeline.del(...emojis);
+  deletePipeline.del(...events);
+  deletePipeline.del(...guildCommands);
+  deletePipeline.del(...integrations);
+  deletePipeline.del(...invites);
+  deletePipeline.del(...members);
+  deletePipeline.del(...messages);
+  deletePipeline.del(...reactions);
+  deletePipeline.del(...roles);
+  deletePipeline.del(...soundboards);
+  deletePipeline.del(...stages);
+  deletePipeline.del(...stickers);
+  deletePipeline.del(...threads);
+  deletePipeline.del(...threadMembers);
+  deletePipeline.del(...voices);
+  deletePipeline.del(...webhooks);
+  deletePipeline.del(...welcomeScreens);
+  deletePipeline.del(...onboarding);
+  deletePipeline.del(...eventUsers);
 
   await deletePipeline.exec();
  },
@@ -348,9 +346,9 @@ export default {
   firstGuildInteraction(data.guild_id);
   cache.emojis.set(data.guild_id, data.emojis.length);
 
-  const emojis = await redis.cacheDb.hgetall(redis.emojis.keystore(data.guild_id));
+  const emojiKeys = await redis.cacheDb.hscanKeys(redis.emojis.keystore(data.guild_id));
   const pipeline = redis.cacheDb.pipeline();
-  pipeline.del(...Object.keys(emojis));
+  pipeline.del(...emojiKeys);
   pipeline.del(redis.emojis.keystore(data.guild_id));
   await pipeline.exec();
 
@@ -363,7 +361,8 @@ export default {
   const success = await firstGuildInteraction(data.guild_id);
   if (success) return;
 
-  tasks.integrations(data.guild_id);
+  const memberCount = cache.members.get(data.guild_id) || 0;
+  priorityQueue.enqueueGuildTask(data.guild_id, memberCount, 'integrations');
  },
 
  [GatewayDispatchEvents.GuildMemberAdd]: async (data: GatewayGuildMemberAddDispatchData) => {
@@ -387,7 +386,7 @@ export default {
    // eslint-disable-next-line no-console
    console.log('[Chunk] Finished receiving member chunks for', data.guild_id);
 
-   cache.requestingGuild = null;
+   priorityQueue.onMemberChunkComplete(data.guild_id);
   }
 
   if (data.chunk_index === 0) {
@@ -536,9 +535,9 @@ export default {
   firstGuildInteraction(data.guild_id);
   cache.sounds.set(data.guild_id, data.soundboard_sounds.length);
 
-  const sounds = await redis.cacheDb.hgetall(redis.soundboards.keystore(data.guild_id));
+  const soundKeys = await redis.cacheDb.hscanKeys(redis.soundboards.keystore(data.guild_id));
   const pipeline = redis.cacheDb.pipeline();
-  pipeline.del(...Object.keys(sounds));
+  pipeline.del(...soundKeys);
   pipeline.del(redis.soundboards.keystore(data.guild_id));
   await pipeline.exec();
 
@@ -553,9 +552,9 @@ export default {
   firstGuildInteraction(data.guild_id);
   cache.stickers.set(data.guild_id, data.stickers.length);
 
-  const stickers = await redis.cacheDb.hgetall(redis.stickers.keystore(data.guild_id));
+  const stickerKeys = await redis.cacheDb.hscanKeys(redis.stickers.keystore(data.guild_id));
   const pipeline = redis.cacheDb.pipeline();
-  pipeline.del(...Object.keys(stickers));
+  pipeline.del(...stickerKeys);
   pipeline.del(redis.stickers.keystore(data.guild_id));
   await pipeline.exec();
 

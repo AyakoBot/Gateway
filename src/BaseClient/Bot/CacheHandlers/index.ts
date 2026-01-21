@@ -21,9 +21,10 @@ import {
  AllThreadGuildChannelTypes,
 } from '../../../Typings/Channel.js';
 import emit from '../../../Util/EventBus.js';
-import firstChannelInteraction from '../../../Util/firstChannelInteraction.js';
-import firstGuildInteraction, { tasks } from '../../../Util/firstGuildInteraction.js';
+import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
+import { priorityQueue } from '../../../Util/PriorityQueue/index.js';
 import redis from '../Cache.js';
+import { cache } from '../Client.js';
 import ready from '../Events/ready.js';
 
 import AutoModeration from './AutoModeration.js';
@@ -47,14 +48,14 @@ export default (data: GatewayDispatchPayload, shardId: number) => {
    | Promise<unknown>
    | unknown;
   if (res instanceof Promise) {
-   res.then(() => emit(data.t, data.d)).catch(() => emit(data.t, data.d));
+   res.then(() => emit.call(redis, data.t, data.d)).catch(() => emit.call(redis, data.t, data.d));
   } else {
-   emit(data.t, data.d);
+   emit.call(redis, data.t, data.d);
   }
  } catch (err) {
   // eslint-disable-next-line no-console
   console.error(`[CacheHandler] Error processing ${data.t}:`, err);
-  emit(data.t, data.d);
+  emit.call(redis, data.t, data.d);
  }
 };
 
@@ -92,9 +93,6 @@ const caches: Record<
 
  [GatewayDispatchEvents.InteractionCreate]: async (data: GatewayInteractionCreateDispatchData) => {
   if (data.guild_id) firstGuildInteraction(data.guild_id);
-  if (data.channel?.id && data.guild_id) {
-   firstChannelInteraction(data.channel.id, data.guild_id);
-  }
   if (data.user) redis.users.set(data.user);
 
   if (data.message && data.guild_id) {
@@ -124,13 +122,13 @@ const caches: Record<
  },
 
  [GatewayDispatchEvents.WebhooksUpdate]: (data: GatewayWebhooksUpdateDispatchData) => {
-  tasks.webhooks(data.guild_id);
+  const memberCount = cache.members.get(data.guild_id) || 0;
+  priorityQueue.enqueueGuildTask(data.guild_id, memberCount, 'webhooks');
  },
 
  [GatewayDispatchEvents.TypingStart]: async (data: GatewayTypingStartDispatchData) => {
   if (!data.member || !data.guild_id) return;
   firstGuildInteraction(data.guild_id);
-  firstChannelInteraction(data.channel_id, data.guild_id);
 
   redis.members.set(data.member, data.guild_id);
  },

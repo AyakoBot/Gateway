@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "swc src -d dist --strip-leading-paths --copy-files",
-    "dev": "pnpm build && node --enable-source-maps --experimental-wasm-modules --experimental-json-modules ./dist/index.js --debug --warn --dev --debug-db --local",
+    "dev": "pnpm build && bun ./dist/index.js --debug --warn --dev --debug-db --local",
     "lint": "pnpx eslint 'src/**/*.ts' --fix",
-    "run": "node --max-old-space-size=64 --no-deprecation --no-warnings --experimental-json-modules ./dist/index.js",
+    "run": "bun ./dist/index.js",
     "start": "pnpm run run",
     "watch": "swc src -d dist --strip-leading-paths --copy-files --watch"
   },
@@ -19,7 +19,6 @@
     "discord-hybrid-sharding": "^3.0.1",
     "dotenv": "^17.2.3",
     "glob": "^13.0.0",
-    "ioredis": "^5.9.1",
     "node-schedule": "^2.1.1",
     "prom-client": "^15.1.3"
   },
@@ -32,6 +31,7 @@
     "@swc/core": "1.15.8",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/glob": "^9.0.0",
+    "@types/bun": "latest",
     "@types/node": "^25.0.7",
     "@types/node-schedule": "^2.1.8",
     "@typescript-eslint/eslint-plugin": "^8.53.0",

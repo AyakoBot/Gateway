@@ -8,6 +8,7 @@ import {
 import { getInfo } from 'discord-hybrid-sharding';
 import { scheduleJob } from 'node-schedule';
 
+import { priorityQueue } from '../../../Util/PriorityQueue/index.js';
 import redis from '../Cache.js';
 import { cache, client, cluster, gateway } from '../Client.js';
 
@@ -27,6 +28,8 @@ export default async (data: GatewayReadyDispatchData, shardId: number | string) 
     .SHARD_LIST.map((shard) => shard + 1)
     .join(', ')}`,
   );
+
+  priorityQueue.initializeColdStartDetection();
  }
 
  console.log(`[Ready | Shard ${shardId}]`);
