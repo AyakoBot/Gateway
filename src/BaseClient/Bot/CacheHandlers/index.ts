@@ -47,6 +47,7 @@ export default (data: GatewayDispatchPayload, shardId: number) => {
   const res = handler(data.d as Parameters<typeof handler>[0], shardId) as
    | Promise<unknown>
    | unknown;
+
   if (res instanceof Promise) {
    res.then(() => emit.call(redis, data.t, data.d)).catch(() => emit.call(redis, data.t, data.d));
   } else {
@@ -55,7 +56,7 @@ export default (data: GatewayDispatchPayload, shardId: number) => {
  } catch (err) {
   // eslint-disable-next-line no-console
   console.error(`[CacheHandler] Error processing ${data.t}:`, err);
-  emit.call(redis, data.t, data.d);
+  emit.call(redis, `raw:${data.t}` as never, data.d);
  }
 };
 
