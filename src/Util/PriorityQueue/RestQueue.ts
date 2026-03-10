@@ -384,9 +384,7 @@ class RestQueue {
  private async executeGuildTask(item: RestQueueItem): Promise<void> {
   const { guildId } = item;
 
-  const expireTime = await redis.cacheDb.expiretime(redis.guilds.key(guildId));
-  const remainingTTL = Math.abs(expireTime * 1000 - Date.now());
-  if (remainingTTL > 604800 / 2) return;
+  const exists = await redis.cacheDb.hget('guild-interacts', guildId);
 
   switch (item.taskName) {
    case 'auto-moderation':
@@ -426,34 +424,42 @@ class RestQueue {
     break;
 
    case 'channels':
+    if (exists) break;
     await this.taskChannels(guildId);
     break;
 
    case 'roles':
+    if (exists) break;
     await this.taskRoles(guildId);
     break;
 
    case 'emojis':
+    if (exists) break;
     await this.taskEmojis(guildId);
     break;
 
    case 'stickers':
+    if (exists) break;
     await this.taskStickers(guildId);
     break;
 
    case 'soundboard-sounds':
+    if (exists) break;
     await this.taskSoundboardSounds(guildId);
     break;
 
    case 'threads':
+    if (exists) break;
     await this.taskThreads(guildId);
     break;
 
    case 'stage-instances':
+    if (exists) break;
     await this.taskStageInstances(guildId);
     break;
 
    case 'voice-states':
+    if (exists) break;
     await this.taskVoiceStates(guildId);
     break;
 
