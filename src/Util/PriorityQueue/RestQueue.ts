@@ -117,6 +117,36 @@ class RestQueue {
   );
  }
 
+ /**
+  * Map a task name to its actual Discord REST API endpoint for rate limit bucket matching.
+  * Tasks that don't map to a single REST call use an informational endpoint.
+  */
+ private getTaskEndpoint(guildId: string, taskName: GuildTaskName): string {
+  switch (taskName) {
+   case 'auto-moderation':
+    return `guilds/${guildId}/auto-moderation/rules`;
+   case 'commands':
+    return `applications/${clientCache.user?.id ?? '0'}/guilds/${guildId}/commands`;
+   case 'command-permissions':
+    return `applications/${clientCache.user?.id ?? '0'}/guilds/${guildId}/commands/permissions`;
+   case 'threads':
+    return `guilds/${guildId}/threads/active`;
+   case 'soundboard-sounds':
+    return `guilds/${guildId}/soundboard-sounds`;
+   // Multi-call tasks: endpoint is informational, not used for bucket matching
+   case 'stage-instances':
+    return `stage-instances`;
+   case 'voice-states':
+    return `guilds/${guildId}/voice-states`;
+   case 'channel-status':
+    return `guilds/${guildId}/channel-status`;
+   default:
+    // Most task names match their Discord endpoint: channels, roles, emojis,
+    // stickers, welcome-screen, onboarding, scheduled-events, webhooks, etc.
+    return `guilds/${guildId}/${taskName}`;
+  }
+ }
+
  //#region Bucket-Based Rate Limiting
 
  /**
@@ -240,7 +270,7 @@ class RestQueue {
     guildId,
     memberCount,
     taskName,
-    endpoint: `guilds/${guildId}/${taskName}`,
+    endpoint: this.getTaskEndpoint(guildId, taskName),
     addedAt: now,
    });
   }
@@ -257,7 +287,7 @@ class RestQueue {
  enqueueGuildTask(guildId: string, memberCount: number, taskName: GuildTaskName): void {
   if (this.hasGuildTask(guildId, taskName)) return;
 
-  const endpoint = `guilds/${guildId}/${taskName}`;
+  const endpoint = this.getTaskEndpoint(guildId, taskName);
   this.queue.push({
    type: 'guild',
    id: guildId,
@@ -692,9 +722,7 @@ class RestQueue {
  }
 
  private async taskChannelStatus(guildId: string): Promise<void> {
-  const statuses = await redis.channelStatus.getAll(guildId);
-  if (Object.values(statuses).length) await redis.cacheDb.del(...Object.values(statuses));
-
+  await redis.channelStatus.delAll(guildId);
   await requestVoiceChannelStatuses(guildId);
  }
 
