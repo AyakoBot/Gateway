@@ -6,9 +6,20 @@
  * - Re-queues on 429 with retry_after delay
  * - Priority by member count (larger guilds first)
  */
-import { getGuildPerms } from '@ayako/utility';
+import {
+ getGuildPerms,
+ type RChannelTypes,
+ type RStageInstance,
+ type RVoiceState,
+} from '@ayako/utility';
 import { RESTEvents } from '@discordjs/rest';
-import { GuildFeature, PermissionFlagsBits } from 'discord-api-types/v10';
+import {
+ GuildFeature,
+ PermissionFlagsBits,
+ type APIGuildChannel,
+ type APIThreadChannel,
+ type ThreadChannelType,
+} from 'discord-api-types/v10';
 
 import redis from '../../BaseClient/Bot/Cache.js';
 import { api, cache as clientCache } from '../../BaseClient/Bot/Client.js';
@@ -197,16 +208,30 @@ class RestQueue {
 
   const now = Date.now();
   const guildTasks: GuildTaskName[] = [
-   'vcStatus',
-   'autoModRules',
+   // Exact endpoint names
    'commands',
-   'commandPermissions',
-   'welcomeScreen',
+   'welcome-screen',
    'onboarding',
-   'scheduledEvents',
    'webhooks',
    'integrations',
    'invites',
+   'channels',
+   'roles',
+   'emojis',
+   'stickers',
+   'scheduled-events',
+   'soundboard-sounds',
+
+   // Not exact endpoint names
+   'auto-moderation',
+   'threads',
+   'command-permissions',
+   'channel-status',
+
+   // Custom logic tasks
+   'vc-status',
+   'stage-instances',
+   'voice-states',
   ];
 
   for (const taskName of guildTasks) {
@@ -361,11 +386,11 @@ class RestQueue {
   const { guildId } = item;
 
   switch (item.taskName) {
-   case 'vcStatus':
+   case 'vc-status':
     await requestVoiceChannelStatuses(guildId);
     break;
 
-   case 'autoModRules':
+   case 'auto-moderation':
     await this.taskAutoModRules(guildId);
     break;
 
@@ -373,11 +398,11 @@ class RestQueue {
     await this.taskCommands(guildId);
     break;
 
-   case 'commandPermissions':
+   case 'command-permissions':
     await this.taskCommandPermissions(guildId);
     break;
 
-   case 'welcomeScreen':
+   case 'welcome-screen':
     await this.taskWelcomeScreen(guildId);
     break;
 
@@ -385,7 +410,7 @@ class RestQueue {
     await this.taskOnboarding(guildId);
     break;
 
-   case 'scheduledEvents':
+   case 'scheduled-events':
     await this.taskScheduledEvents(guildId);
     break;
 
@@ -399,6 +424,42 @@ class RestQueue {
 
    case 'invites':
     await this.taskInvites(guildId);
+    break;
+
+   case 'channels':
+    await this.taskChannels(guildId);
+    break;
+
+   case 'roles':
+    await this.taskRoles(guildId);
+    break;
+
+   case 'emojis':
+    await this.taskEmojis(guildId);
+    break;
+
+   case 'stickers':
+    await this.taskStickers(guildId);
+    break;
+
+   case 'soundboard-sounds':
+    await this.taskSoundboardSounds(guildId);
+    break;
+
+   case 'threads':
+    await this.taskThreads(guildId);
+    break;
+
+   case 'stage-instances':
+    await this.taskStageInstances(guildId);
+    break;
+
+   case 'voice-states':
+    await this.taskVoiceStates(guildId);
+    break;
+
+   case 'channel-status':
+    await this.taskChannelStatus(guildId);
     break;
 
    default:
@@ -416,7 +477,7 @@ class RestQueue {
 
   const keystoreKey = redis.automods.keystore(guildId);
   const keys = await redis.cacheDb.hkeys(keystoreKey);
-  if (keys.length > 0) await redis.cacheDb.del(...keys, keystoreKey);
+  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey);
   const rules = await api.guilds.getAutoModerationRules(guildId).catch(() => []);
   rules.forEach((r) => redis.automods.set(r));
  }
@@ -426,7 +487,7 @@ class RestQueue {
 
   const keystoreKey = redis.commands.keystore(guildId);
   const keys = await redis.cacheDb.hkeys(keystoreKey);
-  if (keys.length > 0) await redis.cacheDb.del(...keys, keystoreKey);
+  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey);
 
   const commands = await api.applicationCommands
    .getGuildCommands(clientCache.user.id, guildId)
@@ -439,7 +500,7 @@ class RestQueue {
 
   const keystoreKey = redis.commandPermissions.keystore(guildId);
   const keys = await redis.cacheDb.hkeys(keystoreKey);
-  if (keys.length > 0) await redis.cacheDb.del(...keys, keystoreKey);
+  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey);
 
   const commandPerms = await api.applicationCommands
    .getGuildCommandsPermissions(clientCache.user.id, guildId)
@@ -463,7 +524,7 @@ class RestQueue {
 
   const keystoreKey = redis.welcomeScreens.keystore(guildId);
   const keys = await redis.cacheDb.hkeys(keystoreKey);
-  if (keys.length > 0) await redis.cacheDb.del(...keys, keystoreKey);
+  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey);
 
   const welcomeScreen = await api.guilds.getWelcomeScreen(guildId).catch(() => null);
   if (!welcomeScreen) return;
@@ -487,7 +548,7 @@ class RestQueue {
  private async taskScheduledEvents(guildId: string): Promise<void> {
   const keystoreKey = redis.events.keystore(guildId);
   const keys = await redis.cacheDb.hkeys(keystoreKey);
-  if (keys.length > 0) await redis.cacheDb.del(...keys, keystoreKey);
+  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey);
 
   const scheduledEvents = await api.guilds
    .getScheduledEvents(guildId, { with_user_count: true })
@@ -526,7 +587,7 @@ class RestQueue {
 
   const keystoreKey = redis.webhooks.keystore(guildId);
   const keys = await redis.cacheDb.hkeys(keystoreKey);
-  if (keys.length > 0) await redis.cacheDb.del(...keys, keystoreKey);
+  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey);
 
   const webhooks = await api.guilds.getWebhooks(guildId).catch(() => []);
   webhooks.forEach((w) => redis.webhooks.set(w));
@@ -540,7 +601,7 @@ class RestQueue {
 
   const keystoreKey = redis.integrations.keystore(guildId);
   const keys = await redis.cacheDb.hkeys(keystoreKey);
-  if (keys.length > 0) await redis.cacheDb.del(...keys, keystoreKey);
+  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey);
 
   const integrations = await api.guilds.getIntegrations(guildId).catch(() => []);
   integrations.forEach((i) => redis.integrations.set(i, guildId));
@@ -561,11 +622,109 @@ class RestQueue {
 
   const codes = await redis.cacheDb.hkeys(guildCodestoreKey);
 
-  if (keys.length > 0) await redis.cacheDb.del(...keys, keystoreKey, guildCodestoreKey);
-  if (codes.length > 0) await redis.cacheDb.hdel(globalCodestoreKey, ...codes);
+  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey, guildCodestoreKey);
+  if (codes.length) await redis.cacheDb.hdel(globalCodestoreKey, ...codes);
 
   const invites = await api.guilds.getInvites(guildId).catch(() => []);
   invites.forEach((i) => redis.invites.set(i));
+ }
+
+ private async taskRoles(guildId: string): Promise<void> {
+  const keystoreKey = redis.roles.keystore(guildId);
+  const keys = await redis.cacheDb.hkeys(keystoreKey);
+  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey);
+
+  const roles = await api.guilds.getRoles(guildId).catch(() => []);
+  roles.forEach((r) => redis.roles.set(r, guildId));
+ }
+
+ private async taskChannels(guildId: string): Promise<void> {
+  const keystoreKey = redis.channels.keystore(guildId);
+  const keys = await redis.cacheDb.hkeys(keystoreKey);
+  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey);
+
+  const channels = await api.guilds.getChannels(guildId).catch(() => []);
+  channels.forEach((r) => redis.channels.set(r as APIGuildChannel<RChannelTypes>));
+ }
+
+ private async taskEmojis(guildId: string): Promise<void> {
+  const keystoreKey = redis.emojis.keystore(guildId);
+  const keys = await redis.cacheDb.hkeys(keystoreKey);
+  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey);
+
+  const emojis = await api.guilds.getEmojis(guildId).catch(() => []);
+  emojis.forEach((e) => redis.emojis.set(e, guildId));
+ }
+
+ private async taskStickers(guildId: string): Promise<void> {
+  const keystoreKey = redis.stickers.keystore(guildId);
+  const keys = await redis.cacheDb.hkeys(keystoreKey);
+  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey);
+
+  const stickers = await api.guilds.getStickers(guildId).catch(() => []);
+  stickers.forEach((s) => redis.stickers.set(s));
+ }
+
+ private async taskThreads(guildId: string): Promise<void> {
+  const keystoreKey = redis.threads.keystore(guildId);
+  const keys = await redis.cacheDb.hkeys(keystoreKey);
+  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey);
+
+  const threads = await api.guilds
+   .getActiveThreads(guildId)
+   .then((res) => res.threads)
+   .catch(() => []);
+  threads.forEach((t) => redis.threads.set(t as APIThreadChannel<ThreadChannelType>));
+ }
+
+ private async taskSoundboardSounds(guildId: string): Promise<void> {
+  const keystoreKey = redis.soundboards.keystore(guildId);
+  const keys = await redis.cacheDb.hkeys(keystoreKey);
+  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey);
+
+  const soundboardSounds = await api.guilds.getSoundboardSounds(guildId).catch(() => null);
+  soundboardSounds?.items.forEach((e) => redis.soundboards.set(e));
+ }
+
+ private async taskChannelStatus(guildId: string): Promise<void> {
+  const statuses = await redis.channelStatus.getAll(guildId);
+  if (statuses.length) await redis.cacheDb.del(...Object.keys(statuses));
+
+  requestVoiceChannelStatuses(guildId);
+ }
+
+ private async taskStageInstances(guildId: string): Promise<void> {
+  const stages = await redis.stages.getAll(guildId);
+  if (!stages.length) return;
+
+  await redis.cacheDb.del(
+   ...stages.map((s) => redis.stages.key(s.id)),
+   redis.stages.keystore(guildId),
+  );
+
+  const existing = (
+   await Promise.all(stages.map((s) => api.stageInstances.get(s.id).catch(() => null)))
+  ).filter((s): s is RStageInstance => !!s);
+
+  existing.forEach((s) => redis.stages.set(s));
+ }
+
+ private async taskVoiceStates(guildId: string): Promise<void> {
+  const voiceStates = await redis.voices.getAll(guildId);
+  if (!voiceStates.length) return;
+
+  await redis.cacheDb.del(
+   ...voiceStates.map((s) => redis.voices.key(guildId, s.user_id)),
+   redis.voices.keystore(guildId),
+  );
+
+  const existing = (
+   await Promise.all(
+    voiceStates.map((s) => api.voice.getUserVoiceState(guildId, s.user_id).catch(() => null)),
+   )
+  ).filter((s): s is RVoiceState => !!s);
+
+  existing.forEach((s) => redis.voices.set(s));
  }
 
  //#region Utilities

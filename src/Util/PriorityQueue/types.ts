@@ -17,16 +17,25 @@ export type GatewayQueueItem = {
  * Task names for REST API calls on first guild interaction
  */
 export type GuildTaskName =
- | 'autoModRules'
+ | 'auto-moderation'
  | 'commands'
- | 'commandPermissions'
- | 'welcomeScreen'
+ | 'command-permissions'
+ | 'welcome-screen'
  | 'onboarding'
- | 'scheduledEvents'
  | 'webhooks'
  | 'integrations'
  | 'invites'
- | 'vcStatus';
+ | 'roles'
+ | 'channels'
+ | 'emojis'
+ | 'stickers'
+ | 'threads'
+ | 'scheduled-events'
+ | 'soundboard-sounds'
+ | 'channel-status'
+ | 'vc-status'
+ | 'stage-instances'
+ | 'voice-states';
 
 /**
  * Item in the REST queue
