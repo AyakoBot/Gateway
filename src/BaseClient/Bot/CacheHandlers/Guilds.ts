@@ -69,8 +69,8 @@ export default {
   if (rGuild) {
    const guildJson = JSON.stringify(rGuild);
    redis.queueSync((p: ChainableCommanderInterface) => {
-    p.set(`cache:guilds:${guildId}:current`, guildJson, 'EX', 604800);
-    p.hset('keystore:guilds', `cache:guilds:${guildId}`, 0);
+    p.set(`${redis.guilds.key(guildId)}:current`, guildJson, 'EX', 604800);
+    p.hset(redis.guilds.keystore(), redis.guilds.key(guildId), 0);
    });
   }
 
@@ -87,14 +87,14 @@ export default {
    if (rMember) {
     const memberJson = JSON.stringify(rMember);
     redis.queueSync((p: ChainableCommanderInterface) => {
-     p.set(`cache:members:${guildId}:${userId}:current`, memberJson, 'EX', 604800);
-     p.hset(`keystore:members:${guildId}`, `cache:members:${guildId}:${userId}`, 0);
+     p.set(`${redis.members.key(guildId, userId)}:current`, memberJson, 'EX', 604800);
+     p.hset(redis.members.keystore(guildId), redis.members.key(guildId, userId), 0);
     });
    }
    if (rUser) {
     const userJson = JSON.stringify(rUser);
     redis.queueSync((p: ChainableCommanderInterface) => {
-     p.set(`cache:users:${userId}:current`, userJson, 'EX', 604800);
+     p.set(`${redis.users.key(userId)}:current`, userJson, 'EX', 604800);
     });
    }
   }
@@ -107,8 +107,8 @@ export default {
    if (rChannel) {
     const channelJson = JSON.stringify(rChannel);
     redis.queueSync((p: ChainableCommanderInterface) => {
-     p.set(`cache:channels:${channel.id}:current`, channelJson, 'EX', 604800);
-     p.hset(`keystore:channels:${guildId}`, `cache:channels:${channel.id}`, 0);
+     p.set(`${redis.channels.key(channel.id)}:current`, channelJson, 'EX', 604800);
+     p.hset(redis.channels.keystore(guildId), redis.channels.key(channel.id), 0);
     });
    }
   }
@@ -121,8 +121,8 @@ export default {
    if (rRole) {
     const roleJson = JSON.stringify(rRole);
     redis.queueSync((p: ChainableCommanderInterface) => {
-     p.set(`cache:roles:${role.id}:current`, roleJson, 'EX', 604800);
-     p.hset(`keystore:roles:${guildId}`, `cache:roles:${role.id}`, 0);
+     p.set(`${redis.roles.key(role.id)}:current`, roleJson, 'EX', 604800);
+     p.hset(redis.roles.keystore(guildId), redis.roles.key(role.id), 0);
     });
    }
   }
@@ -136,8 +136,8 @@ export default {
    if (rEmoji) {
     const emojiJson = JSON.stringify(rEmoji);
     redis.queueSync((p: ChainableCommanderInterface) => {
-     p.set(`cache:emojis:${emoji.id}:current`, emojiJson, 'EX', 604800);
-     p.hset(`keystore:emojis:${guildId}`, `cache:emojis:${emoji.id}`, 0);
+     p.set(`${redis.emojis.key(emoji.id || emoji.name || '')}:current`, emojiJson, 'EX', 604800);
+     p.hset(redis.emojis.keystore(guildId), redis.emojis.key(emoji.id || emoji.name || ''), 0);
     });
    }
   }
@@ -150,8 +150,8 @@ export default {
    if (rSticker) {
     const stickerJson = JSON.stringify(rSticker);
     redis.queueSync((p: ChainableCommanderInterface) => {
-     p.set(`cache:stickers:${sticker.id}:current`, stickerJson, 'EX', 604800);
-     p.hset(`keystore:stickers:${guildId}`, `cache:stickers:${sticker.id}`, 0);
+     p.set(`${redis.stickers.key(sticker.id)}:current`, stickerJson, 'EX', 604800);
+     p.hset(redis.stickers.keystore(guildId), redis.stickers.key(sticker.id), 0);
     });
    }
   }
@@ -164,7 +164,7 @@ export default {
    if (rSound) {
     const soundJson = JSON.stringify(rSound);
     redis.queueSync((p: ChainableCommanderInterface) => {
-     p.set(`cache:soundboards:${sound.sound_id}:current`, soundJson, 'EX', 604800);
+     p.set(`${redis.soundboards.key(sound.sound_id)}:current`, soundJson, 'EX', 604800);
     });
    }
   }
@@ -179,8 +179,8 @@ export default {
    if (rVoice) {
     const voiceJson = JSON.stringify(rVoice);
     redis.queueSync((p: ChainableCommanderInterface) => {
-     p.set(`cache:voices:${guildId}:${voice.user_id}:current`, voiceJson, 'EX', 604800);
-     p.hset(`keystore:voices:${guildId}`, `cache:voices:${guildId}:${voice.user_id}`, 0);
+     p.set(`${redis.voices.key(guildId, voice.user_id)}:current`, voiceJson, 'EX', 604800);
+     p.hset(redis.voices.keystore(guildId), redis.voices.key(guildId, voice.user_id), 0);
     });
    }
   }
@@ -194,8 +194,8 @@ export default {
    if (rThread) {
     const threadJson = JSON.stringify(rThread);
     redis.queueSync((p: ChainableCommanderInterface) => {
-     p.set(`cache:threads:${thread.id}:current`, threadJson, 'EX', 604800);
-     p.hset(`keystore:threads:${guildId}`, `cache:threads:${thread.id}`, 0);
+     p.set(`${redis.threads.key(thread.id)}:current`, threadJson, 'EX', 604800);
+     p.hset(redis.threads.keystore(guildId), redis.threads.key(thread.id), 0);
     });
    }
   }
@@ -208,13 +208,28 @@ export default {
    if (rEvent) {
     const eventJson = JSON.stringify(rEvent);
     redis.queueSync((p: ChainableCommanderInterface) => {
-     p.set(`cache:events:${event.id}:current`, eventJson, 'EX', 604800);
-     p.hset(`keystore:events:${event.guild_id}`, `cache:events:${event.id}`, 0);
+     p.set(`${redis.events.key(event.id)}:current`, eventJson, 'EX', 604800);
+     p.hset(redis.events.keystore(event.guild_id), redis.events.key(event.id), 0);
     });
    }
   }
   // eslint-disable-next-line @typescript-eslint/naming-convention
   (data as { guild_scheduled_events?: unknown }).guild_scheduled_events = undefined;
+
+  for (let i = 0; i < data.stage_instances.length; i++) {
+   const stage = data.stage_instances[i];
+   const rStage = redis.stages.apiToR(stage);
+   (data.stage_instances as unknown[])[i] = undefined;
+   if (rStage) {
+    const stageJson = JSON.stringify(rStage);
+    redis.queueSync((p: ChainableCommanderInterface) => {
+     p.set(`${redis.stages.key(stage.id)}:current`, stageJson, 'EX', 604800);
+     p.hset(redis.stages.keystore(stage.guild_id), redis.stages.key(stage.id), 0);
+    });
+   }
+  }
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  (data as { stage_instances?: unknown }).stage_instances = undefined;
  },
 
  [GatewayDispatchEvents.GuildDelete]: async (data: GatewayGuildDeleteDispatchData) => {
