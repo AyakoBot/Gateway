@@ -135,7 +135,7 @@ class RestQueue {
     return `guilds/${guildId}/soundboard-sounds`;
    // Multi-call tasks: endpoint is informational, not used for bucket matching
    case 'stage-instances':
-    return `stage-instances`;
+    return 'stage-instances';
    case 'voice-states':
     return `guilds/${guildId}/voice-states`;
    case 'channel-status':
