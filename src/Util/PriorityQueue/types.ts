@@ -33,7 +33,6 @@ export type GuildTaskName =
  | 'scheduled-events'
  | 'soundboard-sounds'
  | 'channel-status'
- | 'vc-status'
  | 'stage-instances'
  | 'voice-states';
 

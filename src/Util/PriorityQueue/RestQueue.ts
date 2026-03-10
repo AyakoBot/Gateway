@@ -229,7 +229,6 @@ class RestQueue {
    'channel-status',
 
    // Custom logic tasks
-   'vc-status',
    'stage-instances',
    'voice-states',
   ];
@@ -385,11 +384,11 @@ class RestQueue {
  private async executeGuildTask(item: RestQueueItem): Promise<void> {
   const { guildId } = item;
 
-  switch (item.taskName) {
-   case 'vc-status':
-    await requestVoiceChannelStatuses(guildId);
-    break;
+  const expireTime = await redis.cacheDb.expiretime(redis.guilds.key(guildId));
+  const remainingTTL = Math.abs(expireTime * 1000 - Date.now());
+  if (remainingTTL > 604800 / 2) return;
 
+  switch (item.taskName) {
    case 'auto-moderation':
     await this.taskAutoModRules(guildId);
     break;
@@ -688,9 +687,9 @@ class RestQueue {
 
  private async taskChannelStatus(guildId: string): Promise<void> {
   const statuses = await redis.channelStatus.getAll(guildId);
-  if (statuses.length) await redis.cacheDb.del(...Object.keys(statuses));
+  if (Object.values(statuses).length) await redis.cacheDb.del(...Object.values(statuses));
 
-  requestVoiceChannelStatuses(guildId);
+  await requestVoiceChannelStatuses(guildId);
  }
 
  private async taskStageInstances(guildId: string): Promise<void> {
@@ -703,7 +702,7 @@ class RestQueue {
   );
 
   const existing = (
-   await Promise.all(stages.map((s) => api.stageInstances.get(s.id).catch(() => null)))
+   await Promise.all(stages.map((s) => api.stageInstances.get(s.channel_id).catch(() => null)))
   ).filter((s): s is RStageInstance => !!s);
 
   existing.forEach((s) => redis.stages.set(s));
