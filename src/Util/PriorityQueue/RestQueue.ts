@@ -701,9 +701,12 @@ class RestQueue {
  }
 
  private async taskThreads(guildId: string): Promise<void> {
-  const keystoreKey = redis.threads.keystore(guildId);
-  const keys = await redis.cacheDb.hkeys(keystoreKey);
-  if (keys.length) await redis.cacheDb.del(...keys, keystoreKey);
+  const channelKeys = await redis.cacheDb.hkeys(redis.channels.keystore(guildId));
+  const channelIds = channelKeys.map((k) => k.split(':').slice(2).join(':'));
+  const { keystoreKeys, dataKeys } = await redis.threads.getAllGuildKeys(guildId, channelIds);
+  if (dataKeys.length || keystoreKeys.length) {
+   await redis.cacheDb.del(...dataKeys, ...keystoreKeys);
+  }
 
   const threads = await api.guilds
    .getActiveThreads(guildId)

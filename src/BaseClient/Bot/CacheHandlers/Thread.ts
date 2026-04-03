@@ -22,6 +22,10 @@ export default {
 
  [GatewayDispatchEvents.ThreadDelete]: async (data: GatewayThreadDeleteDispatchData) => {
   redis.threads.del(data.id);
+  redis.cacheDb.hdel(
+   redis.threads.keystore(data.guild_id, data.parent_id),
+   redis.threads.key(data.id),
+  );
 
   firstGuildInteraction(data.guild_id);
 

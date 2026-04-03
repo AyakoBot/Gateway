@@ -191,11 +191,11 @@ export default {
    const thread = data.threads[i];
    const rThread = redis.threads.apiToR({ ...thread, guild_id: guildId });
    (data.threads as unknown[])[i] = undefined;
-   if (rThread) {
+   if (rThread && thread.parent_id) {
     const threadJson = JSON.stringify(rThread);
     redis.queueSync((p: ChainableCommanderInterface) => {
      p.set(`${redis.threads.key(thread.id)}:current`, threadJson, 'EX', 604800);
-     p.hset(redis.threads.keystore(guildId), redis.threads.key(thread.id), 0);
+     p.hset(redis.threads.keystore(guildId, thread.parent_id!), redis.threads.key(thread.id), 0);
     });
    }
   }
@@ -262,7 +262,6 @@ export default {
    soundboards,
    stages,
    stickers,
-   threads,
    threadMembers,
    voices,
    webhooks,
@@ -287,7 +286,6 @@ export default {
    redis.cacheDb.hscanKeys(redis.soundboards.keystore(data.id)),
    redis.cacheDb.hscanKeys(redis.stages.keystore(data.id)),
    redis.cacheDb.hscanKeys(redis.stickers.keystore(data.id)),
-   redis.cacheDb.hscanKeys(redis.threads.keystore(data.id)),
    redis.cacheDb.hscanKeys(redis.threadMembers.keystore(data.id)),
    redis.cacheDb.hscanKeys(redis.voices.keystore(data.id)),
    redis.cacheDb.hscanKeys(redis.webhooks.keystore(data.id)),
@@ -295,6 +293,9 @@ export default {
    redis.cacheDb.hscanKeys(redis.onboardings.keystore(data.id)),
    redis.cacheDb.hscanKeys(redis.eventUsers.keystore(data.id)),
   ]);
+
+  const channelIds = channels.map((k) => k.split(':').slice(2).join(':'));
+  const threadCleanup = await redis.threads.getAllGuildKeys(data.id, channelIds);
 
   const deletePipeline = redis.cacheDb.pipeline();
 
@@ -316,7 +317,7 @@ export default {
   deletePipeline.del(redis.soundboards.keystore(data.id));
   deletePipeline.del(redis.stages.keystore(data.id));
   deletePipeline.del(redis.stickers.keystore(data.id));
-  deletePipeline.del(redis.threads.keystore(data.id));
+  deletePipeline.del(...threadCleanup.keystoreKeys);
   deletePipeline.del(redis.threadMembers.keystore(data.id));
   deletePipeline.del(redis.voices.keystore(data.id));
   deletePipeline.del(redis.webhooks.keystore(data.id));
@@ -341,7 +342,7 @@ export default {
   deletePipeline.del(...soundboards);
   deletePipeline.del(...stages);
   deletePipeline.del(...stickers);
-  deletePipeline.del(...threads);
+  deletePipeline.del(...threadCleanup.dataKeys);
   deletePipeline.del(...threadMembers);
   deletePipeline.del(...voices);
   deletePipeline.del(...webhooks);
