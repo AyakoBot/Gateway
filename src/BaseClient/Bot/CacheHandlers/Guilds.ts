@@ -58,7 +58,6 @@ export default {
 
   const guildId = data.id;
 
-  cache.guilds += 1;
   cache.members.set(guildId, data.member_count || 0);
   cache.emojis.set(guildId, data.emojis?.length || 0);
   cache.roles.set(guildId, data.roles?.length || 0);
@@ -233,7 +232,6 @@ export default {
  },
 
  [GatewayDispatchEvents.GuildDelete]: async (data: GatewayGuildDeleteDispatchData) => {
-  cache.guilds -= 1;
   cache.members.delete(data.id);
   cache.emojis.delete(data.id);
   cache.roles.delete(data.id);

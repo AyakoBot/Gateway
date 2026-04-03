@@ -16,7 +16,7 @@ const getCounts = () =>
    // @ts-expect-error custom path cuz broadcastEval
    import('/app/Ayako/packages/Gateway/dist/BaseClient/Bot/Client.js').then(
     ({ cache }: { cache: typeof CacheType }) => ({
-     guilds: cache.guilds,
+     guilds: cache.approxGuilds,
      members: Array.from(cache.members.values()).reduce((a, b) => a + b, 0),
      emojis: Array.from(cache.emojis.values()).reduce((a, b) => a + b, 0),
      roles: Array.from(cache.roles.values()).reduce((a, b) => a + b, 0),
