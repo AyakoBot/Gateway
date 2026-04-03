@@ -93,19 +93,25 @@ const caches: Record<
  },
 
  [GatewayDispatchEvents.InteractionCreate]: async (data: GatewayInteractionCreateDispatchData) => {
-  if (data.guild_id) firstGuildInteraction(data.guild_id);
-  if (data.user) redis.users.set(data.user);
+  const guildId = data.guild?.id || data.guild_id;
 
-  if (data.message && data.guild_id) {
-   redis.messages.set(data.message, (data.guild_id || data.guild?.id)!);
+  if (guildId) firstGuildInteraction(guildId);
+  if (data.user) redis.users.set(data.user);
+  if (data.member && guildId) {
+   redis.members.set(data.member, guildId);
+   redis.users.set(data.member.user);
   }
 
-  if (!data.channel || !data.guild_id) return;
+  if (data.message && guildId) {
+   redis.messages.set(data.message, guildId);
+  }
+
+  if (!data.channel || !guildId) return;
 
   if (AllThreadGuildChannelTypes.includes(data.channel.type)) {
    redis.threads.set({
     ...(data.channel as APIThreadChannel),
-    guild_id: (data.channel as APIThreadChannel).guild_id || data.guild_id,
+    guild_id: (data.channel as APIThreadChannel).guild_id || guildId,
    });
    return;
   }
@@ -114,7 +120,7 @@ const caches: Record<
 
   redis.channels.set({
    ...(data.channel as APIGuildChannel<RChannelTypes>),
-   guild_id: data.guild_id || (data.channel as APIGuildChannel<RChannelTypes>).guild_id,
+   guild_id: guildId || (data.channel as APIGuildChannel<RChannelTypes>).guild_id,
   });
  },
 
