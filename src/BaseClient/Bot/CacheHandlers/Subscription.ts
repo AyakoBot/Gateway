@@ -6,9 +6,21 @@ import {
 } from 'discord-api-types/gateway/v10';
 
 export default {
- [GatewayDispatchEvents.SubscriptionCreate]: (_: GatewaySubscriptionCreateDispatchData) => {},
+ [GatewayDispatchEvents.SubscriptionCreate]: (
+  _0: GatewaySubscriptionCreateDispatchData,
+  _1: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => p,
 
- [GatewayDispatchEvents.SubscriptionDelete]: (_: GatewaySubscriptionDeleteDispatchData) => {},
+ [GatewayDispatchEvents.SubscriptionDelete]: (
+  _0: GatewaySubscriptionDeleteDispatchData,
+  _1: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => p,
 
- [GatewayDispatchEvents.SubscriptionUpdate]: (_: GatewaySubscriptionUpdateDispatchData) => {},
+ [GatewayDispatchEvents.SubscriptionUpdate]: (
+  _0: GatewaySubscriptionUpdateDispatchData,
+  _1: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => p,
 } as const;

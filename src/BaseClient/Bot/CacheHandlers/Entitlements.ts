@@ -8,18 +8,33 @@ import {
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
 
 export default {
- [GatewayDispatchEvents.EntitlementCreate]: (data: GatewayEntitlementCreateDispatchData) => {
-  if (!data.guild_id) return;
-  firstGuildInteraction(data.guild_id);
+ [GatewayDispatchEvents.EntitlementCreate]: (
+  data: GatewayEntitlementCreateDispatchData,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => {
+  if (!data.guild_id) return p;
+  p.push(firstGuildInteraction(data.guild_id));
+  return p;
  },
 
- [GatewayDispatchEvents.EntitlementDelete]: (data: GatewayEntitlementDeleteDispatchData) => {
-  if (!data.guild_id) return;
-  firstGuildInteraction(data.guild_id);
+ [GatewayDispatchEvents.EntitlementDelete]: (
+  data: GatewayEntitlementDeleteDispatchData,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => {
+  if (!data.guild_id) return p;
+  p.push(firstGuildInteraction(data.guild_id));
+  return p;
  },
 
- [GatewayDispatchEvents.EntitlementUpdate]: (data: GatewayEntitlementUpdateDispatchData) => {
-  if (!data.guild_id) return;
-  firstGuildInteraction(data.guild_id);
+ [GatewayDispatchEvents.EntitlementUpdate]: (
+  data: GatewayEntitlementUpdateDispatchData,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => {
+  if (!data.guild_id) return p;
+  p.push(firstGuildInteraction(data.guild_id));
+  return p;
  },
 } as const;

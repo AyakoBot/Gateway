@@ -41,17 +41,25 @@ import Voice from './Voice.js';
 
 export default (data: GatewayDispatchPayload, shardId: number) => {
  const handler = caches[data.t];
- if (!handler) return;
+ if (!handler) {
+  try {
+   emit.call(redis, data.t, data.d);
+   return;
+  } catch (err) {
+   // eslint-disable-next-line no-console
+   console.error(`[CacheHandler] Error emitting ${data.t}:`, err);
+   emit.call(redis, `raw:${data.t}` as never, data.d);
+  }
+  return;
+ }
 
  try {
-  const res = handler(data.d as Parameters<typeof handler>[0], shardId) as
-   | Promise<unknown>
-   | unknown;
+  const res = handler(data.d as Parameters<typeof handler>[0], shardId, []);
 
   if (res instanceof Promise) {
-   res.then(() => emit.call(redis, data.t, data.d)).catch(() => emit.call(redis, data.t, data.d));
+   res.then((r) => Promise.all(r).then(() => emit.call(redis, data.t, data.d)));
   } else {
-   emit.call(redis, data.t, data.d);
+   Promise.all(res).then(() => emit.call(redis, data.t, data.d));
   }
  } catch (err) {
   // eslint-disable-next-line no-console
@@ -62,7 +70,11 @@ export default (data: GatewayDispatchPayload, shardId: number) => {
 
 const caches: Record<
  GatewayDispatchEvents,
- (data: never, additionalData: number | undefined) => unknown
+ (
+  data: never,
+  additionalData: number | undefined,
+  promiseArray: Promise<unknown>[],
+ ) => Promise<unknown>[] | Promise<Promise<unknown>[]>
 > = {
  ...AutoModeration,
  ...Channel,
@@ -78,84 +90,140 @@ const caches: Record<
 
  [GatewayDispatchEvents.ApplicationCommandPermissionsUpdate]: async (
   data: GatewayApplicationCommandPermissionsUpdateDispatchData,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
  ) => {
-  firstGuildInteraction(data.guild_id);
-  data.permissions.forEach((perm) => redis.commandPermissions.set(perm, data.guild_id, data.id));
+  if (data.guild_id) p.push(firstGuildInteraction(data.guild_id));
+
+  p.push(
+   ...data.permissions.map((perm) => redis.commandPermissions.set(perm, data.guild_id, data.id)),
+  );
+
+  return p;
  },
 
  [GatewayDispatchEvents.SoundboardSounds]: async (
   data: GatewayGuildSoundboardSoundsUpdateDispatchData,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
  ) => {
-  firstGuildInteraction(data.guild_id);
-  data.soundboard_sounds.forEach((sound) =>
-   redis.soundboards.set({ ...sound, guild_id: data.guild_id || sound.guild_id }),
+  p.push(firstGuildInteraction(data.guild_id));
+  p.push(
+   ...data.soundboard_sounds.map((sound) =>
+    redis.soundboards.set({ ...sound, guild_id: data.guild_id || sound.guild_id }),
+   ),
   );
+  return p;
  },
 
- [GatewayDispatchEvents.InteractionCreate]: async (data: GatewayInteractionCreateDispatchData) => {
+ [GatewayDispatchEvents.InteractionCreate]: async (
+  data: GatewayInteractionCreateDispatchData,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => {
   const guildId = data.guild?.id || data.guild_id;
 
-  if (guildId) firstGuildInteraction(guildId);
-  if (data.user) redis.users.set(data.user);
+  if (guildId) p.push(firstGuildInteraction(guildId));
+  if (data.user) p.push(redis.users.set(data.user));
   if (data.member && guildId) {
-   redis.members.set(data.member, guildId);
-   redis.users.set(data.member.user);
+   p.push(redis.members.set(data.member, guildId));
+   p.push(redis.users.set(data.member.user));
   }
 
   if (data.message && guildId) {
-   redis.messages.set(data.message, guildId);
+   p.push(redis.messages.set(data.message, guildId));
   }
 
-  if (!data.channel || !guildId) return;
+  if (!data.channel || !guildId) return p;
 
   if (AllThreadGuildChannelTypes.includes(data.channel.type)) {
-   redis.threads.set({
-    ...(data.channel as APIThreadChannel),
-    guild_id: (data.channel as APIThreadChannel).guild_id || guildId,
-   });
-   return;
+   p.push(
+    redis.threads.set({
+     ...(data.channel as APIThreadChannel),
+     guild_id: (data.channel as APIThreadChannel).guild_id || guildId,
+    }),
+   );
+   return p;
   }
 
-  if (!AllNonThreadGuildChannelTypes.includes(data.channel.type)) return;
+  if (!AllNonThreadGuildChannelTypes.includes(data.channel.type)) return p;
 
-  redis.channels.set({
-   ...(data.channel as APIGuildChannel<RChannelTypes>),
-   guild_id: guildId || (data.channel as APIGuildChannel<RChannelTypes>).guild_id,
-  });
+  p.push(
+   redis.channels.set({
+    ...(data.channel as APIGuildChannel<RChannelTypes>),
+    guild_id: guildId || (data.channel as APIGuildChannel<RChannelTypes>).guild_id,
+   }),
+  );
+
+  return p;
  },
 
- [GatewayDispatchEvents.UserUpdate]: (data: GatewayUserUpdateDispatchData) => {
-  redis.users.set(data);
+ [GatewayDispatchEvents.UserUpdate]: (
+  data: GatewayUserUpdateDispatchData,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => {
+  p.push(redis.users.set(data));
+
+  return p;
  },
 
- [GatewayDispatchEvents.WebhooksUpdate]: (data: GatewayWebhooksUpdateDispatchData) => {
+ [GatewayDispatchEvents.WebhooksUpdate]: (
+  data: GatewayWebhooksUpdateDispatchData,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => {
   const memberCount = cache.members.get(data.guild_id) || 0;
   priorityQueue.enqueueGuildTask(data.guild_id, memberCount, 'webhooks');
+
+  return p;
  },
 
- [GatewayDispatchEvents.TypingStart]: async (data: GatewayTypingStartDispatchData) => {
-  if (!data.member || !data.guild_id) return;
-  firstGuildInteraction(data.guild_id);
+ [GatewayDispatchEvents.TypingStart]: async (
+  data: GatewayTypingStartDispatchData,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => {
+  if (!data.member || !data.guild_id) return p;
+  p.push(firstGuildInteraction(data.guild_id));
 
-  redis.members.set(data.member, data.guild_id);
+  p.push(redis.members.set(data.member, data.guild_id));
+  return p;
  },
 
- [GatewayDispatchEvents.Ready]: (data: GatewayReadyDispatchData, shardId: number | undefined) => {
-  ready(data, shardId ?? '?');
-  redis.users.set(data.user);
+ [GatewayDispatchEvents.Ready]: (
+  data: GatewayReadyDispatchData,
+  shardId: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => {
+  p.push(ready(data, shardId ?? '?'));
+  p.push(redis.users.set(data.user));
+
+  return p;
  },
 
- [GatewayDispatchEvents.Resumed]: (_: GatewayResumedDispatch['d']) => {},
+ [GatewayDispatchEvents.Resumed]: (
+  _0: GatewayResumedDispatch['d'],
+  _1: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => p,
 
- [GatewayDispatchEvents.PresenceUpdate]: (_: GatewayPresenceUpdateDispatchData) => {},
+ [GatewayDispatchEvents.PresenceUpdate]: (
+  _0: GatewayPresenceUpdateDispatchData,
+  _1: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => p,
 
  [GatewayDispatchEvents.RateLimited]: (
   data: GatewayRateLimitedDispatchData,
   shardId: number | undefined,
- ) => [
+  p: Promise<unknown>[] = [],
+ ) => {
   // eslint-disable-next-line no-console
   console.log(
    `[Shard ${shardId || '?'} Rate limited] ${data.retry_after}ms - ${data.opcode}: ${data.meta}`,
-  ),
- ],
+  );
+
+  return p;
+ },
 };

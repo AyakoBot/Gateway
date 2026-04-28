@@ -11,14 +11,18 @@ import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
 import redis from '../Cache.js';
 
 export default {
- [GatewayDispatchEvents.InviteCreate]: async (data: GatewayInviteCreateDispatchData) => {
-  if (data.inviter) redis.users.set(data.inviter);
+ [GatewayDispatchEvents.InviteCreate]: async (
+  data: GatewayInviteCreateDispatchData,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => {
+  if (data.inviter) p.push(redis.users.set(data.inviter));
+  if (data.target_user) p.push(redis.users.set(data.target_user));
+  if (!data.guild_id) return p;
 
-  if (data.target_user) redis.users.set(data.target_user);
+  p.push(firstGuildInteraction(data.guild_id));
 
-  if (data.guild_id) {
-   firstGuildInteraction(data.guild_id);
-
+  p.push(
    redis.invites.set({
     ...data,
     type: InviteType.Guild,
@@ -39,11 +43,17 @@ export default {
     guild_scheduled_event: undefined,
     stage_instance: undefined,
     channel: null,
-   });
-  }
+   }),
+  );
+  return p;
  },
 
- [GatewayDispatchEvents.InviteDelete]: (data: GatewayInviteDeleteDispatchData) => {
-  redis.invites.del(data.channel_id, data.code, data.guild_id);
+ [GatewayDispatchEvents.InviteDelete]: (
+  data: GatewayInviteDeleteDispatchData,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => {
+  p.push(redis.invites.del(data.channel_id, data.code, data.guild_id));
+  return p;
  },
 } as const;

@@ -11,19 +11,31 @@ import redis from '../Cache.js';
 export default {
  [GatewayDispatchEvents.VoiceChannelEffectSend]: async (
   data: GatewayVoiceChannelEffectSendDispatchData,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
  ) => {
-  firstGuildInteraction(data.guild_id);
+  p.push(firstGuildInteraction(data.guild_id));
+  return p;
  },
 
- [GatewayDispatchEvents.VoiceServerUpdate]: async (data: GatewayVoiceServerUpdateDispatchData) => {
-  firstGuildInteraction(data.guild_id);
+ [GatewayDispatchEvents.VoiceServerUpdate]: async (
+  data: GatewayVoiceServerUpdateDispatchData,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => {
+  p.push(firstGuildInteraction(data.guild_id));
+  return p;
  },
 
- [GatewayDispatchEvents.VoiceStateUpdate]: async (data: APIVoiceState) => {
-  if (!data.guild_id) return;
+ [GatewayDispatchEvents.VoiceStateUpdate]: async (
+  data: APIVoiceState,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => {
+  if (!data.guild_id) return p;
 
-  firstGuildInteraction(data.guild_id);
-
-  redis.voices.set(data);
+  p.push(firstGuildInteraction(data.guild_id));
+  p.push(redis.voices.set(data));
+  return p;
  },
 } as const;
