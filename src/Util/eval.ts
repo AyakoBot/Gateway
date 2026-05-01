@@ -1,10 +1,9 @@
 import util from 'util';
 
+import { txtFileWriter } from '@ayako/utility';
 import type { APIMessage } from 'discord-api-types/v10';
 
 import { api } from '../BaseClient/Bot/Client.js';
-
-import txtFileWriter from './txtFileWriter.js';
 
 const reg = new RegExp(
  (process.argv.includes('--dev') ? process.env.DevToken : process.env.Token) ?? '',
@@ -38,7 +37,7 @@ export default async (msg: APIMessage) => {
    return;
   }
 
-  api.channels.addMessageReaction(msg.channel_id, msg.id, '❗️');
+  api.channels.addMessageReaction(msg.channel_id, msg.id, '❌');
  } catch (err) {
   if (clean(err).length > 2000) {
    api.channels.createMessage(msg.channel_id, { files: [txtFileWriter(clean(err))] });
@@ -54,7 +53,7 @@ export default async (msg: APIMessage) => {
    return;
   }
 
-  api.channels.addMessageReaction(msg.channel_id, msg.id, '❗️');
+  api.channels.addMessageReaction(msg.channel_id, msg.id, '❌');
  }
 };
 
