@@ -2,7 +2,7 @@
  "compilerOptions": {
   "composite": true,
   "moduleDetection": "force",
-  "types": ["node"],
+  "types": ["node", "bun"],
   "target": "ESNext",
   "module": "esnext",
   "lib": ["ESNext", "WebWorker", "ES6"],
