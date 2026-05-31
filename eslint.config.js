@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import js from '@eslint/js';
 import { defineConfig } from 'eslint/config';
 import prettier from 'eslint-config-prettier';
-import importPlugin from 'eslint-plugin-import';
+import importPlugin from 'eslint-plugin-import-x';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -29,10 +29,10 @@ export default defineConfig(
    globals: { ...globals.node },
   },
   plugins: {
-   import: importPlugin,
+   'import-x': importPlugin,
   },
   settings: {
-   'import/resolver': {
+   'import-x/resolver': {
     node: {
      extensions: ['.js', '.mjs', '.cjs'],
     },
@@ -152,9 +152,9 @@ export default defineConfig(
    ],
 
    // Import rules
-   'import/first': 'error',
-   'import/no-mutable-exports': 'error',
-   'import/prefer-default-export': 'off',
+   'import-x/first': 'error',
+   'import-x/no-mutable-exports': 'error',
+   'import-x/prefer-default-export': 'off',
    'no-restricted-imports': [
     'error',
     {
@@ -166,7 +166,7 @@ export default defineConfig(
      ],
     },
    ],
-   'import/order': [
+   'import-x/order': [
     'error',
     {
      groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
@@ -177,8 +177,8 @@ export default defineConfig(
      },
     },
    ],
-   'import/newline-after-import': 'error',
-   'import/extensions': [
+   'import-x/newline-after-import': 'error',
+   'import-x/extensions': [
     'error',
     'ignorePackages',
     {

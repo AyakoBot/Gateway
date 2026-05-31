@@ -6,7 +6,6 @@ import {
 } from 'discord-api-types/gateway/v10';
 
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
-
 import redis from '../Cache.js';
 
 export default {

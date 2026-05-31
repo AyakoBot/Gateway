@@ -5,9 +5,9 @@ import {
  type GatewayChannelPinsUpdateDispatchData,
  type GatewayChannelUpdateDispatchData,
 } from 'discord-api-types/gateway/v10';
+import type { GatewayVoiceChannelEffectSendDispatchData } from 'discord-api-types/v9';
 
 import redis from '../Cache.js';
-import type { GatewayVoiceChannelEffectSendDispatchData } from 'discord-api-types/v9';
 
 export default {
  [GatewayDispatchEvents.ChannelCreate]: (

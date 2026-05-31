@@ -38,7 +38,6 @@ scheduleJob('0 */10 * * * *', async () => {
  const counts = await getCounts();
 
  manager.broadcastEval(
-  // @ts-expect-error customn cl type
   async (cl: Client, { guilds, members }: { guilds: number; members: number }) => {
    const app = await cl.api.applications
     .getCurrent(undefined)
