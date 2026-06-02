@@ -36,7 +36,11 @@
   "allowSyntheticDefaultImports": true,
   "noErrorTruncation": true,
   "isolatedModules": true,
-  "verbatimModuleSyntax": true
+  "verbatimModuleSyntax": true,
+  "paths": {
+   "@ayako/bot/*": ["./src/_ayako-bot-stub.d.ts"],
+   "@ayako/server/*": ["./src/_ayako-bot-stub.d.ts"]
+  }
  },
  "include": ["src/**/*"],
  "exclude": ["node_modules", "dist"]
