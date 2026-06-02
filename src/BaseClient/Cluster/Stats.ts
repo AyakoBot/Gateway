@@ -38,7 +38,8 @@ scheduleJob('0 */10 * * * *', async () => {
  const counts = await getCounts();
 
  manager.broadcastEval(
-  async (cl: Client, { guilds, members }: { guilds: number; members: number }) => {
+  async (clientArg: unknown, { guilds, members }: { guilds: number; members: number }) => {
+   const cl = clientArg as Client;
    const app = await cl.api.applications
     .getCurrent(undefined)
     .then((res) => ('message' in res ? undefined : res));
