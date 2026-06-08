@@ -1,6 +1,14 @@
 const api = 'https://api.botlist.me/api/v1/bots/650691698409734151/stats';
 
-export default (guilds: number, shardCount: number) =>
+export default ({
+ guilds,
+ shardCount,
+}: {
+ guilds: number;
+ users: number;
+ shardCount: number;
+ shardList: number[];
+}) =>
  fetch(api, {
   method: 'post',
   headers: {

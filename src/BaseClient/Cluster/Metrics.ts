@@ -47,18 +47,6 @@ const soundCount = new Gauge({
  labelNames: ['key'],
 });
 
-const clusterCount = new Gauge({
- name: 'ayako_cluster_count',
- help: 'Amount of Clusters running',
- labelNames: ['key'],
-});
-
-const shardCount = new Gauge({
- name: 'ayako_shard_count',
- help: 'Amount of Shards running',
- labelNames: ['key'],
-});
-
 registry.registerMetric(guildCount);
 registry.registerMetric(userCount);
 registry.registerMetric(emojiCount);
@@ -67,8 +55,6 @@ registry.registerMetric(channelCount);
 registry.registerMetric(guildCount);
 registry.registerMetric(soundCount);
 registry.registerMetric(stickerCount);
-registry.registerMetric(clusterCount);
-registry.registerMetric(shardCount);
 
 export default {
  guildCount: (key: string, count: number) => guildCount.labels(key).set(count),
@@ -78,8 +64,6 @@ export default {
  channelCount: (key: string, count: number) => channelCount.labels(key).set(count),
  stickerCount: (key: string, count: number) => stickerCount.labels(key).set(count),
  soundCount: (key: string, count: number) => soundCount.labels(key).set(count),
- clusterCount: (key: string, count: number) => clusterCount.labels(key).set(count),
- shardCount: (key: string, count: number) => shardCount.labels(key).set(count),
 };
 
 scheduleJob('metrics', '*/5 * * * * *', async () => {

@@ -1,4 +1,5 @@
 import type { Client } from '@discordjs/core';
+import { glob } from 'glob';
 import { scheduleJob } from 'node-schedule';
 
 import type { cache as CacheType } from '../Bot/Client.js';
@@ -88,29 +89,28 @@ const run = () => {
    Metrics.emojiCount(key, counts.emojis);
    Metrics.roleCount(key, counts.roles);
    Metrics.stickerCount(key, counts.stickers);
-   // Metrics.clusterCount(key, getInfo().CLUSTER_COUNT);
-   // Metrics.shardCount(key, getInfo().SHARD_LIST.length);
 
-   // eslint-disable-next-line no-console
-   console.log(
-    `| Stats: ${counts.members} Users, ${counts.guilds} Guilds, ${manager.totalShards} Shards`,
-   );
+   (
+    await glob(
+     `${process.cwd()}${
+      process.cwd().includes('dist') ? '' : '/dist'
+     }/BaseClient/Cluster/Stats/**/*`,
+    )
+   )
+    .filter((fileName) => fileName.endsWith('.js'))
+    .forEach(async (fileName) => {
+     // eslint-disable-next-line no-console
+     console.log('Running stats', fileName);
 
-   // (
-   //  await glob(
-   //   `${process.cwd()}${process.cwd().includes('dist') ?
-   // '' : '/dist'}/BaseClient/Cluster/Stats/**/*`,
-   //  )
-   // )
-   //  .filter((fileName) => fileName.endsWith('.js'))
-   //  .forEach(async (fileName) => {
-   //   // eslint-disable-next-line no-console
-   //   console.log('Running stats', fileName);
+     const file = await import(fileName);
 
-   //   const file = await import(fileName);
-
-   //   file.default(counts.guilds, counts.members, key);
-   //  });
+     file.default({
+      guilds: counts.guilds,
+      members: counts.members,
+      shardCount: manager.totalShards,
+      shardList: manager.shardList,
+     });
+    });
   });
  });
 };

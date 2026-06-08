@@ -1,6 +1,13 @@
 const discords = 'https://discords.com/bots/api/bot/650691698409734151/setservers';
 
-export default (guilds: number) =>
+export default ({
+ guilds,
+}: {
+ guilds: number;
+ users: number;
+ shardCount: number;
+ shardList: number[];
+}) =>
  fetch(discords, {
   method: 'post',
   headers: {
@@ -9,7 +16,6 @@ export default (guilds: number) =>
    'Content-Type': 'application/json',
   },
   body: JSON.stringify({ server_count: guilds }),
-
  })
   // eslint-disable-next-line no-console
   .then(async (r) => (r.ok ? undefined : console.log(await r.text())))

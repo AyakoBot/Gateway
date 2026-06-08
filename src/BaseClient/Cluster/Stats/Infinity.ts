@@ -1,6 +1,16 @@
 const infinityBots = 'https://spider.infinitybots.gg/bots/stats';
 
-export default (guilds: number, users: number, shardCount: number, shardList: number[]) =>
+export default ({
+ guilds,
+ users,
+ shardCount,
+ shardList,
+}: {
+ guilds: number;
+ users: number;
+ shardCount: number;
+ shardList: number[];
+}) =>
  fetch(infinityBots, {
   method: 'post',
   headers: {
@@ -14,9 +24,8 @@ export default (guilds: number, users: number, shardCount: number, shardList: nu
    shard_list: shardList,
    users,
   }),
-
  })
   // eslint-disable-next-line no-console
   .then(async (r) => (r.ok ? undefined : console.log(await r.text())))
   // eslint-disable-next-line no-console
-  .catch(() => console.log('Failed to post stats to Top.gg'));
+  .catch(() => console.log('Failed to post stats to Infinity Bots'));

@@ -1,6 +1,13 @@
 const db = 'https://discord.bots.gg/api/v1/bots/650691698409734151/stats';
 
-export default (guilds: number) =>
+export default ({
+ guilds,
+}: {
+ guilds: number;
+ users: number;
+ shardCount: number;
+ shardList: number[];
+}) =>
  fetch(db, {
   method: 'post',
   body: JSON.stringify({

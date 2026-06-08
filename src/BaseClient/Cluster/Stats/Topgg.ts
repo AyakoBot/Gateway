@@ -1,6 +1,14 @@
 const topgg = 'https://top.gg/api/bots/650691698409734151/stats';
 
-export default (guilds: number, shardCount: number) =>
+export default ({
+ guilds,
+ shardCount,
+}: {
+ guilds: number;
+ users: number;
+ shardCount: number;
+ shardList: number[];
+}) =>
  fetch(topgg, {
   method: 'post',
   headers: {
@@ -12,7 +20,6 @@ export default (guilds: number, shardCount: number) =>
    server_count: guilds,
    shard_count: shardCount,
   }),
-
  })
   // eslint-disable-next-line no-console
   .then(async (r) => (r.ok ? undefined : console.log(await r.text())))
