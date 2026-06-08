@@ -4,6 +4,7 @@ import 'dotenv/config';
 import './BaseClient/Bot/Client.js';
 import { getInfo } from 'discord-hybrid-sharding';
 
+import { startPresenceSync } from './BaseClient/Bot/Dedupe/index.js';
 import { priorityQueue } from './Util/PriorityQueue/index.js';
 
 if (process.argv.includes('--debug')) console.log('[Debug] Debug mode enabled');
@@ -30,4 +31,5 @@ setInterval(() => {
  ]);
 
  priorityQueue.start();
+ startPresenceSync();
 })();

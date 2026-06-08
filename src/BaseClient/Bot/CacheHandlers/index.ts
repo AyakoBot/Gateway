@@ -23,8 +23,10 @@ import {
 import emit from '../../../Util/EventBus.js';
 import firstGuildInteraction from '../../../Util/firstGuildInteraction.js';
 import { priorityQueue } from '../../../Util/PriorityQueue/index.js';
+import { dedupeEnabled } from '../../Cluster/bots.js';
 import redis from '../Cache.js';
 import { cache } from '../Client.js';
+import { dedupe, DedupeVerdict, maintainPresence } from '../Dedupe/index.js';
 import ready from '../Events/ready.js';
 
 import AutoModeration from './AutoModeration.js';
@@ -39,7 +41,12 @@ import Subscription from './Subscription.js';
 import Thread from './Thread.js';
 import Voice from './Voice.js';
 
-export default (data: GatewayDispatchPayload, shardId: number) => {
+export default async (data: GatewayDispatchPayload, shardId: number) => {
+ if (dedupeEnabled) {
+  await maintainPresence(data);
+  if ((await dedupe(data)) === DedupeVerdict.Drop) return;
+ }
+
  const handler = caches[data.t];
  if (!handler) {
   try {

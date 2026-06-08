@@ -1,8 +1,6 @@
-import manager from '../Manager.js';
-
 const infinityBots = 'https://spider.infinitybots.gg/bots/stats';
 
-export default (guilds: number, users: number) =>
+export default (guilds: number, users: number, shardCount: number, shardList: number[]) =>
  fetch(infinityBots, {
   method: 'post',
   headers: {
@@ -12,8 +10,8 @@ export default (guilds: number, users: number) =>
   },
   body: JSON.stringify({
    servers: guilds,
-   shards: manager.totalShards,
-   shard_list: manager.shardList,
+   shards: shardCount,
+   shard_list: shardList,
    users,
   }),
 

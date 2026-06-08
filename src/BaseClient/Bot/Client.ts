@@ -1,17 +1,12 @@
 import { Client } from '@discordjs/core';
 import { REST } from '@discordjs/rest';
 import { WebSocketManager } from '@discordjs/ws';
-import {
- ActivityType,
- GatewayIntentBits,
- PresenceUpdateStatus,
- type APIUser,
-} from 'discord-api-types/v10';
+import { ActivityType, PresenceUpdateStatus, type APIUser } from 'discord-api-types/v10';
 import { ClusterClient, getInfo } from 'discord-hybrid-sharding';
 
-const cleanedToken = (
- (process.argv.includes('--dev') ? process.env.DevToken : process.env.Token) ?? ''
-).replace('Bot ', '');
+import { currentBot, defaultIntents } from '../Cluster/bots.js';
+
+const cleanedToken = (currentBot?.token ?? '').replace('Bot ', '');
 
 const rest = new REST({
  api: `http://${process.argv.includes('--dev') ? 'localhost' : 'nirn'}:8080/api`,
@@ -19,24 +14,7 @@ const rest = new REST({
 
 export const gateway = new WebSocketManager({
  rest,
- intents:
-  GatewayIntentBits.Guilds |
-  GatewayIntentBits.GuildMembers |
-  GatewayIntentBits.GuildModeration |
-  GatewayIntentBits.GuildExpressions |
-  GatewayIntentBits.GuildIntegrations |
-  GatewayIntentBits.GuildWebhooks |
-  GatewayIntentBits.GuildInvites |
-  GatewayIntentBits.GuildVoiceStates |
-  GatewayIntentBits.GuildMessages |
-  GatewayIntentBits.GuildMessageReactions |
-  GatewayIntentBits.DirectMessages |
-  GatewayIntentBits.DirectMessageReactions |
-  GatewayIntentBits.MessageContent |
-  GatewayIntentBits.GuildScheduledEvents |
-  GatewayIntentBits.AutoModerationConfiguration |
-  GatewayIntentBits.AutoModerationExecution |
-  GatewayIntentBits.GuildMessageTyping,
+ intents: currentBot?.intents ?? defaultIntents,
  shardCount: getInfo().TOTAL_SHARDS,
  shardIds: getInfo().SHARD_LIST,
  initialPresence: {

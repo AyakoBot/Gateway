@@ -7,56 +7,56 @@ const registry = new Registry();
 
 const guildCount = new Gauge({
  name: 'ayako_guild_count',
- help: 'Amount of Guilds Ayako is in',
- labelNames: [],
+ help: 'Amount of Guilds',
+ labelNames: ['key'],
 });
 
 const userCount = new Gauge({
  name: 'ayako_user_count',
- help: 'Amount of Users Ayako manages',
- labelNames: [],
+ help: 'Amount of Users',
+ labelNames: ['key'],
 });
 
 const emojiCount = new Gauge({
  name: 'ayako_emoji_count',
- help: 'Amount of Emojis Ayako has access to',
- labelNames: [],
+ help: 'Amount of Emojis',
+ labelNames: ['key'],
 });
 
 const roleCount = new Gauge({
  name: 'ayako_role_count',
- help: 'Amount of Roles Ayako has access to',
- labelNames: [],
+ help: 'Amount of Roles',
+ labelNames: ['key'],
 });
 
 const channelCount = new Gauge({
  name: 'ayako_channel_count',
- help: 'Amount of Channels Ayako has access to',
- labelNames: [],
+ help: 'Amount of Channels',
+ labelNames: ['key'],
 });
 
 const stickerCount = new Gauge({
  name: 'ayako_sticker_count',
- help: 'Amount of Stickers Ayako has access to',
- labelNames: [],
+ help: 'Amount of Stickers',
+ labelNames: ['key'],
 });
 
 const soundCount = new Gauge({
  name: 'ayako_sound_count',
- help: 'Amount of Sounds Ayako has access to',
- labelNames: [],
+ help: 'Amount of Sounds',
+ labelNames: ['key'],
 });
 
 const clusterCount = new Gauge({
  name: 'ayako_cluster_count',
- help: 'Amount of Clusters Ayako is running',
- labelNames: [],
+ help: 'Amount of Clusters running',
+ labelNames: ['key'],
 });
 
 const shardCount = new Gauge({
  name: 'ayako_shard_count',
- help: 'Amount of Shards Ayako is running',
- labelNames: [],
+ help: 'Amount of Shards running',
+ labelNames: ['key'],
 });
 
 registry.registerMetric(guildCount);
@@ -71,15 +71,15 @@ registry.registerMetric(clusterCount);
 registry.registerMetric(shardCount);
 
 export default {
- guildCount: (count: number) => guildCount.labels().set(count),
- userCount: (count: number) => userCount.labels().set(count),
- emojiCount: (count: number) => emojiCount.labels().set(count),
- roleCount: (count: number) => roleCount.labels().set(count),
- channelCount: (count: number) => channelCount.labels().set(count),
- stickerCount: (count: number) => stickerCount.labels().set(count),
- soundCount: (count: number) => soundCount.labels().set(count),
- clusterCount: (count: number) => clusterCount.labels().set(count),
- shardCount: (count: number) => shardCount.labels().set(count),
+ guildCount: (key: string, count: number) => guildCount.labels(key).set(count),
+ userCount: (key: string, count: number) => userCount.labels(key).set(count),
+ emojiCount: (key: string, count: number) => emojiCount.labels(key).set(count),
+ roleCount: (key: string, count: number) => roleCount.labels(key).set(count),
+ channelCount: (key: string, count: number) => channelCount.labels(key).set(count),
+ stickerCount: (key: string, count: number) => stickerCount.labels(key).set(count),
+ soundCount: (key: string, count: number) => soundCount.labels(key).set(count),
+ clusterCount: (key: string, count: number) => clusterCount.labels(key).set(count),
+ shardCount: (key: string, count: number) => shardCount.labels(key).set(count),
 };
 
 scheduleJob('metrics', '*/5 * * * * *', async () => {
