@@ -46,7 +46,10 @@ scheduleJob('0 */10 * * * *', async () => {
   if (!counts) return;
 
   manager.broadcastEval(
-   async (clientArg: unknown, { guilds, members }: { guilds: number; members: number }) => {
+   async (
+    clientArg: unknown,
+    { guilds, members, key }: { guilds: number; members: number; key: string },
+   ) => {
     const cl = clientArg as Client;
     const app = await cl.api.applications
      .getCurrent(undefined)
@@ -71,7 +74,7 @@ scheduleJob('0 */10 * * * *', async () => {
       descriptions(guilds, members, app).MAIN_TOKEN,
     });
    },
-   { context: counts, cluster: 0 },
+   { context: { ...counts, key }, cluster: 0 },
   );
  });
 });
