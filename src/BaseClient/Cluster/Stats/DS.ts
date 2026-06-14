@@ -12,7 +12,7 @@ export default ({
   method: 'post',
   headers: {
    // eslint-disable-next-line @typescript-eslint/naming-convention
-   Authorization: process.env.discords ?? '',
+   Authorization: process.env.discordsToken ?? '',
    'Content-Type': 'application/json',
   },
   body: JSON.stringify({ server_count: guilds }),

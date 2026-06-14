@@ -15,7 +15,7 @@ export default ({
   method: 'post',
   headers: {
    // eslint-disable-next-line @typescript-eslint/naming-convention
-   Authorization: process.env.infinityBots ? `Bot ${process.env.infinityBots}` : '',
+   Authorization: process.env.infinityBotsToken ? `Bot ${process.env.infinityBotsToken}` : '',
    'Content-Type': 'application/json',
   },
   body: JSON.stringify({
