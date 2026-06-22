@@ -33,7 +33,15 @@ export interface BotConfig {
 
 const definitions: Array<{ key: string; token: string | undefined; intents?: number }> = [
  { key: baseKey, token: isDev ? process.env.DevToken : process.env.Token },
- // { key: 'TICKET_TOKEN', token: process.env.TICKET_TOKEN },
+ {
+  key: 'TICKET_TOKEN',
+  token: process.env.TICKET_TOKEN,
+  intents:
+   GatewayIntentBits.Guilds |
+   GatewayIntentBits.GuildMessages |
+   GatewayIntentBits.DirectMessages |
+   GatewayIntentBits.MessageContent,
+ },
  // { key: 'AFK_TOKEN', token: process.env.AFK_TOKEN },
 ];
 
