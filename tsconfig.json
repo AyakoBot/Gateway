@@ -1,6 +1,5 @@
 {
  "compilerOptions": {
-  "composite": true,
   "moduleDetection": "force",
   "types": ["node", "bun"],
   "target": "ESNext",
