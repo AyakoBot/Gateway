@@ -1,11 +1,14 @@
 import {
- GatewayDispatchEvents,
  type GatewayChannelCreateDispatchData,
  type GatewayChannelDeleteDispatchData,
+ type GatewayChannelInfoDispatchData,
  type GatewayChannelPinsUpdateDispatchData,
  type GatewayChannelUpdateDispatchData,
+ GatewayDispatchEvents,
+ type GatewayVoiceChannelEffectSendDispatchData,
+ type GatewayVoiceChannelStartTimeUpdateDispatchData,
+ type GatewayVoiceChannelStatusUpdateDispatchData,
 } from 'discord-api-types/gateway/v10';
-import type { GatewayVoiceChannelEffectSendDispatchData } from 'discord-api-types/v9';
 
 import redis from '../Cache.js';
 
@@ -57,10 +60,8 @@ export default {
   return p;
  },
 
- // eslint-disable-next-line @typescript-eslint/naming-convention
- VOICE_CHANNEL_STATUS_UPDATE: async (
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  data: { status: string; id: string; guild_id: string },
+ [GatewayDispatchEvents.VoiceChannelStatusUpdate]: async (
+  data: GatewayVoiceChannelStatusUpdateDispatchData,
   _: number | undefined,
   p: Promise<unknown>[] = [],
  ) => {
@@ -97,4 +98,22 @@ export default {
   });
   return p;
  },
+
+ [GatewayDispatchEvents.ChannelInfo]: (
+  data: GatewayChannelInfoDispatchData,
+  _: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => {
+  data.channels.forEach((c) => {
+   if (c.status) p.push(redis.channelStatus.set(data.guild_id, c.id, c.status));
+  });
+
+  return p;
+ },
+
+ [GatewayDispatchEvents.VoiceChannelStartTimeUpdate]: async (
+  _0: GatewayVoiceChannelStartTimeUpdateDispatchData,
+  _1: number | undefined,
+  p: Promise<unknown>[] = [],
+ ) => p,
 } as const;
