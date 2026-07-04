@@ -5,6 +5,7 @@ import { scheduleJob } from 'node-schedule';
 import type { cache as CacheType } from '../Bot/Client.js';
 import type BotMetricsType from '../Bot/Metrics.js';
 
+import { baseKey } from './bots.js';
 import type descriptionsType from './Descriptions.js';
 import managers from './Manager.js';
 import Metrics from './Metrics.js';
@@ -92,6 +93,8 @@ const run = () => {
    Metrics.emojiCount(key, counts.emojis);
    Metrics.roleCount(key, counts.roles);
    Metrics.stickerCount(key, counts.stickers);
+
+   if (key !== baseKey) return;
 
    (
     await glob(
