@@ -42,7 +42,16 @@ const definitions: Array<{ key: string; token: string | undefined; intents?: num
    GatewayIntentBits.DirectMessages |
    GatewayIntentBits.MessageContent,
  },
- // { key: 'AFK_TOKEN', token: process.env.AFK_TOKEN },
+ {
+  key: 'INFO_TOKEN',
+  token: process.env.INFO_TOKEN,
+  intents: GatewayIntentBits.Guilds,
+ },
+ {
+  key: 'AFK_TOKEN',
+  token: process.env.AFK_TOKEN,
+  intents: GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages,
+ },
 ];
 
 const getPriority = (index: number, intents: number): number => {
