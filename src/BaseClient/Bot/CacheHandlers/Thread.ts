@@ -40,7 +40,7 @@ export default {
 
   const [threadMemberKeys, messageKeys] = await Promise.all([
    redis.cacheDb.hscanKeys(redis.threadMembers.keystore(data.guild_id), `*${data.id}*`),
-   redis.cacheDb.hscanKeys(redis.messages.keystore(data.guild_id), `*${data.id}*`),
+   redis.cacheDb.hkeys(redis.messages.keystore(data.guild_id, data.id)),
   ]);
 
   if (threadMemberKeys.length === 0 && messageKeys.length === 0) return p;
@@ -49,12 +49,11 @@ export default {
 
   if (threadMemberKeys.length > 0) {
    deletePipeline.hdel(redis.threadMembers.keystore(data.guild_id), ...threadMemberKeys);
-   deletePipeline.del(...threadMemberKeys);
+   deletePipeline.del(...threadMemberKeys.map((key) => `${key}:current`));
   }
 
   if (messageKeys.length > 0) {
-   deletePipeline.hdel(redis.messages.keystore(data.guild_id), ...messageKeys);
-   deletePipeline.del(...messageKeys);
+   deletePipeline.del(...messageKeys.map((key) => `${key}:current`));
   }
 
   p.push(deletePipeline.exec());

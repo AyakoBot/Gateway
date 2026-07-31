@@ -31,17 +31,11 @@ export default {
   p.push(redis.pins.delAll(data.id));
   p.push(redis.channelStatus.del(data.guild_id, data.id));
 
-  const messageKeys = await redis.cacheDb.hscanKeys(
-   redis.messages.keystore(data.guild_id),
-   `*${data.id}*`,
-  );
+  const messageKeys = await redis.cacheDb.hkeys(redis.messages.keystore(data.guild_id, data.id));
 
   if (messageKeys.length === 0) return p;
 
-  const pipeline = redis.cacheDb.pipeline();
-  pipeline.hdel(redis.messages.keystore(data.guild_id), ...messageKeys);
-  pipeline.del(...messageKeys);
-  p.push(pipeline.exec());
+  p.push(redis.cacheDb.del(...messageKeys.map((key) => `${key}:current`)));
   return p;
  },
 
