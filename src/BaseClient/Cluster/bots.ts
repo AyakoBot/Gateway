@@ -22,7 +22,8 @@ export const defaultIntents =
  GatewayIntentBits.GuildScheduledEvents |
  GatewayIntentBits.AutoModerationConfiguration |
  GatewayIntentBits.AutoModerationExecution |
- GatewayIntentBits.GuildMessageTyping;
+ GatewayIntentBits.GuildMessageTyping |
+ GatewayIntentBits.GuildMessagePolls;
 
 export interface BotConfig {
  key: string;
@@ -51,6 +52,12 @@ const definitions: Array<{ key: string; token: string | undefined; intents?: num
   key: 'AFK_TOKEN',
   token: process.env.AFK_TOKEN,
   intents: GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages,
+ },
+ {
+  key: 'RP_TOKEN',
+  token: process.env.RP_TOKEN,
+  intents:
+   GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages | GatewayIntentBits.MessageContent,
  },
 ];
 

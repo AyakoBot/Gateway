@@ -1,4 +1,5 @@
 import {
+ ChannelType,
  GatewayDispatchEvents,
  GuildNSFWLevel,
  GuildVerificationLevel,
@@ -42,7 +43,7 @@ export default {
     target_user: data.target_user,
     guild_scheduled_event: undefined,
     stage_instance: undefined,
-    channel: null,
+    channel: { id: data.channel_id, name: null, type: ChannelType.GuildText },
    }),
   );
   return p;

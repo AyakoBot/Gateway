@@ -479,6 +479,7 @@ export default {
   p: Promise<unknown>[] = [],
  ) => {
   p.push(firstGuildInteraction(data.guild_id));
+  if (data.user) p.push(redis.users.set(data.user));
 
   if (data.joined_at && data.deaf && data.mute) {
    p.push(redis.members.set(data as Parameters<typeof redis.members.set>[0], data.guild_id));
