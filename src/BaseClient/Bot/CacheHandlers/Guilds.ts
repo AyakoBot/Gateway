@@ -465,11 +465,15 @@ export default {
     const pipeline = redis.cacheDb.pipeline();
     keys.forEach((key) => pipeline.del(key));
     pipeline.del(keystoreKey);
-    p.push(pipeline.exec());
+    await pipeline.exec();
    }
   }
 
   p.push(redis.members.setMany(data.members, data.guild_id));
+
+  const users = data.members.map((member) => member.user).filter((user) => !!user);
+  if (users.length) p.push(redis.users.setMany(users));
+
   return p;
  },
 
