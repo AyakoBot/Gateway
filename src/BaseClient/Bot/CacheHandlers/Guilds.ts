@@ -256,6 +256,8 @@ export default {
   _: number | undefined,
   p: Promise<unknown>[] = [],
  ) => {
+  if (data.unavailable) return p;
+
   cache.members.delete(data.id);
   cache.emojis.delete(data.id);
   cache.roles.delete(data.id);
