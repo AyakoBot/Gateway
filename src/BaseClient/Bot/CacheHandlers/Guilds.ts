@@ -461,14 +461,7 @@ export default {
    // eslint-disable-next-line no-console
    console.log('[Chunk] Receiving', data.chunk_count, 'member chunks for', data.guild_id);
 
-   const keystoreKey = redis.members.keystore(data.guild_id);
-   const keys = await redis.cacheDb.hkeys(keystoreKey);
-   if (keys.length > 0) {
-    const pipeline = redis.cacheDb.pipeline();
-    keys.forEach((key) => pipeline.del(key));
-    pipeline.del(keystoreKey);
-    await pipeline.exec();
-   }
+   p.push(redis.cacheDb.del(redis.members.keystore(data.guild_id)));
   }
 
   p.push(redis.members.setMany(data.members, data.guild_id));
