@@ -12,10 +12,10 @@
     "watch": "swc src -d dist --strip-leading-paths --copy-files --watch"
   },
   "dependencies": {
-    "@discordjs/core": "^2.5.0",
-    "@discordjs/rest": "^2.6.1",
+    "@discordjs/core": "^2.6.0",
+    "@discordjs/rest": "^2.6.3",
     "@discordjs/ws": "^2.0.4",
-    "discord-api-types": "0.38.49",
+    "discord-api-types": "0.38.55",
     "discord-hybrid-sharding": "^3.0.1",
     "dotenv": "^17.4.2",
     "glob": "^13.0.6",
@@ -25,33 +25,33 @@
   "devDependencies": {
     "@babel/eslint-parser": "^8.0.1",
     "@babel/eslint-plugin": "^8.0.1",
-    "@eslint/compat": "^2.1.0",
+    "@eslint/compat": "^2.1.1",
     "@eslint/js": "^10.0.1",
     "@swc/cli": "^0.8.1",
-    "@swc/core": "1.15.43",
+    "@swc/core": "1.16.2",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/bun": "latest",
     "@types/glob": "^9.0.0",
-    "@types/node": "^26.0.0",
+    "@types/node": "^26.5.0",
     "@types/node-schedule": "^2.1.8",
-    "@typescript-eslint/eslint-plugin": "^8.62.0",
-    "@typescript-eslint/parser": "^8.62.0",
-    "eslint": "^10.5.0",
+    "@typescript-eslint/eslint-plugin": "^8.70.0",
+    "@typescript-eslint/parser": "^8.70.0",
+    "eslint": "^10.10.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.5",
-    "eslint-plugin-import-x": "^4.17.0",
-    "eslint-plugin-json": "^4.0.1",
+    "eslint-plugin-import-x": "^4.17.1",
+    "eslint-plugin-json": "^5.0.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-prettier": "^5.5.6",
-    "globals": "^17.7.0",
-    "prettier": "^3.8.4",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.62.0"
+    "globals": "^17.12.0",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2",
+    "typescript-eslint": "^8.70.0"
   },
   "packageManager": "pnpm@11.8.0",
   "engines": {
-    "node": "^25.6.0",
-    "pnpm": "^11.6.0"
+    "node": ">=25.6.0",
+    "pnpm": ">=11.6.0"
   }
 }
