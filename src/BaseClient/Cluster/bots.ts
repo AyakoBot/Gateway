@@ -77,6 +77,11 @@ const definitions: Array<{ key: string; token: string | undefined; intents?: num
   token: process.env.CUSTOM_ROLES_TOKEN,
   intents: GatewayIntentBits.Guilds | GatewayIntentBits.GuildMembers,
  },
+ {
+  key: 'CONFESSIONS_TOKEN',
+  token: process.env.CONFESSIONS_TOKEN,
+  intents: GatewayIntentBits.Guilds,
+ },
 ];
 
 const getPriority = (index: number, intents: number): number => {
