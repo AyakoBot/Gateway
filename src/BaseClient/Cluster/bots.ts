@@ -75,12 +75,17 @@ const definitions: Array<{ key: string; token: string | undefined; intents?: num
  {
   key: 'CUSTOM_ROLES_TOKEN',
   token: process.env.CUSTOM_ROLES_TOKEN,
-  intents: GatewayIntentBits.Guilds | GatewayIntentBits.GuildMembers,
+  intents:
+   GatewayIntentBits.Guilds |
+   GatewayIntentBits.GuildMembers |
+   GatewayIntentBits.GuildMessages |
+   GatewayIntentBits.GuildMessageReactions |
+   GatewayIntentBits.GuildVoiceStates,
  },
  {
   key: 'CONFESSIONS_TOKEN',
   token: process.env.CONFESSIONS_TOKEN,
-  intents: GatewayIntentBits.Guilds,
+  intents: GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages,
  },
 ];
 
