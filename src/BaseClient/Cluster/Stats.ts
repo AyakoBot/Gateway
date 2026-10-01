@@ -19,6 +19,7 @@ const getCounts = () =>
      import('/app/Ayako/packages/Gateway/dist/BaseClient/Bot/Client.js').then(
       ({ cache }: { cache: typeof CacheType }) => ({
        guilds: cache.approxGuilds,
+       loaded: cache.members.size,
        members: Array.from(cache.members.values()).reduce((a, b) => a + b, 0),
        emojis: Array.from(cache.emojis.values()).reduce((a, b) => a + b, 0),
        roles: Array.from(cache.roles.values()).reduce((a, b) => a + b, 0),
@@ -30,6 +31,7 @@ const getCounts = () =>
     .then((counts) => ({
      key,
      guilds: counts.reduce((a, b) => a + b.guilds, 0),
+     loaded: counts.reduce((a, b) => a + b.loaded, 0),
      members: counts.reduce((a, b) => a + b.members, 0),
      emojis: counts.reduce((a, b) => a + b.emojis, 0),
      roles: counts.reduce((a, b) => a + b.roles, 0),
@@ -75,7 +77,14 @@ scheduleJob('0 */10 * * * *', async () => {
       descriptions(guilds, members, app).MAIN_TOKEN,
     });
    },
-   { context: { ...counts, key }, cluster: 0 },
+   {
+    context: {
+     ...counts,
+     guilds: key === baseKey ? counts.guilds : counts.loaded || counts.guilds,
+     key,
+    },
+    cluster: 0,
+   },
   );
  });
 });
