@@ -4,6 +4,7 @@ import { GatewayOpcodes } from 'discord-api-types/gateway/v10';
 
 import cache from '../../../BaseClient/Bot/CacheHandlers/index.js';
 import { gateway } from '../Client.js';
+import guildLog from '../GuildLog/index.js';
 import Metrics from '../Metrics.js';
 
 gateway.setMaxListeners(Object.keys(WebSocketShardEvents).length);
@@ -37,6 +38,7 @@ gateway.on(WebSocketShardEvents.Dispatch, (data, shardId) => {
  }
 
  Metrics.dispatchEventsReceived(data.t, shardId);
+ guildLog(data, shardId);
  cache(data, shardId);
 });
 

@@ -30,13 +30,20 @@ export interface BotConfig {
  token: string | undefined;
  intents: number;
  priority: number;
+ guildLogThread: string | undefined;
 }
 
-const definitions: Array<{ key: string; token: string | undefined; intents?: number }> = [
+const definitions: Array<{
+ key: string;
+ token: string | undefined;
+ intents?: number;
+ guildLogThread?: string;
+}> = [
  { key: baseKey, token: isDev ? process.env.DevToken : process.env.Token },
  {
   key: 'TICKET_TOKEN',
   token: process.env.TICKET_TOKEN,
+  guildLogThread: '1554605476107395242',
   intents:
    GatewayIntentBits.Guilds |
    GatewayIntentBits.GuildMessages |
@@ -46,6 +53,7 @@ const definitions: Array<{ key: string; token: string | undefined; intents?: num
  {
   key: 'INFO_TOKEN',
   token: process.env.INFO_TOKEN,
+  guildLogThread: '1554605436253118564',
   intents: GatewayIntentBits.Guilds,
  },
  {
@@ -62,6 +70,7 @@ const definitions: Array<{ key: string; token: string | undefined; intents?: num
  {
   key: 'WELCOME_TOKEN',
   token: process.env.WELCOME_TOKEN,
+  guildLogThread: '1554605520453771314',
   intents:
    GatewayIntentBits.Guilds |
    GatewayIntentBits.GuildMembers |
@@ -70,11 +79,13 @@ const definitions: Array<{ key: string; token: string | undefined; intents?: num
  {
   key: 'ECONOMY_TOKEN',
   token: process.env.ECONOMY_TOKEN,
+  guildLogThread: '1554605692977938512',
   intents: GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages,
  },
  {
   key: 'CUSTOM_ROLES_TOKEN',
   token: process.env.CUSTOM_ROLES_TOKEN,
+  guildLogThread: '1554605652612222996',
   intents:
    GatewayIntentBits.Guilds |
    GatewayIntentBits.GuildMembers |
@@ -85,6 +96,7 @@ const definitions: Array<{ key: string; token: string | undefined; intents?: num
  {
   key: 'CONFESSIONS_TOKEN',
   token: process.env.CONFESSIONS_TOKEN,
+  guildLogThread: '1554605606768480307',
   intents: GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages,
  },
 ];
@@ -105,6 +117,7 @@ export const bots: BotConfig[] = definitions.map((d, i) => ({
  token: d.token,
  intents: d.intents ?? defaultIntents,
  priority: getPriority(i, d.intents ?? defaultIntents),
+ guildLogThread: d.guildLogThread,
 }));
 
 export const activeBots: BotConfig[] = bots.filter((b) => !!b.token);

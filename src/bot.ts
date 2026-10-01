@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { heapStats } from 'bun:jsc';
 import 'dotenv/config';
-import './BaseClient/Bot/Client.js';
+import { gateway } from './BaseClient/Bot/Client.js';
 import { getInfo } from 'discord-hybrid-sharding';
 
 import { startPresenceSync } from './BaseClient/Bot/Dedupe/index.js';
@@ -32,4 +32,5 @@ setInterval(() => {
 
  priorityQueue.start();
  startPresenceSync();
+ gateway.connect();
 })();

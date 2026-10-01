@@ -32,7 +32,6 @@ export const gateway = new WebSocketManager({
 });
 
 gateway.setToken(cleanedToken);
-gateway.connect();
 
 export const client = new Client({ rest, gateway });
 export const { api } = client;
