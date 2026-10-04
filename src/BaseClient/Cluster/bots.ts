@@ -99,6 +99,12 @@ const definitions: Array<{
   guildLogThread: '1554605606768480307',
   intents: GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages,
  },
+ {
+  key: 'REMINDERS_TOKEN',
+  token: process.env.REMINDERS_TOKEN,
+  guildLogThread: '1556106975245373460',
+  intents: GatewayIntentBits.Guilds,
+ },
 ];
 
 const getPriority = (index: number, intents: number): number => {

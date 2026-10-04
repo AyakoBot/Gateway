@@ -11,6 +11,7 @@ const pluginKeys = [
  'WELCOME_TOKEN',
  'INFO_TOKEN',
  'AFK_TOKEN',
+ 'REMINDERS_TOKEN',
 ] as const;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -36,13 +37,15 @@ test('plugin bios use singular and plural counts', () => {
  assert.ok(many.includes('Managing `2 Members`\n'));
 });
 
-test('only Info shows user installs', () => {
+const userInstallable: readonly string[] = ['INFO_TOKEN', 'REMINDERS_TOKEN'];
+
+test('only user-installable bots show user installs', () => {
  const bios = descriptions(4, 821, app);
 
- assert.ok(bios.INFO_TOKEN.includes('Installed on `4 Servers` / `3 Users`\n'));
- pluginKeys
-  .filter((key) => key !== 'INFO_TOKEN')
-  .forEach((key) => assert.ok(!bios[key].includes('Users'), key));
+ pluginKeys.forEach((key) => {
+  const shown = bios[key].includes('Installed on `4 Servers` / `3 Users`\n');
+  assert.equal(shown, userInstallable.includes(key), key);
+ });
 });
 
 test('plugin bios say Managing and fit the 400 character limit', () => {

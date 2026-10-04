@@ -59,4 +59,10 @@ https://support.ayakobot.com
   app?.approximate_user_install_count ?? 0,
  ),
  AFK_TOKEN: pluginBio('Ayako AFK: AFK statuses that answer mentions for you', guilds, members),
+ REMINDERS_TOKEN: pluginBio(
+  'Ayako Reminders: reminders delivered to your DMs',
+  guilds,
+  members,
+  app?.approximate_user_install_count ?? 0,
+ ),
 });
