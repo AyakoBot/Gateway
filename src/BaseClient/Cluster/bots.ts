@@ -59,6 +59,7 @@ const definitions: Array<{
  {
   key: 'AFK_TOKEN',
   token: process.env.AFK_TOKEN,
+  guildLogThread: '1556693755300544512',
   intents: GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages,
  },
  {
