@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { GatewayDispatchEvents, type GatewayDispatchPayload } from '@discordjs/core';
 
-import { currentKey, dedupeEnabled, priorityOf } from '../../Cluster/bots.js';
+import { currentKey, dedupeEnabled, DedupeLens, priorityOf } from '../../Cluster/bots.js';
 import redis from '../Cache.js';
 
 import dedupeKey from './dedupeKey.js';
@@ -14,6 +14,15 @@ const windowMs = 10000;
 const graceMs = 200;
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+const contentEvents = new Set<GatewayDispatchEvents>([
+ GatewayDispatchEvents.MessageCreate,
+ GatewayDispatchEvents.MessageUpdate,
+ GatewayDispatchEvents.MessageDelete,
+]);
+
+const lensOf = (data: GatewayDispatchPayload): DedupeLens =>
+ contentEvents.has(data.t) ? DedupeLens.Content : DedupeLens.Members;
 
 const guildIdOf = (data: GatewayDispatchPayload): string | undefined => {
  // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -52,10 +61,11 @@ export const dedupe = async (data: GatewayDispatchPayload): Promise<DedupeVerdic
   const dk = dedupeKey(data);
   if (!dk) return DedupeVerdict.Process;
 
+  const lens = lensOf(data);
   const present = await presenceOf(guildId);
-  const myPriority = priorityOf(currentKey);
+  const myPriority = priorityOf(currentKey, lens);
   const highest = present.reduce(
-   (min, key) => Math.min(min, priorityOf(key)),
+   (min, key) => Math.min(min, priorityOf(key, lens)),
    Number.MAX_SAFE_INTEGER,
   );
 

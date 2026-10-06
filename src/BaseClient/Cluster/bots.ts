@@ -25,11 +25,16 @@ export const defaultIntents =
  GatewayIntentBits.GuildMessageTyping |
  GatewayIntentBits.GuildMessagePolls;
 
+export enum DedupeLens {
+ Members = 'members',
+ Content = 'content',
+}
+
 export interface BotConfig {
  key: string;
  token: string | undefined;
  intents: number;
- priority: number;
+ priority: Record<DedupeLens, number>;
  guildLogThread: string | undefined;
 }
 
@@ -108,30 +113,44 @@ const definitions: Array<{
  },
 ];
 
-const getPriority = (index: number, intents: number): number => {
+const lensIntents: Record<DedupeLens, [GatewayIntentBits, GatewayIntentBits]> = {
+ [DedupeLens.Members]: [GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent],
+ [DedupeLens.Content]: [GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers],
+};
+
+const getPriority = (index: number, intents: number, lens: DedupeLens): number => {
  if (index === 0) return 0;
 
- const hasMembers = (intents & GatewayIntentBits.GuildMembers) !== 0;
- const hasContent = (intents & GatewayIntentBits.MessageContent) !== 0;
- if (!hasMembers && !hasContent) return 4;
- if (!hasMembers && hasContent) return 3;
- if (hasMembers && !hasContent) return 2;
+ const [lead, second] = lensIntents[lens];
+ const hasLead = (intents & lead) !== 0;
+ const hasSecond = (intents & second) !== 0;
+ if (!hasLead && !hasSecond) return 4;
+ if (!hasLead && hasSecond) return 3;
+ if (hasLead && !hasSecond) return 2;
  return 1;
 };
 
-export const bots: BotConfig[] = definitions.map((d, i) => ({
- key: d.key,
- token: d.token,
- intents: d.intents ?? defaultIntents,
- priority: getPriority(i, d.intents ?? defaultIntents),
- guildLogThread: d.guildLogThread,
-}));
+export const bots: BotConfig[] = definitions.map((d, i) => {
+ const intents = d.intents ?? defaultIntents;
+
+ return {
+  key: d.key,
+  token: d.token,
+  intents,
+  priority: {
+   [DedupeLens.Members]: getPriority(i, intents, DedupeLens.Members),
+   [DedupeLens.Content]: getPriority(i, intents, DedupeLens.Content),
+  },
+  guildLogThread: d.guildLogThread,
+ };
+});
 
 export const activeBots: BotConfig[] = bots.filter((b) => !!b.token);
 
 export const byKey = (key: string): BotConfig | undefined => bots.find((b) => b.key === key);
 
-export const priorityOf = (key: string): number => byKey(key)?.priority ?? Number.MAX_SAFE_INTEGER;
+export const priorityOf = (key: string, lens: DedupeLens): number =>
+ byKey(key)?.priority[lens] ?? Number.MAX_SAFE_INTEGER;
 
 export const currentKey: string =
  process.argv.find((a) => a.startsWith('--key='))?.slice('--key='.length) ?? baseKey;
