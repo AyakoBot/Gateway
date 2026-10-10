@@ -65,4 +65,9 @@ https://support.ayakobot.com
   members,
   app?.approximate_user_install_count ?? 0,
  ),
+ BUMP_REMINDERS_TOKEN: pluginBio(
+  'Ayako Bump Reminders: a ping when your server can be bumped again',
+  guilds,
+  members,
+ ),
 });

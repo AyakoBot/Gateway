@@ -111,6 +111,13 @@ const definitions: Array<{
   guildLogThread: '1556106975245373460',
   intents: GatewayIntentBits.Guilds,
  },
+ {
+  key: 'BUMP_REMINDERS_TOKEN',
+  token: process.env.BUMP_REMINDERS_TOKEN,
+  guildLogThread: '1557454283094360084',
+  intents:
+   GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages | GatewayIntentBits.MessageContent,
+ },
 ];
 
 const lensIntents: Record<DedupeLens, [GatewayIntentBits, GatewayIntentBits]> = {

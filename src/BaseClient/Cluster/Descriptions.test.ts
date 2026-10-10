@@ -12,6 +12,7 @@ const pluginKeys = [
  'INFO_TOKEN',
  'AFK_TOKEN',
  'REMINDERS_TOKEN',
+ 'BUMP_REMINDERS_TOKEN',
 ] as const;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
