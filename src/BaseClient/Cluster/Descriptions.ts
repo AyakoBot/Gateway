@@ -70,4 +70,9 @@ https://support.ayakobot.com
   guilds,
   members,
  ),
+ GIVEAWAYS_TOKEN: pluginBio(
+  'Ayako Giveaways: giveaways with personal prizes and bonus entries',
+  guilds,
+  members,
+ ),
 });

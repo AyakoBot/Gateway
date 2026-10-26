@@ -118,6 +118,12 @@ const definitions: Array<{
   intents:
    GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages | GatewayIntentBits.MessageContent,
  },
+ {
+  key: 'GIVEAWAYS_TOKEN',
+  token: process.env.GIVEAWAYS_TOKEN,
+  intents:
+   GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages | GatewayIntentBits.GuildVoiceStates,
+ },
 ];
 
 const lensIntents: Record<DedupeLens, [GatewayIntentBits, GatewayIntentBits]> = {
