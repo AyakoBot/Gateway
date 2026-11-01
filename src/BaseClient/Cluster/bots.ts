@@ -121,8 +121,15 @@ const definitions: Array<{
  {
   key: 'GIVEAWAYS_TOKEN',
   token: process.env.GIVEAWAYS_TOKEN,
+  guildLogThread: '1564711609367007232',
   intents:
    GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages | GatewayIntentBits.GuildVoiceStates,
+ },
+ {
+  key: 'VERIFICATION_TOKEN',
+  token: process.env.VERIFICATION_TOKEN,
+  guildLogThread: '1564711516526084186',
+  intents: GatewayIntentBits.Guilds | GatewayIntentBits.GuildMembers,
  },
 ];
 

@@ -75,4 +75,9 @@ https://support.ayakobot.com
   guilds,
   members,
  ),
+ VERIFICATION_TOKEN: pluginBio(
+  'Ayako Verification: new members solve a captcha before they get in',
+  guilds,
+  members,
+ ),
 });
