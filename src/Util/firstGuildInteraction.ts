@@ -6,9 +6,8 @@ import { cache as clientCache } from '../BaseClient/Bot/Client.js';
 import { priorityQueue } from './PriorityQueue/index.js';
 
 export default async (guildId: string) => {
- const [isMember] = await cache.execPipeline<[string | null]>((pipeline) => {
-  pipeline.hget('guild-interacts', guildId);
-  pipeline.hset('guild-interacts', guildId, '1');
+ const [isNew] = await cache.execPipeline<[number]>((pipeline) => {
+  pipeline.call('hsetnx', 'guild-interacts', guildId, '1');
   pipeline.call(
    'hexpire',
    'guild-interacts',
@@ -19,7 +18,7 @@ export default async (guildId: string) => {
    guildId,
   );
  });
- if (isMember === '1') return false;
+ if (!isNew) return false;
 
  const memberCount = clientCache.members.get(guildId) || 0;
 
