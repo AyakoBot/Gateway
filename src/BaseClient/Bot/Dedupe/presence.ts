@@ -2,6 +2,8 @@
 import { currentKey, dedupeEnabled } from '../../Cluster/bots.js';
 import redis from '../Cache.js';
 
+import { DedupeVerdict, leaveVerdict } from './guildLeave.js';
+
 const guildKey = (guildId: string) => `gw:presence:${guildId}`;
 const sharedSetKey = 'gw:shared';
 const sharedGuilds = new Set<string>();
@@ -35,19 +37,18 @@ export const addPresence = async (guildId: string): Promise<void> => {
  }
 };
 
-export const removePresence = async (guildId: string): Promise<void> => {
- const pipeline = redis.cacheDb.pipeline();
- pipeline.call('SREM', guildKey(guildId), currentKey);
- pipeline.call('SCARD', guildKey(guildId));
- const res = await pipeline.exec();
+export const removePresence = async (guildId: string): Promise<DedupeVerdict> => {
+ const removed = await redis.cacheDb.call('SREM', guildKey(guildId), currentKey);
+ const remaining = await redis.cacheDb.call('SCARD', guildKey(guildId));
 
  presenceCache.delete(guildId);
 
- const card = Number((res?.[1]?.[1] as number) ?? 0);
- if (card < 2) {
+ if (Number(remaining) < 2) {
   await redis.cacheDb.call('SREM', sharedSetKey, guildId);
   sharedGuilds.delete(guildId);
  }
+
+ return leaveVerdict(removed, remaining);
 };
 
 const refreshShared = async (): Promise<void> => {

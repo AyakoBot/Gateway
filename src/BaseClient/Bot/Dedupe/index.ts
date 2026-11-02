@@ -5,8 +5,10 @@ import { currentKey, dedupeEnabled, DedupeLens, priorityOf } from '../../Cluster
 import redis from '../Cache.js';
 
 import dedupeKey from './dedupeKey.js';
+import { DedupeVerdict } from './guildLeave.js';
 import { addPresence, isShared, presenceOf, removePresence } from './presence.js';
 
+export { DedupeVerdict } from './guildLeave.js';
 export { startPresenceSync } from './presence.js';
 
 const markerKey = (dk: string) => `gw:dedupe:${dk}`;
@@ -29,8 +31,8 @@ const guildIdOf = (data: GatewayDispatchPayload): string | undefined => {
  const d = data.d as { guild_id?: string; guild?: { id?: string } } | undefined;
  return d?.guild_id ?? d?.guild?.id;
 };
-export const maintainPresence = async (data: GatewayDispatchPayload): Promise<void> => {
- if (!dedupeEnabled) return;
+export const maintainPresence = async (data: GatewayDispatchPayload): Promise<DedupeVerdict> => {
+ if (!dedupeEnabled) return DedupeVerdict.Process;
 
  try {
   if (data.t === GatewayDispatchEvents.GuildCreate) {
@@ -38,17 +40,15 @@ export const maintainPresence = async (data: GatewayDispatchPayload): Promise<vo
    if (id) await addPresence(id);
   } else if (data.t === GatewayDispatchEvents.GuildDelete) {
    const d = data.d as { id?: string; unavailable?: boolean };
-   if (d.id && !d.unavailable) await removePresence(d.id);
+   if (d.id && !d.unavailable) return await removePresence(d.id);
   }
  } catch (err) {
   console.error('[Dedupe] presence upkeep failed:', err);
+  if (data.t === GatewayDispatchEvents.GuildDelete) return DedupeVerdict.Drop;
  }
-};
 
-export enum DedupeVerdict {
- Process = 'process',
- Drop = 'drop',
-}
+ return DedupeVerdict.Process;
+};
 
 export const dedupe = async (data: GatewayDispatchPayload): Promise<DedupeVerdict> => {
  if (!dedupeEnabled) return DedupeVerdict.Process;

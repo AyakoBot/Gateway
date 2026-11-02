@@ -43,7 +43,7 @@ import Voice from './Voice.js';
 
 export default async (data: GatewayDispatchPayload, shardId: number) => {
  if (dedupeEnabled) {
-  await maintainPresence(data);
+  if ((await maintainPresence(data)) === DedupeVerdict.Drop) return;
   if ((await dedupe(data)) === DedupeVerdict.Drop) return;
  }
 
